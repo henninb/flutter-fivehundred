@@ -6,7 +6,7 @@ import '../../game/logic/bidding_engine.dart';
 import '../../models/theme_models.dart';
 import '../../models/game_settings.dart';
 import '../widgets/action_bar_500.dart';
-import '../widgets/bidding_dialog.dart';
+import '../widgets/bidding_panel.dart';
 import '../widgets/score_display.dart';
 
 /// Simplified game screen for 500
@@ -32,13 +32,6 @@ class GameScreen500 extends StatelessWidget {
       animation: engine,
       builder: (context, _) {
         final state = engine.state;
-
-        // Show bidding dialog
-        if (state.showBiddingDialog && state.currentBidder == Position.north) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _showBiddingDialog(context, state);
-          });
-        }
 
         return Scaffold(
           appBar: AppBar(
@@ -74,21 +67,64 @@ class GameScreen500 extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
               ),
-              // Game area
-              Expanded(
-                child: Center(
-                  child: _buildGameArea(context, state),
+              // Game area - show hand during bidding, full area otherwise
+              if (state.currentPhase == GamePhase.bidding &&
+                  state.currentBidder == Position.north)
+                // Show just the hand during bidding
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Your Hand:',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: List.generate(
+                          state.playerHand.length,
+                          (index) => Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Text(
+                                state.playerHand[index].label,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                // Full game area for other phases
+                Expanded(
+                  child: Center(
+                    child: _buildGameArea(context, state),
+                  ),
                 ),
-              ),
-              // Action bar
-              ActionBar500(
-                state: state,
-                onStartGame: () => engine.startNewGame(),
-                onCutForDeal: () => engine.cutForDeal(),
-                onDealCards: () => engine.dealCards(),
-                onConfirmKitty: () => engine.confirmKittyExchange(),
-                onNextHand: () => engine.startNextHand(),
-              ),
+              // Show bidding panel when it's player's turn to bid
+              if (state.currentPhase == GamePhase.bidding &&
+                  state.currentBidder == Position.north)
+                Expanded(
+                  child: _buildBiddingPanel(state),
+                )
+              else
+                // Action bar for other phases
+                ActionBar500(
+                  state: state,
+                  onStartGame: () => engine.startNewGame(),
+                  onCutForDeal: () => engine.cutForDeal(),
+                  onDealCards: () => engine.dealCards(),
+                  onConfirmKitty: () => engine.confirmKittyExchange(),
+                  onNextHand: () => engine.startNextHand(),
+                ),
             ],
           ),
         );
@@ -148,7 +184,7 @@ class GameScreen500 extends StatelessWidget {
                 ),
               ),
             );
-          }).toList(),
+          }),
         ],
       );
     }
@@ -177,7 +213,7 @@ class GameScreen500 extends StatelessWidget {
                           textAlign: TextAlign.center,
                         ),
                       ),
-                    ))
+                    ),)
                 .toList(),
           ),
           const SizedBox(height: 24),
@@ -234,7 +270,7 @@ class GameScreen500 extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ))
+                    ),)
                 .toList(),
           ),
           const SizedBox(height: 24),
@@ -327,28 +363,21 @@ class GameScreen500 extends StatelessWidget {
     );
   }
 
-  void _showBiddingDialog(BuildContext context, GameState state) {
-    if (state.currentBidder != Position.north) return;
-
+  Widget _buildBiddingPanel(GameState state) {
     // Check if player can inkle
     final biddingEngine = BiddingEngine(dealer: state.dealer);
     final canInkle = biddingEngine.canInkle(Position.north, state.bidHistory);
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => BiddingDialog(
-        currentHighBid: state.currentHighBid,
-        canInkle: canInkle,
-        playerHand: state.playerHand,
-        onBidSelected: (bid, isInkle) {
-          engine.submitPlayerBid(bid, isInkle: isInkle);
-        },
-        onPass: () {
-          engine.submitPlayerBid(null);
-          Navigator.of(context).pop();
-        },
-      ),
+    return BiddingPanel(
+      currentHighBid: state.currentHighBid,
+      canInkle: canInkle,
+      playerHand: state.playerHand,
+      onBidSelected: (bid, isInkle) {
+        engine.submitPlayerBid(bid, isInkle: isInkle);
+      },
+      onPass: () {
+        engine.submitPlayerBid(null);
+      },
     );
   }
 }

@@ -1,0 +1,232 @@
+import 'package:flutter/material.dart';
+import '../../game/models/card.dart';
+import '../../game/models/game_models.dart';
+import '../../game/logic/avondale_table.dart';
+
+/// Inline panel for player to make a bid (displayed on main screen)
+class BiddingPanel extends StatefulWidget {
+  const BiddingPanel({
+    super.key,
+    required this.currentHighBid,
+    required this.canInkle,
+    required this.onBidSelected,
+    required this.onPass,
+    required this.playerHand,
+  });
+
+  final Bid? currentHighBid;
+  final bool canInkle;
+  final Function(Bid bid, bool isInkle) onBidSelected;
+  final VoidCallback onPass;
+  final List<PlayingCard> playerHand;
+
+  @override
+  State<BiddingPanel> createState() => _BiddingPanelState();
+}
+
+class _BiddingPanelState extends State<BiddingPanel> {
+  Bid? _selectedBid;
+  bool _selectedIsInkle = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.blue.shade300, width: 2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header with current high bid
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Your Bid',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (widget.currentHighBid != null)
+                  Text(
+                    'High: ${widget.currentHighBid!.tricks}${_suitLabel(widget.currentHighBid!.suit)} (${widget.currentHighBid!.value})',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 11,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Bid grid
+            _buildBidGrid(context),
+            const SizedBox(height: 8),
+            // Buttons row
+            Row(
+              children: [
+                // Pass button
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: widget.onPass,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    child: const Text('Pass', style: TextStyle(fontSize: 13)),
+                  ),
+                ),
+                if (_selectedBid != null) ...[
+                  const SizedBox(width: 6),
+                  // Confirm bid button
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton(
+                      onPressed: () {
+                        widget.onBidSelected(_selectedBid!, _selectedIsInkle);
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      child: Text(
+                        'Bid: ${_selectedBid!.tricks}${_suitLabel(_selectedBid!.suit)} (${_selectedBid!.value})',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBidGrid(BuildContext context) {
+    return Table(
+      border: TableBorder.all(color: Colors.grey.shade300),
+      defaultColumnWidth: const FlexColumnWidth(),
+      children: [
+        // Header row
+        TableRow(
+          decoration: BoxDecoration(color: Colors.grey.shade200),
+          children: [
+            _buildHeaderCell(''),
+            _buildHeaderCell('♠'),
+            _buildHeaderCell('♣'),
+            _buildHeaderCell('♦'),
+            _buildHeaderCell('♥'),
+            _buildHeaderCell('NT'),
+          ],
+        ),
+        // Bid rows (6-10)
+        for (int tricks = 6; tricks <= 10; tricks++) _buildBidRow(context, tricks),
+      ],
+    );
+  }
+
+  TableRow _buildBidRow(BuildContext context, int tricks) {
+    return TableRow(
+      children: [
+        _buildHeaderCell(tricks.toString()),
+        for (final suit in BidSuit.values) _buildBidCell(context, tricks, suit),
+      ],
+    );
+  }
+
+  Widget _buildHeaderCell(String text) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      child: Center(
+        child: Text(
+          text,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBidCell(BuildContext context, int tricks, BidSuit suit) {
+    final bid = Bid(tricks: tricks, suit: suit, bidder: Position.north);
+    final value = AvondaleTable.getBidValue(tricks, suit);
+
+    // Check if this bid is valid (beats current high bid)
+    bool isValid = true;
+    bool isInkle = false;
+
+    if (widget.currentHighBid != null && !bid.beats(widget.currentHighBid!)) {
+      isValid = false;
+    }
+
+    // Check if this is an inkle
+    if (tricks == 6 && widget.canInkle) {
+      isInkle = true;
+      isValid = true; // Inkle is always valid if allowed
+    }
+
+    // Can't win with inkle
+    if (tricks == 6 && !widget.canInkle) {
+      isValid = false;
+    }
+
+    // Check if this bid is currently selected
+    final isSelected = _selectedBid != null &&
+        _selectedBid!.tricks == tricks &&
+        _selectedBid!.suit == suit;
+
+    return InkWell(
+      onTap: isValid
+          ? () {
+              setState(() {
+                _selectedBid = bid;
+                _selectedIsInkle = isInkle;
+              });
+            }
+          : null,
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: !isValid
+              ? Colors.grey.shade300
+              : isSelected
+                  ? Colors.green.shade200
+                  : (isInkle ? Colors.blue.shade50 : null),
+          border: isSelected
+              ? Border.all(color: Colors.green.shade700, width: 2)
+              : null,
+        ),
+        child: Center(
+          child: Text(
+            value.toString(),
+            style: TextStyle(
+              color: !isValid ? Colors.grey : Colors.black,
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _suitLabel(BidSuit suit) {
+    switch (suit) {
+      case BidSuit.spades:
+        return '♠';
+      case BidSuit.clubs:
+        return '♣';
+      case BidSuit.diamonds:
+        return '♦';
+      case BidSuit.hearts:
+        return '♥';
+      case BidSuit.noTrump:
+        return 'NT';
+    }
+  }
+}
