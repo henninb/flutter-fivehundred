@@ -39,7 +39,7 @@ class _ReadyToStartDisplay extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.casino_outlined,
+              Icons.style,
               size: 80,
               color: Theme.of(context).colorScheme.primary,
             ),
@@ -89,7 +89,7 @@ class _CutForDealDisplay extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Lowest card deals first',
+              'Highest card deals first',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

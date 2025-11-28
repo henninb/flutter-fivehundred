@@ -82,25 +82,7 @@ class GameEngine extends ChangeNotifier {
       cutCards[position] = deck[index];
     }
 
-    _updateState(_state.copyWith(
-      currentPhase: GamePhase.cutForDeal,
-      cutCards: cutCards,
-      gameStatus: 'Cut for deal - determining dealer...',
-    ));
-
-    // Determine winner after brief delay to show cards
-    Future.delayed(const Duration(milliseconds: 1500), _determineCutWinner);
-  }
-
-  /// Determine the winner of the cut (highest card becomes dealer)
-  /// Ties are broken by suit: Hearts > Diamonds > Clubs > Spades
-  void _determineCutWinner() {
-    final cutCards = _state.cutCards;
-    if (cutCards.isEmpty) return;
-
-    // Find the highest card (excluding joker)
-    // Compare by rank first, then by suit if ranks are equal
-    // Suit order: Hearts (0) > Diamonds (1) > Clubs (2) > Spades (3)
+    // Determine winner immediately
     Position? highestPosition;
     int highestRank = -1;
     int highestSuit = 999; // Lower is better (hearts=0 is best)
@@ -123,11 +105,13 @@ class GameEngine extends ChangeNotifier {
       }
     }
 
-    // We have a winner - keep cut cards visible with Deal button
+    // Set dealer and update status - show cut results on same screen
     if (highestPosition != null) {
       final winnerName = _state.getName(highestPosition);
       final winningCard = cutCards[highestPosition]!;
       _updateState(_state.copyWith(
+        currentPhase: GamePhase.cutForDeal,
+        cutCards: cutCards,
         dealer: highestPosition,
         gameStatus: '$winnerName wins with ${winningCard.label} and will deal. Tap Deal to start.',
       ));
