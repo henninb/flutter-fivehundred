@@ -10,6 +10,7 @@ import '../widgets/bidding_panel.dart';
 import '../widgets/score_display.dart';
 import '../widgets/welcome_screen.dart';
 import '../widgets/setup_screen.dart';
+import 'settings_screen.dart';
 
 /// Simplified game screen for 500
 class GameScreen500 extends StatelessWidget {
@@ -42,7 +43,17 @@ class GameScreen500 extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
-                  // TODO: Show settings
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => SettingsScreen(
+                        currentSettings: currentSettings,
+                        onSettingsChange: onSettingsChange,
+                        onBackPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ),
+                  );
                 },
               ),
             ],
