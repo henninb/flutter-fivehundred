@@ -395,6 +395,9 @@ class GameScreen500 extends StatelessWidget {
       currentHighBid: state.currentHighBid,
       canInkle: canInkle,
       playerHand: state.playerHand,
+      bidHistory: state.bidHistory,
+      currentBidder: state.currentBidder,
+      dealer: state.dealer,
       onBidSelected: (bid, isInkle) {
         engine.submitPlayerBid(bid, isInkle: isInkle);
       },

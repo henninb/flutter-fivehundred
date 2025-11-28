@@ -170,7 +170,7 @@ class _CutCardItem extends StatelessWidget {
     return Card(
       elevation: isDealer ? 8 : 2,
       color: isDealer
-          ? Theme.of(context).colorScheme.secondaryContainer
+          ? Theme.of(context).colorScheme.primaryContainer
           : Theme.of(context).colorScheme.surface,
       child: Container(
         width: 140,
@@ -183,7 +183,7 @@ class _CutCardItem extends StatelessWidget {
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: isDealer ? FontWeight.bold : FontWeight.normal,
                     color: isDealer
-                        ? Theme.of(context).colorScheme.onSecondaryContainer
+                        ? Theme.of(context).colorScheme.onPrimaryContainer
                         : Theme.of(context).colorScheme.onSurface,
                   ),
               textAlign: TextAlign.center,

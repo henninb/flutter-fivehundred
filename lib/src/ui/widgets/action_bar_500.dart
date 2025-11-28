@@ -85,9 +85,19 @@ class ActionBar500 extends StatelessWidget {
       return buttons;
     }
 
-    // Cut for deal phase - show cut cards
+    // Cut for deal phase
     if (state.currentPhase == GamePhase.cutForDeal) {
-      // No button needed, just showing the cut results
+      // Show Deal button if cut is complete and winner determined
+      if (state.gameStatus.contains('Tap Deal')) {
+        buttons.add(
+          Expanded(
+            child: FilledButton(
+              onPressed: onDealCards,
+              child: const Text('Deal'),
+            ),
+          ),
+        );
+      }
       return buttons;
     }
 

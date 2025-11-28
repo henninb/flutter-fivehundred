@@ -12,6 +12,9 @@ class BiddingPanel extends StatefulWidget {
     required this.onBidSelected,
     required this.onPass,
     required this.playerHand,
+    required this.bidHistory,
+    required this.currentBidder,
+    required this.dealer,
   });
 
   final Bid? currentHighBid;
@@ -19,6 +22,9 @@ class BiddingPanel extends StatefulWidget {
   final Function(Bid bid, bool isInkle) onBidSelected;
   final VoidCallback onPass;
   final List<PlayingCard> playerHand;
+  final List<BidEntry> bidHistory;
+  final Position? currentBidder;
+  final Position dealer;
 
   @override
   State<BiddingPanel> createState() => _BiddingPanelState();
@@ -27,6 +33,31 @@ class BiddingPanel extends StatefulWidget {
 class _BiddingPanelState extends State<BiddingPanel> {
   Bid? _selectedBid;
   bool _selectedIsInkle = false;
+
+  /// Get the bidding order based on dealer
+  List<Position> _getBiddingOrder() {
+    final order = <Position>[];
+    var current = widget.dealer.next;
+    for (int i = 0; i < 4; i++) {
+      order.add(current);
+      current = current.next;
+    }
+    return order;
+  }
+
+  /// Get only the bids that were made before the current bidder
+  List<BidEntry> _getPreviousBids() {
+    if (widget.currentBidder == null) return [];
+
+    final biddingOrder = _getBiddingOrder();
+    final currentBidderIndex = biddingOrder.indexOf(widget.currentBidder!);
+
+    // Get all bids made before this player's position in the bidding order
+    return widget.bidHistory.where((entry) {
+      final entryIndex = biddingOrder.indexOf(entry.bidder);
+      return entryIndex < currentBidderIndex;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +94,64 @@ class _BiddingPanelState extends State<BiddingPanel> {
               ],
             ),
             const SizedBox(height: 8),
+            // Previous bids display
+            if (_getPreviousBids().isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Previous Bids:',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: _getPreviousBids().map((entry) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: entry.action == BidAction.pass
+                                ? Theme.of(context).colorScheme.surfaceContainerHighest
+                                : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(3),
+                            border: Border.all(
+                              color: entry.action == BidAction.pass
+                                  ? Theme.of(context).dividerColor
+                                  : Theme.of(context).colorScheme.primary,
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            _formatBidEntry(entry),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: entry.action != BidAction.pass ? FontWeight.bold : FontWeight.normal,
+                              color: entry.action == BidAction.pass
+                                  ? Theme.of(context).colorScheme.onSurfaceVariant
+                                  : Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             // Bid grid
             _buildBidGrid(context),
             const SizedBox(height: 8),
@@ -103,6 +192,9 @@ class _BiddingPanelState extends State<BiddingPanel> {
     return Table(
       border: TableBorder.all(color: Theme.of(context).dividerColor),
       defaultColumnWidth: const FlexColumnWidth(),
+      columnWidths: const {
+        0: FlexColumnWidth(0.5), // First column (trick numbers) is half the width
+      },
       children: [
         // Header row
         TableRow(
@@ -199,13 +291,38 @@ class _BiddingPanelState extends State<BiddingPanel> {
               color: !isValid
                 ? Theme.of(context).colorScheme.onSurfaceVariant
                 : Theme.of(context).colorScheme.onSurface,
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
       ),
     );
+  }
+
+  String _formatBidEntry(BidEntry entry) {
+    final playerName = _getShortName(entry.bidder);
+    if (entry.action == BidAction.pass) {
+      return '$playerName: Pass';
+    } else if (entry.action == BidAction.inkle && entry.bid != null) {
+      return '$playerName: ${entry.bid!.tricks}${_suitLabel(entry.bid!.suit)} (Inkle)';
+    } else if (entry.bid != null) {
+      return '$playerName: ${entry.bid!.tricks}${_suitLabel(entry.bid!.suit)}';
+    }
+    return '$playerName: ?';
+  }
+
+  String _getShortName(Position position) {
+    switch (position) {
+      case Position.north:
+        return 'You';
+      case Position.south:
+        return 'Partner';
+      case Position.east:
+        return 'East';
+      case Position.west:
+        return 'West';
+    }
   }
 
   String _suitLabel(BidSuit suit) {

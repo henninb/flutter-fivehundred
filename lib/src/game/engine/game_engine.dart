@@ -123,15 +123,13 @@ class GameEngine extends ChangeNotifier {
       }
     }
 
-    // We have a winner
+    // We have a winner - keep cut cards visible with Deal button
     if (highestPosition != null) {
       final winnerName = _state.getName(highestPosition);
       final winningCard = cutCards[highestPosition]!;
       _updateState(_state.copyWith(
         dealer: highestPosition,
         gameStatus: '$winnerName wins with ${winningCard.label} and will deal. Tap Deal to start.',
-        currentPhase: GamePhase.setup,
-        cutCards: {}, // Clear cut cards
       ));
     }
   }
@@ -152,6 +150,7 @@ class GameEngine extends ChangeNotifier {
       opponentWestHand: dealResult.hands[Position.west],
       kitty: dealResult.kitty,
       handNumber: _state.handNumber + 1,
+      cutCards: {}, // Clear cut cards after dealing
       gameStatus: 'Cards dealt',
     ));
 
