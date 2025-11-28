@@ -1,4 +1,4 @@
-package com.brianhenning.cribbage
+package com.brianhenning.fivehundred
 
 import io.flutter.embedding.android.FlutterActivity
 
