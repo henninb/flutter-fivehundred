@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'game/engine/game_engine.dart';
-import 'ui/screens/game_screen_500.dart';
+import 'ui/screens/game_screen.dart';
 import 'models/theme_models.dart';
 import 'models/game_settings.dart';
 import 'ui/theme/theme_calculator.dart';

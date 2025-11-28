@@ -5,7 +5,7 @@ import '../../game/models/game_models.dart';
 import '../../game/logic/bidding_engine.dart';
 import '../../models/theme_models.dart';
 import '../../models/game_settings.dart';
-import '../widgets/action_bar_500.dart';
+import '../widgets/action_bar.dart';
 import '../widgets/bidding_panel.dart';
 import '../widgets/score_display.dart';
 import '../widgets/welcome_screen.dart';
