@@ -14,7 +14,7 @@ class WelcomeScreen extends StatelessWidget {
           children: [
             // App title
             Text(
-              '500',
+              'Five Hundred',
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.primary,
@@ -46,7 +46,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Play 500 in a four-player partnership game. Bid wisely, play strategically, and be the first team to reach 500 points!',
+                      'Play Five Hundred in a four-player partnership game. Bid wisely, play strategically, and be the first team to reach 500 points!',
                       style: Theme.of(context).textTheme.bodyLarge,
                       textAlign: TextAlign.center,
                     ),

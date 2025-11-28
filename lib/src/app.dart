@@ -82,7 +82,7 @@ class _FiveHundredAppState extends State<FiveHundredApp> {
     return Consumer<GameEngine>(
       builder: (context, engine, child) {
         return MaterialApp(
-          title: '500',
+          title: 'Five Hundred',
           theme: _currentTheme.toThemeData(),
           home: GameScreen500(
             engine: engine,

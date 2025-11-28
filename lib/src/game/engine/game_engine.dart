@@ -87,21 +87,29 @@ class GameEngine extends ChangeNotifier {
     int highestRank = -1;
     int highestSuit = 999; // Lower is better (hearts=0 is best)
 
+    // First check if anyone drew the Joker - Joker always wins
     for (final entry in cutCards.entries) {
-      final card = entry.value;
-      final position = entry.key;
+      if (entry.value.isJoker) {
+        highestPosition = entry.key;
+        break;
+      }
+    }
 
-      // Skip joker in cut
-      if (card.isJoker) continue;
+    // If no Joker, find highest card
+    if (highestPosition == null) {
+      for (final entry in cutCards.entries) {
+        final card = entry.value;
+        final position = entry.key;
 
-      final rank = card.rank.index;
-      final suit = card.suit.index;
+        final rank = card.rank.index;
+        final suit = card.suit.index;
 
-      // Compare: higher rank wins, or if same rank, lower suit index wins (hearts=0 best)
-      if (rank > highestRank || (rank == highestRank && suit < highestSuit)) {
-        highestRank = rank;
-        highestSuit = suit;
-        highestPosition = position;
+        // Compare: higher rank wins, or if same rank, lower suit index wins (hearts=0 best)
+        if (rank > highestRank || (rank == highestRank && suit < highestSuit)) {
+          highestRank = rank;
+          highestSuit = suit;
+          highestPosition = position;
+        }
       }
     }
 

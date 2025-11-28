@@ -38,7 +38,7 @@ class GameScreen500 extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('500'),
+            title: const Text('Five Hundred'),
             actions: [
               IconButton(
                 icon: const Icon(Icons.settings),
@@ -140,11 +140,10 @@ class GameScreen500 extends StatelessWidget {
                 ),
               // Show bidding panel when it's player's turn to bid
               if (state.currentPhase == GamePhase.bidding &&
-                  state.currentBidder == Position.north)
-                Expanded(
-                  child: _buildBiddingPanel(state),
-                )
-              else
+                  state.currentBidder == Position.north) ...[
+                const Spacer(),
+                _buildBiddingPanel(state),
+              ] else
                 // Action bar for other phases
                 ActionBar500(
                   state: state,
