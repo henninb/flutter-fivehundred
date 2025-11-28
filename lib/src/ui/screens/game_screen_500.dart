@@ -9,6 +9,7 @@ import '../widgets/action_bar_500.dart';
 import '../widgets/bidding_panel.dart';
 import '../widgets/score_display.dart';
 import '../widgets/welcome_screen.dart';
+import '../widgets/setup_screen.dart';
 
 /// Simplified game screen for 500
 class GameScreen500 extends StatelessWidget {
@@ -48,8 +49,10 @@ class GameScreen500 extends StatelessWidget {
           ),
           body: Column(
             children: [
-              // Score display - only show when game has started
-              if (state.gameStarted) ...[
+              // Score display - only show when past setup/cut phases
+              if (state.gameStarted &&
+                  state.currentPhase != GamePhase.setup &&
+                  state.currentPhase != GamePhase.cutForDeal) ...[
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: ScoreDisplay(
@@ -58,6 +61,7 @@ class GameScreen500 extends StatelessWidget {
                     tricksNS: state.tricksWonNS,
                     tricksEW: state.tricksWonEW,
                     trumpSuit: state.trumpSuit,
+                    dealer: state.dealer,
                   ),
                 ),
                 // Status message
@@ -74,6 +78,12 @@ class GameScreen500 extends StatelessWidget {
               if (!state.gameStarted)
                 const Expanded(
                   child: WelcomeScreen(),
+                )
+              // Show setup screen during setup/cut for deal phases
+              else if (state.currentPhase == GamePhase.setup ||
+                  state.currentPhase == GamePhase.cutForDeal)
+                Expanded(
+                  child: SetupScreen(state: state),
                 )
               // Show hand during bidding when it's player's turn
               else if (state.currentPhase == GamePhase.bidding &&
@@ -333,13 +343,18 @@ class GameScreen500 extends StatelessWidget {
         state.currentPhase == GamePhase.kittyExchange &&
         state.contractor == Position.north;
     final bool isSelected = state.selectedCardIndices.contains(index);
+    final bool isJoker = card.label == 'JOKER';
 
     // Determine card color
     Color? cardColor;
+    Color? textColor;
+
     if (isKittyExchange && isSelected) {
       cardColor = Theme.of(context).colorScheme.errorContainer; // Highlight selected cards for discard
+      textColor = Theme.of(context).colorScheme.onErrorContainer;
     } else if (canPlay) {
       cardColor = Theme.of(context).colorScheme.primaryContainer; // Highlight playable cards
+      textColor = Theme.of(context).colorScheme.onPrimaryContainer;
     }
 
     return InkWell(
@@ -354,14 +369,16 @@ class GameScreen500 extends StatelessWidget {
       },
       child: Card(
         color: cardColor,
-        elevation: isSelected ? 8 : 1, // Raise selected cards
+        elevation: isSelected ? 8 : 1,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
             card.label,
             style: TextStyle(
               fontSize: 20,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontWeight: isJoker || isSelected ? FontWeight.bold : FontWeight.normal,
+              letterSpacing: isJoker ? 1.5 : 0,
+              color: textColor,
             ),
           ),
         ),
