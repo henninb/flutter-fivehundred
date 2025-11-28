@@ -100,7 +100,7 @@ class ActionBar500 extends StatelessWidget {
 
     // Kitty exchange phase (player is contractor)
     if (state.currentPhase == GamePhase.kittyExchange &&
-        state.contractor == Position.north) {
+        state.contractor == Position.south) {
       final selectedCount = state.selectedCardIndices.length;
       final canDiscard = selectedCount == 5;
 

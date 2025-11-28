@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../game/engine/game_engine.dart';
 import '../../game/engine/game_state.dart';
 import '../../game/models/game_models.dart';
+import '../../game/models/card.dart';
 import '../../game/logic/bidding_engine.dart';
 import '../../models/theme_models.dart';
 import '../../models/game_settings.dart';
@@ -10,6 +11,7 @@ import '../widgets/bidding_panel.dart';
 import '../widgets/score_display.dart';
 import '../widgets/welcome_screen.dart';
 import '../widgets/setup_screen.dart';
+import '../widgets/suit_nomination_dialog.dart';
 import 'settings_screen.dart';
 
 /// Simplified game screen for 500
@@ -35,6 +37,20 @@ class GameScreen500 extends StatelessWidget {
       animation: engine,
       builder: (context, _) {
         final state = engine.state;
+
+        // Show game over dialog when game ends
+        if (state.showGameOverDialog && state.gameOverData != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showGameOverDialog(context, state.gameOverData!);
+          });
+        }
+
+        // Show suit nomination dialog when needed
+        if (state.showSuitNominationDialog) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showSuitNominationDialog(context);
+          });
+        }
 
         return Scaffold(
           appBar: AppBar(
@@ -98,7 +114,7 @@ class GameScreen500 extends StatelessWidget {
                 )
               // Show hand during bidding when it's player's turn
               else if (state.currentPhase == GamePhase.bidding &&
-                  state.currentBidder == Position.north)
+                  state.currentBidder == Position.south)
                 // Show just the hand during bidding
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -140,7 +156,7 @@ class GameScreen500 extends StatelessWidget {
                 ),
               // Show bidding panel when it's player's turn to bid
               if (state.currentPhase == GamePhase.bidding &&
-                  state.currentBidder == Position.north) ...[
+                  state.currentBidder == Position.south) ...[
                 const Spacer(),
                 _buildBiddingPanel(state),
               ] else
@@ -348,10 +364,10 @@ class GameScreen500 extends StatelessWidget {
     GameState state,
   ) {
     final bool canPlay =
-        state.isPlayPhase && state.currentPlayer == Position.north;
+        state.isPlayPhase && state.currentPlayer == Position.south;
     final bool isKittyExchange =
         state.currentPhase == GamePhase.kittyExchange &&
-        state.contractor == Position.north;
+        state.contractor == Position.south;
     final bool isSelected = state.selectedCardIndices.contains(index);
     final bool isJoker = card.label == 'JOKER';
 
@@ -399,7 +415,7 @@ class GameScreen500 extends StatelessWidget {
   Widget _buildBiddingPanel(GameState state) {
     // Check if player can inkle
     final biddingEngine = BiddingEngine(dealer: state.dealer);
-    final canInkle = biddingEngine.canInkle(Position.north, state.bidHistory);
+    final canInkle = biddingEngine.canInkle(Position.south, state.bidHistory);
 
     return BiddingPanel(
       currentHighBid: state.currentHighBid,
@@ -414,6 +430,66 @@ class GameScreen500 extends StatelessWidget {
       onPass: () {
         engine.submitPlayerBid(null);
       },
+    );
+  }
+
+  void _showGameOverDialog(BuildContext context, GameOverData data) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(
+          data.winningTeam == Team.northSouth
+              ? 'You Win!'
+              : 'Opponents Win',
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Final Score:',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text('North-South: ${data.finalScoreNS}'),
+            Text('East-West: ${data.finalScoreEW}'),
+            const SizedBox(height: 16),
+            Text(
+              'Games Won: ${data.gamesWon}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text('Games Lost: ${data.gamesLost}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              engine.dismissGameOverDialog();
+            },
+            child: const Text('New Game'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuitNominationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => SuitNominationDialog(
+        onSuitSelected: (suit) {
+          engine.confirmCardPlayWithNominatedSuit(suit);
+        },
+      ),
     );
   }
 }

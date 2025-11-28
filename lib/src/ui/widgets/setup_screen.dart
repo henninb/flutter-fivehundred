@@ -122,11 +122,13 @@ class _CutForDealDisplay extends StatelessWidget {
 
   Widget _buildCutCardsGrid(BuildContext context) {
     // Build a 2x2 grid for the four players
+    // Layout: [North-Partner] [West-Right]
+    //         [East-Left]     [South-You]
     final positions = [
-      Position.north,
-      Position.east,
-      Position.south,
-      Position.west
+      Position.north,  // Partner (top)
+      Position.west,   // Opponent right
+      Position.east,   // Opponent left
+      Position.south   // Human player (bottom)
     ];
 
     return Wrap(

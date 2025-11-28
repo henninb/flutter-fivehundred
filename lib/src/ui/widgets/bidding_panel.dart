@@ -236,7 +236,7 @@ class _BiddingPanelState extends State<BiddingPanel> {
   }
 
   Widget _buildBidCell(BuildContext context, int tricks, BidSuit suit) {
-    final bid = Bid(tricks: tricks, suit: suit, bidder: Position.north);
+    final bid = Bid(tricks: tricks, suit: suit, bidder: Position.south);
     final value = AvondaleTable.getBidValue(tricks, suit);
 
     // Check if this bid is valid (beats current high bid)
@@ -314,9 +314,9 @@ class _BiddingPanelState extends State<BiddingPanel> {
 
   String _getShortName(Position position) {
     switch (position) {
-      case Position.north:
-        return 'You';
       case Position.south:
+        return 'You';
+      case Position.north:
         return 'Partner';
       case Position.east:
         return 'East';

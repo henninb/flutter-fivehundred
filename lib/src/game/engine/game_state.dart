@@ -23,7 +23,7 @@ class GameState {
     // Game setup
     this.gameStarted = false,
     this.currentPhase = GamePhase.setup,
-    this.dealer = Position.west, // Default dealer (player is North, dealer rotates)
+    this.dealer = Position.west, // Default dealer (player is South, dealer rotates)
     this.handNumber = 0,
     // Cut for deal
     this.cutCards = const {},
@@ -38,8 +38,8 @@ class GameState {
     this.opponentWestName = 'West',
     this.opponentEastName = 'East',
     // Hands (10 cards each when dealt)
-    this.playerHand = const [], // North (human player)
-    this.partnerHand = const [], // South
+    this.playerHand = const [], // South (human player)
+    this.partnerHand = const [], // North
     this.opponentWestHand = const [],
     this.opponentEastHand = const [],
     this.kitty = const [], // 5 cards
@@ -67,6 +67,9 @@ class GameState {
     this.showBiddingDialog = false,
     this.pendingBidEntry,
     this.aiThinkingPosition, // Which AI is currently "thinking"
+    this.showSuitNominationDialog = false,
+    this.pendingCardIndex,
+    this.nominatedSuit,
   });
 
   // Game setup
@@ -91,8 +94,8 @@ class GameState {
   final String opponentEastName;
 
   // Hands
-  final List<PlayingCard> playerHand; // North (human)
-  final List<PlayingCard> partnerHand; // South
+  final List<PlayingCard> playerHand; // South (human)
+  final List<PlayingCard> partnerHand; // North
   final List<PlayingCard> opponentWestHand; // West
   final List<PlayingCard> opponentEastHand; // East
   final List<PlayingCard> kitty;
@@ -123,14 +126,17 @@ class GameState {
   final bool showBiddingDialog;
   final BidEntry? pendingBidEntry; // Last bid that was made (for display)
   final Position? aiThinkingPosition; // Show "thinking" indicator
+  final bool showSuitNominationDialog; // Show suit nomination dialog
+  final int? pendingCardIndex; // Card index pending suit nomination
+  final Suit? nominatedSuit; // Nominated suit for joker in no-trump
 
   /// Get hand for a specific position
   List<PlayingCard> getHand(Position position) {
     switch (position) {
       case Position.north:
-        return playerHand;
-      case Position.south:
         return partnerHand;
+      case Position.south:
+        return playerHand;
       case Position.east:
         return opponentEastHand;
       case Position.west:
@@ -142,9 +148,9 @@ class GameState {
   String getName(Position position) {
     switch (position) {
       case Position.north:
-        return playerName;
-      case Position.south:
         return partnerName;
+      case Position.south:
+        return playerName;
       case Position.east:
         return opponentEastName;
       case Position.west:
@@ -212,6 +218,9 @@ class GameState {
     bool? showBiddingDialog,
     BidEntry? pendingBidEntry,
     Position? aiThinkingPosition,
+    bool? showSuitNominationDialog,
+    int? pendingCardIndex,
+    Suit? nominatedSuit,
     // Special handling for nullable fields
     bool clearCurrentBidder = false,
     bool clearCurrentHighBid = false,
@@ -225,6 +234,8 @@ class GameState {
     bool clearScoreAnimation = false,
     bool clearPendingBidEntry = false,
     bool clearAiThinkingPosition = false,
+    bool clearPendingCardIndex = false,
+    bool clearNominatedSuit = false,
   }) {
     return GameState(
       gameStarted: gameStarted ?? this.gameStarted,
@@ -266,6 +277,9 @@ class GameState {
       showBiddingDialog: showBiddingDialog ?? this.showBiddingDialog,
       pendingBidEntry: clearPendingBidEntry ? null : (pendingBidEntry ?? this.pendingBidEntry),
       aiThinkingPosition: clearAiThinkingPosition ? null : (aiThinkingPosition ?? this.aiThinkingPosition),
+      showSuitNominationDialog: showSuitNominationDialog ?? this.showSuitNominationDialog,
+      pendingCardIndex: clearPendingCardIndex ? null : (pendingCardIndex ?? this.pendingCardIndex),
+      nominatedSuit: clearNominatedSuit ? null : (nominatedSuit ?? this.nominatedSuit),
     );
   }
 }

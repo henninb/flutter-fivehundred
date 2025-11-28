@@ -42,17 +42,17 @@ android {
     signingConfigs {
         create("release") {
             // Always use the keystore from home directory
-            storeFile = file("${System.getProperty("user.home")}/.android/keystores/cribbage-release-key.jks")
+            storeFile = file("${System.getProperty("user.home")}/.android/keystores/fivehundred-release-key.jks")
 
             // Read passwords from environment variables (required)
-            storePassword = System.getenv("CRIBBAGE_KEYSTORE_PASSWORD")
-                ?: throw GradleException("CRIBBAGE_KEYSTORE_PASSWORD environment variable not set")
-            keyPassword = System.getenv("CRIBBAGE_KEY_PASSWORD")
-                ?: throw GradleException("CRIBBAGE_KEY_PASSWORD environment variable not set")
+            storePassword = System.getenv("FIVEHUNDRED_KEYSTORE_PASSWORD")
+                ?: throw GradleException("FIVEHUNDRED_KEYSTORE_PASSWORD environment variable not set")
+            keyPassword = System.getenv("FIVEHUNDRED_KEY_PASSWORD")
+                ?: throw GradleException("FIVEHUNDRED_KEY_PASSWORD environment variable not set")
 
             // Key alias from properties file or default
             keyAlias = keystoreProperties.getProperty("keyAlias")?.takeIf { it.isNotEmpty() }
-                ?: "cribbage-release"
+                ?: "fivehundred-release"
         }
     }
 

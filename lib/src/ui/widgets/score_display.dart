@@ -55,7 +55,7 @@ class ScoreDisplay extends StatelessWidget {
           ),
           _buildTeamScore(
             context,
-            'E-W',
+            'W-E',
             scoreEW,
             tricksEW,
             Team.eastWest,
@@ -89,7 +89,10 @@ class ScoreDisplay extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           'Tricks: $tricks',
-          style: Theme.of(context).textTheme.bodySmall,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
         ),
       ],
     );

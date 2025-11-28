@@ -175,7 +175,7 @@ class _BiddingDialogState extends State<BiddingDialog> {
   }
 
   Widget _buildBidCell(BuildContext context, int tricks, BidSuit suit) {
-    final bid = Bid(tricks: tricks, suit: suit, bidder: Position.north);
+    final bid = Bid(tricks: tricks, suit: suit, bidder: Position.south);
     final value = AvondaleTable.getBidValue(tricks, suit);
 
     // Check if this bid is valid (beats current high bid)

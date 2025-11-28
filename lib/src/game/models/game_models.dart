@@ -4,7 +4,7 @@ import '../logic/avondale_table.dart';
 // Extends Suit enum to include no-trump for bidding
 enum BidSuit { spades, clubs, diamonds, hearts, noTrump }
 
-// Player positions around the table (North is human player)
+// Player positions around the table (South is human player)
 enum Position { north, south, east, west }
 
 // Teams in 500 (North-South vs East-West)

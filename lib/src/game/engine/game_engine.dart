@@ -131,13 +131,47 @@ class GameEngine extends ChangeNotifier {
     final deck = createDeck();
     final dealResult = dealHand(deck: deck, dealer: _state.dealer);
 
+    // DEBUG: Log the deal
+    print('\n========== DEAL CARDS (Hand #${_state.handNumber + 1}) ==========');
+    print('Dealer: ${_state.dealer.name}');
+    print('Deck size: ${deck.length}');
+
+    // Check for Joker in each hand
+    for (final position in Position.values) {
+      final hand = dealResult.hands[position]!;
+      final hasJoker = hand.any((card) => card.isJoker);
+      print('${position.name}: ${hand.length} cards${hasJoker ? ' ⭐ HAS JOKER' : ''}');
+      if (hasJoker) {
+        print('  Cards: ${hand.map((c) => c.label).join(', ')}');
+      }
+    }
+
+    final kittyHasJoker = dealResult.kitty.any((card) => card.isJoker);
+    print('Kitty: ${dealResult.kitty.length} cards${kittyHasJoker ? ' ⭐ HAS JOKER' : ''}');
+    if (kittyHasJoker) {
+      print('  Cards: ${dealResult.kitty.map((c) => c.label).join(', ')}');
+    }
+
+    // Count total cards
+    final totalCards = dealResult.hands.values.fold(0, (sum, hand) => sum + hand.length) + dealResult.kitty.length;
+    print('Total cards dealt: $totalCards (should be 45)');
+
+    // Count Jokers
+    var jokerCount = 0;
+    for (final hand in dealResult.hands.values) {
+      jokerCount += hand.where((card) => card.isJoker).length;
+    }
+    jokerCount += dealResult.kitty.where((card) => card.isJoker).length;
+    print('Total Jokers in deal: $jokerCount (should be 1)');
+    print('========================================\n');
+
     // Sort player's hand by suit for easier viewing
-    final sortedPlayerHand = sortHandBySuit(dealResult.hands[Position.north]!);
+    final sortedPlayerHand = sortHandBySuit(dealResult.hands[Position.south]!);
 
     _updateState(_state.copyWith(
       currentPhase: GamePhase.dealing,
       playerHand: sortedPlayerHand,
-      partnerHand: dealResult.hands[Position.south],
+      partnerHand: dealResult.hands[Position.north],
       opponentEastHand: dealResult.hands[Position.east],
       opponentWestHand: dealResult.hands[Position.west],
       kitty: dealResult.kitty,
@@ -170,7 +204,7 @@ class GameEngine extends ChangeNotifier {
     ));
 
     // If first bidder is AI, trigger AI bidding
-    if (biddingOrder.first != Position.north) {
+    if (biddingOrder.first != Position.south) {
       _scheduleAIBid();
     } else {
       _updateState(_state.copyWith(showBiddingDialog: true));
@@ -179,13 +213,13 @@ class GameEngine extends ChangeNotifier {
 
   /// Player submits a bid
   void submitPlayerBid(Bid? bid, {bool isInkle = false}) {
-    if (_state.currentBidder != Position.north) return;
+    if (_state.currentBidder != Position.south) return;
 
     final biddingEngine = BiddingEngine(dealer: _state.dealer);
 
     // Validate bid
     final validation = biddingEngine.validateBid(
-      bidder: Position.north,
+      bidder: Position.south,
       proposedBid: bid,
       currentBids: _state.bidHistory,
       isInkle: isInkle,
@@ -202,7 +236,7 @@ class GameEngine extends ChangeNotifier {
     final action = bid == null
         ? BidAction.pass
         : (isInkle ? BidAction.inkle : BidAction.bid);
-    final entry = BidEntry(bidder: Position.north, action: action, bid: bid);
+    final entry = BidEntry(bidder: Position.south, action: action, bid: bid);
 
     _addBidEntry(entry);
     _updateState(_state.copyWith(showBiddingDialog: false));
@@ -214,7 +248,7 @@ class GameEngine extends ChangeNotifier {
   /// AI makes a bid
   void _scheduleAIBid() {
     if (_state.currentBidder == null) return;
-    if (_state.currentBidder == Position.north) return;
+    if (_state.currentBidder == Position.south) return;
 
     _updateState(_state.copyWith(
       aiThinkingPosition: _state.currentBidder,
@@ -228,7 +262,7 @@ class GameEngine extends ChangeNotifier {
 
   void _executeAIBid() {
     final position = _state.currentBidder;
-    if (position == null || position == Position.north) return;
+    if (position == null || position == Position.south) return;
 
     final hand = _state.getHand(position);
     final biddingEngine = BiddingEngine(dealer: _state.dealer);
@@ -287,9 +321,9 @@ class GameEngine extends ChangeNotifier {
             : 'Auction complete',
       ));
 
-      if (nextBidder != null && nextBidder != Position.north) {
+      if (nextBidder != null && nextBidder != Position.south) {
         _scheduleAIBid();
-      } else if (nextBidder == Position.north) {
+      } else if (nextBidder == Position.south) {
         _updateState(_state.copyWith(showBiddingDialog: true));
       }
       return;
@@ -335,14 +369,24 @@ class GameEngine extends ChangeNotifier {
     final contractor = _state.contractor;
     if (contractor == null) return;
 
+    print('\n========== KITTY EXCHANGE ==========');
+    print('Contractor: ${_state.getName(contractor)} (${contractor.name})');
+    print('Kitty cards: ${_state.kitty.map((c) => c.label).join(', ')}');
+
     _updateState(_state.copyWith(
       currentPhase: GamePhase.kittyExchange,
       gameStatus: '${_state.getName(contractor)} exchanges kitty',
     ));
 
-    if (contractor == Position.north) {
+    if (contractor == Position.south) {
       // Player picks up kitty
+      print('Player hand before kitty: ${_state.playerHand.length} cards');
+      final kittyHasJoker = _state.kitty.any((c) => c.isJoker);
+      final handHasJoker = _state.playerHand.any((c) => c.isJoker);
+      print('Hand has Joker: $handHasJoker, Kitty has Joker: $kittyHasJoker');
+
       final newHand = [..._state.playerHand, ..._state.kitty];
+      print('Player hand after kitty: ${newHand.length} cards');
 
       // Sort hand with trump consideration (we know trump from winning bid)
       final trumpSuit = _getBidSuitAsTrumpSuit();
@@ -361,7 +405,7 @@ class GameEngine extends ChangeNotifier {
 
   void _executeAIKittyExchange() {
     final contractor = _state.contractor;
-    if (contractor == null || contractor == Position.north) return;
+    if (contractor == null || contractor == Position.south) return;
 
     var hand = _state.getHand(contractor);
     hand = [...hand, ..._state.kitty];
@@ -375,7 +419,7 @@ class GameEngine extends ChangeNotifier {
 
     // Update hand
     switch (contractor) {
-      case Position.south:
+      case Position.north:
         _updateState(_state.copyWith(partnerHand: kept));
         break;
       case Position.east:
@@ -384,7 +428,7 @@ class GameEngine extends ChangeNotifier {
       case Position.west:
         _updateState(_state.copyWith(opponentWestHand: kept));
         break;
-      case Position.north:
+      case Position.south:
         break; // Already handled
     }
 
@@ -393,7 +437,7 @@ class GameEngine extends ChangeNotifier {
 
   /// Player confirms kitty exchange (discards selected 5 cards)
   void confirmKittyExchange() {
-    if (_state.contractor != Position.north) return;
+    if (_state.contractor != Position.south) return;
 
     // Must have exactly 5 cards selected
     if (_state.selectedCardIndices.length != 5) {
@@ -401,6 +445,15 @@ class GameEngine extends ChangeNotifier {
         gameStatus: 'Must select exactly 5 cards to discard',
       ));
       return;
+    }
+
+    // DEBUG: Log discarded cards
+    print('Player discarding ${_state.selectedCardIndices.length} cards:');
+    final discardedCards = <PlayingCard>[];
+    for (final index in _state.selectedCardIndices) {
+      final card = _state.playerHand[index];
+      discardedCards.add(card);
+      print('  - ${card.label}${card.isJoker ? ' ⭐' : ''}');
     }
 
     // Remove selected cards from hand
@@ -419,6 +472,11 @@ class GameEngine extends ChangeNotifier {
       return;
     }
 
+    print('Player hand after discard: ${newHand.length} cards');
+    final hasJoker = newHand.any((c) => c.isJoker);
+    print('Hand has Joker: $hasJoker');
+    print('========================================\n');
+
     // Update state and start play
     _updateState(_state.copyWith(
       playerHand: newHand,
@@ -432,7 +490,7 @@ class GameEngine extends ChangeNotifier {
   /// Player toggles card selection for kitty exchange
   void toggleCardSelection(int index) {
     if (_state.currentPhase != GamePhase.kittyExchange) return;
-    if (_state.contractor != Position.north) return;
+    if (_state.contractor != Position.south) return;
 
     final selectedIndices = Set<int>.from(_state.selectedCardIndices);
 
@@ -481,6 +539,30 @@ class GameEngine extends ChangeNotifier {
     final trumpSuit = _getBidSuitAsTrumpSuit();
     final leader = _state.contractor!; // Contractor leads
 
+    // DEBUG: Verify all hands before play starts
+    print('\n========== START PLAY PHASE ==========');
+    print('Contractor: ${_state.getName(leader)} (${leader.name})');
+    print('Trump: ${trumpSuit?.name ?? 'No Trump'}');
+    print('\nHand verification:');
+    var totalCards = 0;
+    var jokerCount = 0;
+    for (final position in Position.values) {
+      final hand = _state.getHand(position);
+      final hasJoker = hand.any((c) => c.isJoker);
+      jokerCount += hand.where((c) => c.isJoker).length;
+      totalCards += hand.length;
+      print('${_state.getName(position)}: ${hand.length} cards${hasJoker ? ' ⭐ HAS JOKER' : ''}');
+    }
+    print('Total cards: $totalCards (should be 40)');
+    print('Total Jokers: $jokerCount (should be 1)');
+    if (totalCards != 40) {
+      print('⚠️ WARNING: Card count mismatch!');
+    }
+    if (jokerCount != 1) {
+      print('⚠️ WARNING: Joker count mismatch!');
+    }
+    print('========================================\n');
+
     // Re-sort player's hand with trump consideration
     // (In case player wasn't contractor and hand still sorted by natural suits)
     final sortedPlayerHand = sortHandBySuit(_state.playerHand, trumpSuit: trumpSuit);
@@ -500,26 +582,44 @@ class GameEngine extends ChangeNotifier {
     ));
 
     // If AI leads, schedule AI play
-    if (leader != Position.north) {
+    if (leader != Position.south) {
       _scheduleAIPlay();
     }
   }
 
   /// Player plays a card
   void playCard(int cardIndex) {
-    if (_state.currentPlayer != Position.north) return;
+    if (_state.currentPlayer != Position.south) return;
     if (_state.currentTrick == null) return;
 
     final card = _state.playerHand[cardIndex];
     final trumpRules = TrumpRules(trumpSuit: _state.trumpSuit);
     final trickEngine = TrickEngine(trumpRules: trumpRules);
 
+    // Check if player is leading with joker in no-trump - needs suit nomination
+    if (card.isJoker &&
+        _state.currentTrick!.isEmpty &&
+        _state.trumpSuit == null) {
+      // Store card index and show suit nomination dialog
+      _updateState(_state.copyWith(
+        showSuitNominationDialog: true,
+        pendingCardIndex: cardIndex,
+        gameStatus: 'Nominate a suit for the Joker',
+      ));
+      return;
+    }
+
+    // DEBUG: Log card play
+    final suitInfo = card.isJoker ? '⭐ JOKER' : '(${card.suit.name})';
+    print('[PLAY] ${_state.getName(Position.south)} plays ${card.label} $suitInfo (hand size before: ${_state.playerHand.length})');
+
     // Play the card
     final result = trickEngine.playCard(
       currentTrick: _state.currentTrick!,
       card: card,
-      player: Position.north,
+      player: Position.south,
       playerHand: _state.playerHand,
+      nominatedSuit: _state.nominatedSuit,
     );
 
     if (result.status == TrickStatus.error) {
@@ -530,6 +630,63 @@ class GameEngine extends ChangeNotifier {
     // Remove card from hand
     final newHand = List<PlayingCard>.from(_state.playerHand);
     newHand.removeAt(cardIndex);
+
+    print('[PLAY] ${_state.getName(Position.south)} hand size after: ${newHand.length}');
+
+    _updateState(_state.copyWith(
+      playerHand: newHand,
+      currentTrick: result.trick,
+      gameStatus: result.message,
+      clearSelectedCardIndices: true,
+    ));
+
+    if (result.status == TrickStatus.complete) {
+      _handleTrickComplete(result.trick, result.winner!);
+    } else {
+      // Advance to next player
+      _advanceToNextPlayer();
+    }
+  }
+
+  /// Confirm card play after suit nomination
+  void confirmCardPlayWithNominatedSuit(Suit nominatedSuit) {
+    final cardIndex = _state.pendingCardIndex;
+    if (cardIndex == null) return;
+
+    // Close dialog and set nominated suit
+    _updateState(_state.copyWith(
+      showSuitNominationDialog: false,
+      nominatedSuit: nominatedSuit,
+      clearPendingCardIndex: true,
+    ));
+
+    // Now play the card with the nominated suit
+    final card = _state.playerHand[cardIndex];
+    final trumpRules = TrumpRules(trumpSuit: _state.trumpSuit);
+    final trickEngine = TrickEngine(trumpRules: trumpRules);
+
+    // DEBUG: Log card play
+    print('[PLAY] ${_state.getName(Position.south)} plays ${card.label} ⭐ JOKER (nominated suit: ${nominatedSuit.name}) (hand size before: ${_state.playerHand.length})');
+
+    // Play the card with nominated suit
+    final result = trickEngine.playCard(
+      currentTrick: _state.currentTrick!,
+      card: card,
+      player: Position.south,
+      playerHand: _state.playerHand,
+      nominatedSuit: nominatedSuit,
+    );
+
+    if (result.status == TrickStatus.error) {
+      _updateState(_state.copyWith(gameStatus: result.message));
+      return;
+    }
+
+    // Remove card from hand
+    final newHand = List<PlayingCard>.from(_state.playerHand);
+    newHand.removeAt(cardIndex);
+
+    print('[PLAY] ${_state.getName(Position.south)} hand size after: ${newHand.length}');
 
     _updateState(_state.copyWith(
       playerHand: newHand,
@@ -553,7 +710,7 @@ class GameEngine extends ChangeNotifier {
       gameStatus: '${_state.getName(nextPlayer)}\'s turn',
     ));
 
-    if (nextPlayer != Position.north) {
+    if (nextPlayer != Position.south) {
       _scheduleAIPlay();
     }
   }
@@ -567,12 +724,15 @@ class GameEngine extends ChangeNotifier {
 
   void _executeAIPlay() {
     final position = _state.currentPlayer;
-    if (position == null || position == Position.north) return;
+    if (position == null || position == Position.south) return;
     if (_state.currentTrick == null) return;
 
     final hand = _state.getHand(position);
     final trumpRules = TrumpRules(trumpSuit: _state.trumpSuit);
     final trickEngine = TrickEngine(trumpRules: trumpRules);
+
+    // DEBUG: Log hand size before
+    print('[PLAY] ${_state.getName(position)} hand size before: ${hand.length}');
 
     // AI chooses card
     final card = PlayAI.chooseCard(
@@ -583,6 +743,10 @@ class GameEngine extends ChangeNotifier {
       partner: position.partner,
       trickEngine: trickEngine,
     );
+
+    // DEBUG: Log card play
+    final suitInfo = card.isJoker ? '⭐ JOKER' : '(${card.suit.name})';
+    print('[PLAY] ${_state.getName(position)} plays ${card.label} $suitInfo');
 
     // Play the card
     final result = trickEngine.playCard(
@@ -596,8 +760,10 @@ class GameEngine extends ChangeNotifier {
     final newHand = List<PlayingCard>.from(hand);
     newHand.remove(card);
 
+    print('[PLAY] ${_state.getName(position)} hand size after: ${newHand.length}');
+
     switch (position) {
-      case Position.south:
+      case Position.north:
         _updateState(_state.copyWith(partnerHand: newHand));
         break;
       case Position.east:
@@ -606,7 +772,7 @@ class GameEngine extends ChangeNotifier {
       case Position.west:
         _updateState(_state.copyWith(opponentWestHand: newHand));
         break;
-      case Position.north:
+      case Position.south:
         break;
     }
 
@@ -624,6 +790,23 @@ class GameEngine extends ChangeNotifier {
   }
 
   void _handleTrickComplete(Trick trick, Position winner) {
+    // DEBUG: Log trick completion
+    print('\n---------- TRICK ${_state.completedTricks.length + 1} COMPLETE ----------');
+    print('Winner: ${_state.getName(winner)} (${winner.name})');
+    final ledSuit = trick.ledSuit;
+    if (ledSuit != null) {
+      print('Led suit: ${ledSuit.name}');
+    } else if (_state.nominatedSuit != null) {
+      print('Nominated suit: ${_state.nominatedSuit!.name} (joker led in no-trump)');
+    } else {
+      print('Led suit: joker in no-trump (no suit nominated)');
+    }
+    print('Cards played:');
+    for (final play in trick.plays) {
+      final suitInfo = play.card.isJoker ? '⭐ JOKER' : '(${play.card.suit.name})';
+      print('  ${_state.getName(play.player)}: ${play.card.label} $suitInfo');
+    }
+
     // Add trick to completed tricks
     final newCompleted = [..._state.completedTricks, trick];
 
@@ -638,6 +821,11 @@ class GameEngine extends ChangeNotifier {
       newTricksEW++;
     }
 
+    print('Team ${winnerTeam.name} wins trick');
+    print('Score: N-S: $newTricksNS, E-W: $newTricksEW');
+    print('${_state.getName(winner)} will lead next trick');
+    print('----------------------------------------\n');
+
     _updateState(_state.copyWith(
       completedTricks: newCompleted,
       tricksWonNS: newTricksNS,
@@ -647,6 +835,9 @@ class GameEngine extends ChangeNotifier {
 
     // Check if all tricks played
     if (newCompleted.length == 10) {
+      // DEBUG: Verify all cards are unique
+      _verifyAllCardsUnique(newCompleted);
+
       // Last trick - give extra time to see the cards before scoring
       Future.delayed(const Duration(milliseconds: 3000), _scoreHand);
     } else {
@@ -655,6 +846,56 @@ class GameEngine extends ChangeNotifier {
         _startNextTrick(winner);
       });
     }
+  }
+
+  /// Verify that all 40 cards played are unique (no duplicates)
+  void _verifyAllCardsUnique(List<Trick> completedTricks) {
+    print('\n========== VERIFYING ALL CARDS PLAYED ==========');
+
+    // Collect all cards played
+    final allCardsPlayed = <PlayingCard>[];
+    for (final trick in completedTricks) {
+      for (final play in trick.plays) {
+        allCardsPlayed.add(play.card);
+      }
+    }
+
+    print('Total cards played: ${allCardsPlayed.length} (should be 40)');
+
+    // Check for duplicates
+    final cardCounts = <String, int>{};
+    final duplicates = <String, int>{};
+
+    for (final card in allCardsPlayed) {
+      final label = card.label;
+      cardCounts[label] = (cardCounts[label] ?? 0) + 1;
+
+      if (cardCounts[label]! > 1) {
+        duplicates[label] = cardCounts[label]!;
+      }
+    }
+
+    if (duplicates.isEmpty) {
+      print('✅ All 40 cards are unique - no duplicates found!');
+    } else {
+      print('⚠️⚠️⚠️ DUPLICATE CARDS FOUND! ⚠️⚠️⚠️');
+      for (final entry in duplicates.entries) {
+        print('  ${entry.key} appeared ${entry.value} times');
+      }
+
+      // Show which tricks had the duplicates
+      print('\nDetailed breakdown by trick:');
+      for (int i = 0; i < completedTricks.length; i++) {
+        final trick = completedTricks[i];
+        print('Trick ${i + 1}:');
+        for (final play in trick.plays) {
+          final isDuplicate = duplicates.containsKey(play.card.label);
+          print('  ${_state.getName(play.player)}: ${play.card.label}${isDuplicate ? ' ⚠️ DUPLICATE' : ''}');
+        }
+      }
+    }
+
+    print('================================================\n');
   }
 
   void _startNextTrick(Position leader) {
@@ -667,9 +908,10 @@ class GameEngine extends ChangeNotifier {
       currentPlayer: leader,
       gameStatus: '${_state.getName(leader)} leads',
       clearSelectedCardIndices: true,
+      clearNominatedSuit: true, // Clear nominated suit for new trick
     ));
 
-    if (leader != Position.north) {
+    if (leader != Position.south) {
       _scheduleAIPlay();
     }
   }
