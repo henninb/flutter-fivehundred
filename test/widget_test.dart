@@ -5,6 +5,7 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,18 +16,20 @@ import 'package:cribbage/src/game/engine/game_engine.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('App builds initial screen', (WidgetTester tester) async {
+  testWidgets('FiveHundredApp renders a MaterialApp', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final engine = GameEngine();
+
     await tester.pumpWidget(
-      ChangeNotifierProvider<GameEngine>.value(
+      ChangeNotifierProvider.value(
         value: engine,
-        child: const CribbageApp(),
+        child: const FiveHundredApp(),
       ),
     );
 
+    // Allow async initialization inside the app to complete
     await tester.pumpAndSettle();
 
-    expect(find.text('Cribbage'), findsWidgets);
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

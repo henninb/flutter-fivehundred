@@ -77,9 +77,10 @@ class _BiddingDialogState extends State<BiddingDialog> {
                         ),
                         child: Text(
                           card.label,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
+                            color: _getCardColor(card.label),
                           ),
                         ),
                       );
@@ -252,5 +253,13 @@ class _BiddingDialogState extends State<BiddingDialog> {
       case BidSuit.noTrump:
         return 'NT';
     }
+  }
+
+  Color _getCardColor(String label) {
+    // Red for hearts and diamonds, black for clubs and spades
+    if (label.contains('♥') || label.contains('♦')) {
+      return Colors.red.shade800;
+    }
+    return Colors.black;
   }
 }

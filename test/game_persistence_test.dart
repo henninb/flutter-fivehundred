@@ -48,7 +48,7 @@ void main() {
 
     test('cut cards round-trip through save and load', () {
       const playerCard = PlayingCard(rank: Rank.queen, suit: Suit.spades);
-      const opponentCard = PlayingCard(rank: Rank.three, suit: Suit.hearts);
+      const opponentCard = PlayingCard(rank: Rank.five, suit: Suit.hearts);
 
       persistence.saveCutCards(playerCard, opponentCard);
 

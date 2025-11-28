@@ -372,8 +372,8 @@ class GameScreen500 extends StatelessWidget {
     final bool isJoker = card.label == 'JOKER';
 
     // Determine card color
-    Color? cardColor;
-    Color? textColor;
+    Color cardColor;
+    Color textColor;
 
     if (isKittyExchange && isSelected) {
       cardColor = Theme.of(context).colorScheme.errorContainer; // Highlight selected cards for discard
@@ -381,6 +381,11 @@ class GameScreen500 extends StatelessWidget {
     } else if (canPlay) {
       cardColor = Theme.of(context).colorScheme.primaryContainer; // Highlight playable cards
       textColor = Theme.of(context).colorScheme.onPrimaryContainer;
+    } else {
+      // Default: white/light background for better contrast with black suits
+      cardColor = Theme.of(context).colorScheme.surface;
+      // Use suit-appropriate colors (red for hearts/diamonds, black for spades/clubs)
+      textColor = _getCardColor(card.label);
     }
 
     return InkWell(
@@ -491,5 +496,13 @@ class GameScreen500 extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Color _getCardColor(String label) {
+    // Red for hearts and diamonds, black for clubs and spades
+    if (label.contains('♥') || label.contains('♦')) {
+      return Colors.red.shade800;
+    }
+    return Colors.black;
   }
 }

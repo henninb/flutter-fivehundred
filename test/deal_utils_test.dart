@@ -2,76 +2,69 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:cribbage/src/game/logic/deal_utils.dart';
 import 'package:cribbage/src/game/models/card.dart';
-
-void main() {
-  group('dealSixToEach', () {
-    final deck = _orderedDeck();
-
-    test('player dealer causes opponent to draw first each round', () {
-      final result = dealSixToEach(deck, true);
-
-      expect(result.playerHand.length, 6);
-      expect(result.opponentHand.length, 6);
-      expect(result.remainingDeck.length, deck.length - 12);
-
-      // When player is dealer, opponent gets cards at even indexes (0-based)
-      expect(result.opponentHand.first, deck[0]);
-      expect(result.playerHand.first, deck[1]);
-      expect(result.opponentHand[1], deck[2]);
-      expect(result.playerHand[1], deck[3]);
-    });
-
-    test('opponent dealer lets player draw first', () {
-      final result = dealSixToEach(deck, false);
-
-      expect(result.playerHand.first, deck[0]);
-      expect(result.opponentHand.first, deck[1]);
-      expect(result.playerHand, hasLength(6));
-      expect(result.opponentHand, hasLength(6));
-
-      final expectedRemaining = deck.sublist(12);
-      expect(result.remainingDeck, expectedRemaining);
-    });
-  });
-
-  group('dealerFromCut', () {
-    test('returns null on tie', () {
-      final player = const PlayingCard(rank: Rank.five, suit: Suit.hearts);
-      final opponent = const PlayingCard(rank: Rank.five, suit: Suit.clubs);
-      expect(dealerFromCut(player, opponent), isNull);
-    });
-
-    test('lower rank becomes dealer', () {
-      final player = const PlayingCard(rank: Rank.four, suit: Suit.spades);
-      final opponent = const PlayingCard(rank: Rank.jack, suit: Suit.spades);
-      expect(dealerFromCut(player, opponent), Player.player);
-    });
-
-    test('higher rank makes opponent dealer', () {
-      final player = const PlayingCard(rank: Rank.king, suit: Suit.spades);
-      final opponent = const PlayingCard(rank: Rank.two, suit: Suit.hearts);
-      expect(dealerFromCut(player, opponent), Player.opponent);
-    });
-  });
-}
+import 'package:cribbage/src/game/models/game_models.dart';
 
 List<PlayingCard> _orderedDeck() {
-  return const [
-    PlayingCard(rank: Rank.ace, suit: Suit.clubs),
-    PlayingCard(rank: Rank.two, suit: Suit.clubs),
-    PlayingCard(rank: Rank.three, suit: Suit.clubs),
-    PlayingCard(rank: Rank.four, suit: Suit.clubs),
-    PlayingCard(rank: Rank.five, suit: Suit.clubs),
-    PlayingCard(rank: Rank.six, suit: Suit.clubs),
-    PlayingCard(rank: Rank.seven, suit: Suit.clubs),
-    PlayingCard(rank: Rank.eight, suit: Suit.clubs),
-    PlayingCard(rank: Rank.nine, suit: Suit.clubs),
-    PlayingCard(rank: Rank.ten, suit: Suit.clubs),
-    PlayingCard(rank: Rank.jack, suit: Suit.clubs),
-    PlayingCard(rank: Rank.queen, suit: Suit.clubs),
-    PlayingCard(rank: Rank.king, suit: Suit.clubs),
-    PlayingCard(rank: Rank.ace, suit: Suit.spades),
-    PlayingCard(rank: Rank.two, suit: Suit.spades),
-    PlayingCard(rank: Rank.three, suit: Suit.spades),
+  final cards = <PlayingCard>[
+    const PlayingCard(rank: Rank.joker, suit: Suit.spades),
   ];
+
+  for (final suit in Suit.values) {
+    for (final rank in Rank.values) {
+      if (rank == Rank.joker) continue;
+      cards.add(PlayingCard(rank: rank, suit: suit));
+    }
+  }
+
+  return cards;
+}
+
+void main() {
+  group('dealHand', () {
+    test('throws when deck length is not 45', () {
+      expect(
+        () => dealHand(deck: _orderedDeck()..removeLast(), dealer: Position.south),
+        throwsArgumentError,
+      );
+    });
+
+    test('deals 10 cards to each player and 5 to kitty', () {
+      final result = dealHand(deck: _orderedDeck(), dealer: Position.south);
+
+      expect(result.hands[Position.north], hasLength(10));
+      expect(result.hands[Position.south], hasLength(10));
+      expect(result.hands[Position.east], hasLength(10));
+      expect(result.hands[Position.west], hasLength(10));
+      expect(result.kitty, hasLength(5));
+
+      final allCards = [
+        ...result.kitty,
+        ...result.hands.values.expand((hand) => hand),
+      ];
+      expect(allCards.toSet(), hasLength(45));
+    });
+
+    test('follows dealing order starting to the dealer left', () {
+      final deck = _orderedDeck();
+      final result = dealHand(deck: deck, dealer: Position.south);
+
+      // Dealer south -> order: west, north, east, south
+      expect(result.hands[Position.west]!.first.isJoker, isTrue);
+      expect(
+        result.hands[Position.north]!.first,
+        const PlayingCard(rank: Rank.four, suit: Suit.hearts),
+      );
+      expect(
+        result.kitty.first,
+        const PlayingCard(rank: Rank.four, suit: Suit.diamonds),
+      );
+    });
+  });
+
+  test('getNextDealer rotates clockwise', () {
+    expect(getNextDealer(Position.north), Position.east);
+    expect(getNextDealer(Position.east), Position.south);
+    expect(getNextDealer(Position.south), Position.west);
+    expect(getNextDealer(Position.west), Position.north);
+  });
 }
