@@ -52,8 +52,8 @@ class _BiddingDialogState extends State<BiddingDialog> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                border: Border.all(color: Colors.green.shade300),
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                border: Border.all(color: Theme.of(context).colorScheme.secondary),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -71,8 +71,8 @@ class _BiddingDialogState extends State<BiddingDialog> {
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: Colors.grey.shade400),
+                          color: Theme.of(context).colorScheme.surface,
+                          border: Border.all(color: Theme.of(context).dividerColor),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -107,7 +107,6 @@ class _BiddingDialogState extends State<BiddingDialog> {
                             Navigator.of(context).pop();
                           },
                           style: FilledButton.styleFrom(
-                            backgroundColor: Colors.green,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                           child: Text(
@@ -120,10 +119,9 @@ class _BiddingDialogState extends State<BiddingDialog> {
                     // Pass button
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
+                      child: FilledButton(
                         onPressed: widget.onPass,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey,
+                        style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         child: const Text('Pass'),
@@ -141,12 +139,12 @@ class _BiddingDialogState extends State<BiddingDialog> {
 
   Widget _buildBidGrid(BuildContext context) {
     return Table(
-      border: TableBorder.all(color: Colors.grey.shade300),
+      border: TableBorder.all(color: Theme.of(context).dividerColor),
       defaultColumnWidth: const FlexColumnWidth(),
       children: [
         // Header row
         TableRow(
-          decoration: BoxDecoration(color: Colors.grey.shade200),
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest),
           children: [
             _buildHeaderCell(''),
             _buildHeaderCell('♠'),
@@ -224,19 +222,21 @@ class _BiddingDialogState extends State<BiddingDialog> {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: !isValid
-              ? Colors.grey.shade300
+              ? Theme.of(context).colorScheme.surfaceContainerHighest
               : isSelected
-                  ? Colors.green.shade200
-                  : (isInkle ? Colors.blue.shade50 : null),
+                  ? Theme.of(context).colorScheme.primaryContainer
+                  : null,
           border: isSelected
-              ? Border.all(color: Colors.green.shade700, width: 2)
+              ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
               : null,
         ),
         child: Center(
           child: Text(
             value.toString(),
             style: TextStyle(
-              color: !isValid ? Colors.grey : Colors.black,
+              color: !isValid
+                ? Theme.of(context).colorScheme.onSurfaceVariant
+                : Theme.of(context).colorScheme.onSurface,
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),

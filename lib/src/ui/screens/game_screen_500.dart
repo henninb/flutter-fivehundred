@@ -8,6 +8,7 @@ import '../../models/game_settings.dart';
 import '../widgets/action_bar_500.dart';
 import '../widgets/bidding_panel.dart';
 import '../widgets/score_display.dart';
+import '../widgets/welcome_screen.dart';
 
 /// Simplified game screen for 500
 class GameScreen500 extends StatelessWidget {
@@ -47,28 +48,35 @@ class GameScreen500 extends StatelessWidget {
           ),
           body: Column(
             children: [
-              // Score display
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: ScoreDisplay(
-                  scoreNS: state.teamNorthSouthScore,
-                  scoreEW: state.teamEastWestScore,
-                  tricksNS: state.tricksWonNS,
-                  tricksEW: state.tricksWonEW,
-                  trumpSuit: state.trumpSuit,
+              // Score display - only show when game has started
+              if (state.gameStarted) ...[
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: ScoreDisplay(
+                    scoreNS: state.teamNorthSouthScore,
+                    scoreEW: state.teamEastWestScore,
+                    tricksNS: state.tricksWonNS,
+                    tricksEW: state.tricksWonEW,
+                    trumpSuit: state.trumpSuit,
+                  ),
                 ),
-              ),
-              // Status message
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text(
-                  state.gameStatus,
-                  style: Theme.of(context).textTheme.titleMedium,
-                  textAlign: TextAlign.center,
+                // Status message
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    state.gameStatus,
+                    style: Theme.of(context).textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
-              // Game area - show hand during bidding, full area otherwise
-              if (state.currentPhase == GamePhase.bidding &&
+              ],
+              // Game area - show welcome screen if game not started
+              if (!state.gameStarted)
+                const Expanded(
+                  child: WelcomeScreen(),
+                )
+              // Show hand during bidding when it's player's turn
+              else if (state.currentPhase == GamePhase.bidding &&
                   state.currentBidder == Position.north)
                 // Show just the hand during bidding
                 Padding(
@@ -278,19 +286,17 @@ class GameScreen500 extends StatelessWidget {
             'Hand Complete',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.blue.shade700,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
         ],
       );
     }
 
-    // Show player's hand
-    if (state.playerHand.isEmpty) {
-      return const Text('Tap Deal to start');
-    }
-
     // Regular play - show hand only (trick is shown in first check above)
+    if (state.playerHand.isEmpty) {
+      return const Text('Waiting for cards...');
+    }
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -331,9 +337,9 @@ class GameScreen500 extends StatelessWidget {
     // Determine card color
     Color? cardColor;
     if (isKittyExchange && isSelected) {
-      cardColor = Colors.red.shade200; // Highlight selected cards for discard
+      cardColor = Theme.of(context).colorScheme.errorContainer; // Highlight selected cards for discard
     } else if (canPlay) {
-      cardColor = Colors.green.shade100; // Highlight playable cards
+      cardColor = Theme.of(context).colorScheme.primaryContainer; // Highlight playable cards
     }
 
     return InkWell(

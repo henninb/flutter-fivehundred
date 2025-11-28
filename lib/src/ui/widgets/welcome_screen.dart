@@ -12,46 +12,28 @@ class WelcomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // App icon/logo
-            Card(
-              elevation: 8,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              color: Theme.of(context).colorScheme.primaryContainer,
-              child: Container(
-                width: 100,
-                height: 100,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.all(12),
-                child: Image.asset(
-                  'assets/cribbage_icon.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
             // App title
             Text(
-              'Cribbage',
+              '500',
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.primary,
+                    fontSize: 72,
                   ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Classic Card Game',
+              'Classic Trick-Taking Card Game',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             // Welcome message
             Card(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
                     Text(
@@ -62,9 +44,9 @@ class WelcomeScreen extends StatelessWidget {
                                 color: Theme.of(context).colorScheme.primary,
                               ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Text(
-                      'Play cribbage against the computer. Be the first to reach 121 points!',
+                      'Play 500 in a four-player partnership game. Bid wisely, play strategically, and be the first team to reach 500 points!',
                       style: Theme.of(context).textTheme.bodyLarge,
                       textAlign: TextAlign.center,
                     ),
@@ -72,20 +54,13 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             // Instruction hint
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('👇', style: TextStyle(fontSize: 24)),
-                const SizedBox(width: 8),
-                Text(
-                  'Tap "Start New Game" below to begin',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-              ],
+            Text(
+              'Ready to play?',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
           ],
         ),
