@@ -118,13 +118,7 @@ class ActionBar500 extends StatelessWidget {
         Expanded(
           child: FilledButton(
             onPressed: onNextHand,
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-            child: const Text(
-              'Next Hand',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            child: const Text('Next Hand'),
           ),
         ),
       );

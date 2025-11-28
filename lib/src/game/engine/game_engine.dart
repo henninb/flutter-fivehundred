@@ -660,7 +660,7 @@ class GameEngine extends ChangeNotifier {
       Future.delayed(const Duration(milliseconds: 3000), _scoreHand);
     } else {
       // Start next trick with winner leading
-      Future.delayed(const Duration(milliseconds: 1500), () {
+      Future.delayed(const Duration(milliseconds: 2500), () {
         _startNextTrick(winner);
       });
     }

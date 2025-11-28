@@ -12,6 +12,7 @@ class ScoreDisplay extends StatelessWidget {
     required this.tricksEW,
     this.trumpSuit,
     this.contract,
+    this.dealer,
   });
 
   final int scoreNS;
@@ -20,6 +21,7 @@ class ScoreDisplay extends StatelessWidget {
   final int tricksEW;
   final Suit? trumpSuit;
   final String? contract;
+  final Position? dealer;
 
   @override
   Widget build(BuildContext context) {
@@ -40,14 +42,12 @@ class ScoreDisplay extends StatelessWidget {
             tricksNS,
             Team.northSouth,
           ),
-          if (trumpSuit != null || contract != null) ...[
-            Container(
-              width: 1,
-              height: 40,
-              color: Theme.of(context).dividerColor,
-            ),
-            _buildGameInfo(context),
-          ],
+          Container(
+            width: 1,
+            height: 40,
+            color: Theme.of(context).dividerColor,
+          ),
+          _buildCenterInfo(context),
           Container(
             width: 1,
             height: 40,
@@ -95,16 +95,46 @@ class ScoreDisplay extends StatelessWidget {
     );
   }
 
-  Widget _buildGameInfo(BuildContext context) {
+  Widget _buildCenterInfo(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Dealer indicator
+        if (dealer != null) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.casino,
+                  size: 14,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _positionLabel(dealer!),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+        ],
+        // Trump info
         if (trumpSuit != null) ...[
           Text(
             'Trump',
-            style: Theme.of(context).textTheme.labelMedium,
+            style: Theme.of(context).textTheme.labelSmall,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             _suitLabel(trumpSuit!),
             style: Theme.of(context).textTheme.headlineMedium,
@@ -112,11 +142,24 @@ class ScoreDisplay extends StatelessWidget {
         ] else if (contract != null) ...[
           Text(
             'No Trump',
-            style: Theme.of(context).textTheme.labelMedium,
+            style: Theme.of(context).textTheme.labelSmall,
           ),
         ],
       ],
     );
+  }
+
+  String _positionLabel(Position position) {
+    switch (position) {
+      case Position.north:
+        return 'North';
+      case Position.south:
+        return 'South';
+      case Position.east:
+        return 'East';
+      case Position.west:
+        return 'West';
+    }
   }
 
   String _suitLabel(Suit suit) {

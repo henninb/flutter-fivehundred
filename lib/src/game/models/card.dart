@@ -52,7 +52,7 @@ class PlayingCard {
 
   String get label {
     // Joker has no suit - it takes on the trump suit when trump is declared
-    if (isJoker) return '🃏';
+    if (isJoker) return 'JOKER';
     return '${_rankLabel(rank)}${_suitLabel(suit)}';
   }
 

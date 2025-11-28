@@ -73,10 +73,7 @@ class _BiddingPanelState extends State<BiddingPanel> {
                 Expanded(
                   child: FilledButton(
                     onPressed: widget.onPass,
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                    child: const Text('Pass', style: TextStyle(fontSize: 13)),
+                    child: const Text('Pass'),
                   ),
                 ),
                 if (_selectedBid != null) ...[
@@ -88,12 +85,8 @@ class _BiddingPanelState extends State<BiddingPanel> {
                       onPressed: () {
                         widget.onBidSelected(_selectedBid!, _selectedIsInkle);
                       },
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                      ),
                       child: Text(
                         'Bid: ${_selectedBid!.tricks}${_suitLabel(_selectedBid!.suit)} (${_selectedBid!.value})',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                       ),
                     ),
                   ),

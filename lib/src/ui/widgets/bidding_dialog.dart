@@ -106,12 +106,8 @@ class _BiddingDialogState extends State<BiddingDialog> {
                             widget.onBidSelected(_selectedBid!, _selectedIsInkle);
                             Navigator.of(context).pop();
                           },
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
                           child: Text(
                             'Confirm Bid: ${_selectedBid!.tricks}${_suitLabel(_selectedBid!.suit)} (${_selectedBid!.value} pts)',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -121,9 +117,6 @@ class _BiddingDialogState extends State<BiddingDialog> {
                       width: double.infinity,
                       child: FilledButton(
                         onPressed: widget.onPass,
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
                         child: const Text('Pass'),
                       ),
                     ),
