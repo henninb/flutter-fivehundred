@@ -4,7 +4,7 @@ import '../../models/theme_models.dart';
 import '../theme/theme_definitions.dart';
 
 /// Settings screen overlay
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   final GameSettings currentSettings;
   final Function(GameSettings) onSettingsChange;
   final VoidCallback onBackPressed;
@@ -17,13 +17,26 @@ class SettingsScreen extends StatelessWidget {
   });
 
   @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  late ThemeType? _selectedTheme;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTheme = widget.currentSettings.selectedTheme;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: onBackPressed,
+          onPressed: widget.onBackPressed,
         ),
       ),
       body: ListView(
@@ -57,7 +70,7 @@ class SettingsScreen extends StatelessWidget {
         child: DropdownButtonHideUnderline(
           child: DropdownButton<ThemeType?>(
             isExpanded: true,
-            value: currentSettings.selectedTheme,
+            value: _selectedTheme,
             icon: const Icon(Icons.arrow_drop_down),
             items: [
               // Date-based option
@@ -101,8 +114,11 @@ class SettingsScreen extends StatelessWidget {
               }),
             ],
             onChanged: (ThemeType? newTheme) {
-              onSettingsChange(
-                currentSettings.copyWith(
+              setState(() {
+                _selectedTheme = newTheme;
+              });
+              widget.onSettingsChange(
+                widget.currentSettings.copyWith(
                   selectedTheme: newTheme,
                   clearSelectedTheme: newTheme == null,
                 ),
