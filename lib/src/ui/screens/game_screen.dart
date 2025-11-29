@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../game/engine/game_engine.dart';
 import '../../game/engine/game_state.dart';
 import '../../game/models/game_models.dart';
-import '../../game/models/card.dart';
 import '../../game/logic/bidding_engine.dart';
 import '../../models/theme_models.dart';
 import '../../models/game_settings.dart';
@@ -38,13 +37,6 @@ class GameScreen500 extends StatelessWidget {
       builder: (context, _) {
         final state = engine.state;
 
-        // Show game over dialog when game ends
-        if (state.showGameOverDialog && state.gameOverData != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _showGameOverDialog(context, state.gameOverData!);
-          });
-        }
-
         // Show suit nomination dialog when needed
         if (state.showSuitNominationDialog) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -74,8 +66,10 @@ class GameScreen500 extends StatelessWidget {
               ),
             ],
           ),
-          body: Column(
+          body: Stack(
             children: [
+              Column(
+                children: [
               // Score display - only show when past setup/cut phases
               if (state.gameStarted &&
                   state.currentPhase != GamePhase.setup &&
@@ -130,18 +124,23 @@ class GameScreen500 extends StatelessWidget {
                         spacing: 8,
                         children: List.generate(
                           state.playerHand.length,
-                          (index) => Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Text(
-                                state.playerHand[index].label,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                          (index) {
+                            final card = state.playerHand[index];
+                            return Card(
+                              color: Colors.white,
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Text(
+                                  card.label,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: _getCardColor(card.label),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -169,9 +168,17 @@ class GameScreen500 extends StatelessWidget {
                   onConfirmKitty: () => engine.confirmKittyExchange(),
                   onNextHand: () => engine.startNextHand(),
                 ),
-            ],
-          ),
-        );
+              ],
+            ),
+            // Game over modal overlay
+            if (state.showGameOverDialog && state.gameOverData != null)
+              _GameOverModal(
+                data: state.gameOverData!,
+                onDismiss: () => engine.dismissGameOverDialog(),
+              ),
+          ],
+        ),
+      );
       },
     );
   }
@@ -250,6 +257,7 @@ class GameScreen500 extends StatelessWidget {
             spacing: 8,
             children: state.currentTrick!.plays
                 .map((play) => Card(
+                      color: Colors.white,
                       child: Padding(
                         padding: const EdgeInsets.all(8),
                         child: Text(
@@ -378,12 +386,9 @@ class GameScreen500 extends StatelessWidget {
     if (isKittyExchange && isSelected) {
       cardColor = Theme.of(context).colorScheme.errorContainer; // Highlight selected cards for discard
       textColor = Theme.of(context).colorScheme.onErrorContainer;
-    } else if (canPlay) {
-      cardColor = Theme.of(context).colorScheme.primaryContainer; // Highlight playable cards
-      textColor = Theme.of(context).colorScheme.onPrimaryContainer;
     } else {
-      // Default: white/light background for better contrast with black suits
-      cardColor = Theme.of(context).colorScheme.surface;
+      // Default: white background for better contrast with black suits
+      cardColor = Colors.white;
       // Use suit-appropriate colors (red for hearts/diamonds, black for spades/clubs)
       textColor = _getCardColor(card.label);
     }
@@ -438,54 +443,6 @@ class GameScreen500 extends StatelessWidget {
     );
   }
 
-  void _showGameOverDialog(BuildContext context, GameOverData data) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(
-          data.winningTeam == Team.northSouth
-              ? 'You Win!'
-              : 'Opponents Win',
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Final Score:',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text('North-South: ${data.finalScoreNS}'),
-            Text('East-West: ${data.finalScoreEW}'),
-            const SizedBox(height: 16),
-            Text(
-              'Games Won: ${data.gamesWon}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            Text('Games Lost: ${data.gamesLost}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              engine.dismissGameOverDialog();
-            },
-            child: const Text('New Game'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showSuitNominationDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -504,5 +461,292 @@ class GameScreen500 extends StatelessWidget {
       return Colors.red.shade800;
     }
     return Colors.black;
+  }
+}
+
+/// Game over modal with polished design (inspired by cribbage app)
+class _GameOverModal extends StatelessWidget {
+  final GameOverData data;
+  final VoidCallback onDismiss;
+
+  const _GameOverModal({
+    required this.data,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final playerWon = data.winningTeam == Team.northSouth;
+    final winnerName = playerWon ? 'North-South' : 'East-West';
+
+    return GestureDetector(
+      onTap: onDismiss,
+      child: Container(
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: GestureDetector(
+                onTap: onDismiss,
+                child: Card(
+                  elevation: 12,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          playerWon
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : Theme.of(context).colorScheme.errorContainer,
+                          playerWon
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.error,
+                        ],
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Trophy/Crown Icon
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: playerWon
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withValues(alpha: 0.3)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .error
+                                      .withValues(alpha: 0.3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              playerWon
+                                  ? Icons.emoji_events
+                                  : Icons.close,
+                              size: 40,
+                              color: playerWon
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onErrorContainer,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Winner Name
+                          Text(
+                            '$winnerName Won!',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineLarge
+                                ?.copyWith(
+                                  color: playerWon
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryContainer
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onErrorContainer,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 26,
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Final Score
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: playerWon
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withValues(alpha: 0.3)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .error
+                                      .withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Final Score',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall
+                                      ?.copyWith(
+                                        color: playerWon
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryContainer
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .onErrorContainer,
+                                        letterSpacing: 1.0,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${data.finalScoreNS} - ${data.finalScoreEW}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(
+                                        color: playerWon
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryContainer
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .onErrorContainer,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 28,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Statistics Grid
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: playerWon
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withValues(alpha: 0.2)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .error
+                                      .withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Overall Statistics',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleSmall
+                                      ?.copyWith(
+                                        color: playerWon
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryContainer
+                                            : Theme.of(context)
+                                                .colorScheme
+                                                .onErrorContainer,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                                _StatRow(
+                                  label: 'Record',
+                                  value:
+                                      '${data.gamesWon} - ${data.gamesLost}',
+                                  icon: Icons.sports_score,
+                                  isPlayerWin: playerWon,
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Tap anywhere instruction
+                          Text(
+                            'Tap anywhere to continue',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: playerWon
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryContainer
+                                          .withValues(alpha: 0.8)
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onErrorContainer
+                                          .withValues(alpha: 0.8),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Stat row widget for statistics display
+class _StatRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final bool isPlayerWin;
+
+  const _StatRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.isPlayerWin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = isPlayerWin
+        ? Theme.of(context).colorScheme.onPrimaryContainer
+        : Theme.of(context).colorScheme.onErrorContainer;
+
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: textColor.withValues(alpha: 0.7),
+          size: 20,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: textColor.withValues(alpha: 0.8),
+                ),
+          ),
+        ),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+      ],
+    );
   }
 }

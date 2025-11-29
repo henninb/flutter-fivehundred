@@ -114,7 +114,7 @@ class ScoreDisplay extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.casino,
+                  Icons.style,
                   size: 14,
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                 ),

@@ -18,7 +18,7 @@ class WelcomeScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.primary,
-                    fontSize: 72,
+                    fontSize: 48,
                   ),
             ),
             const SizedBox(height: 8),

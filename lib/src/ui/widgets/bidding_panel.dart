@@ -108,14 +108,6 @@ class _BiddingPanelState extends State<BiddingPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Previous Bids:',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
                     Wrap(
                       spacing: 4,
                       runSpacing: 4,

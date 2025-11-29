@@ -71,8 +71,8 @@ class _BiddingDialogState extends State<BiddingDialog> {
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface,
-                          border: Border.all(color: Theme.of(context).dividerColor),
+                          color: Colors.white,
+                          border: Border.all(color: Colors.grey.shade400),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
