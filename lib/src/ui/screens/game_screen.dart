@@ -82,6 +82,7 @@ class GameScreen500 extends StatelessWidget {
                     tricksNS: state.tricksWonNS,
                     tricksEW: state.tricksWonEW,
                     trumpSuit: state.trumpSuit,
+                    winningBid: state.winningBid,
                     dealer: state.dealer,
                   ),
                 ),

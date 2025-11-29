@@ -11,7 +11,7 @@ class ScoreDisplay extends StatelessWidget {
     required this.tricksNS,
     required this.tricksEW,
     this.trumpSuit,
-    this.contract,
+    this.winningBid,
     this.dealer,
   });
 
@@ -20,7 +20,7 @@ class ScoreDisplay extends StatelessWidget {
   final int tricksNS;
   final int tricksEW;
   final Suit? trumpSuit;
-  final String? contract;
+  final Bid? winningBid;
   final Position? dealer;
 
   @override
@@ -142,10 +142,17 @@ class ScoreDisplay extends StatelessWidget {
             _suitLabel(trumpSuit!),
             style: Theme.of(context).textTheme.headlineMedium,
           ),
-        ] else if (contract != null) ...[
+        ] else if (winningBid != null && winningBid!.suit == BidSuit.noTrump) ...[
           Text(
             'No Trump',
             style: Theme.of(context).textTheme.labelSmall,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'NT',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
           ),
         ],
       ],
