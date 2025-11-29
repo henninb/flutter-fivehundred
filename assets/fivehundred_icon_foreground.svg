@@ -1,62 +1,38 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <filter id="shadow">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity="0.5"/>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0b2740"/>
+      <stop offset="100%" stop-color="#0f5d5f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.35" r="0.6">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.35"/>
     </filter>
   </defs>
+  <rect width="512" height="512" rx="64" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="64" fill="url(#glow)"/>
 
-  <!-- Playing Cards (foreground only) -->
-  <g transform="translate(512, 420)">
-    <!-- Left card -->
-    <g transform="translate(-160, 40) rotate(-18)">
-          <g filter="url(#shadow)">
-      <rect x="-70" y="-100" width="140" height="200" rx="16" fill="white" stroke="#333" stroke-width="2"/>
-      <text x="0" y="30" font-family="Arial, sans-serif" font-size="80" font-weight="bold"
-            fill="#000000" text-anchor="middle" dominant-baseline="middle">A♠</text>
-    </g>
-    </g>
-
-    <!-- Center card -->
-    <g transform="translate(0, -20)">
-          <g filter="url(#shadow)">
-      <rect x="-70" y="-100" width="140" height="200" rx="16" fill="white" stroke="#333" stroke-width="2"/>
-      <text x="0" y="30" font-family="Arial, sans-serif" font-size="80" font-weight="bold"
-            fill="#C62828" text-anchor="middle" dominant-baseline="middle">5♥</text>
-    </g>
-    </g>
-
-    <!-- Right card -->
-    <g transform="translate(160, 40) rotate(18)">
-          <g filter="url(#shadow)">
-      <rect x="-70" y="-100" width="140" height="200" rx="16" fill="white" stroke="#333" stroke-width="2"/>
-      <text x="0" y="30" font-family="Arial, sans-serif" font-size="80" font-weight="bold"
-            fill="#000000" text-anchor="middle" dominant-baseline="middle">J♣</text>
-    </g>
-    </g>
+  <g transform="translate(96 96)" filter="url(#shadow)">
+    <rect x="0" y="0" width="320" height="400" rx="32" fill="#f6f6f6"/>
+    <rect x="12" y="12" width="296" height="376" rx="24" fill="#e7ecf2"/>
+    <rect x="24" y="24" width="272" height="352" rx="20" fill="#ffffff"/>
   </g>
 
-  <!-- Cribbage Pegs -->
-  <g transform="translate(512, 720)">
-        <g transform="translate(-90.0, 0)">
-      <ellipse cx="0" cy="30" rx="16" ry="6" fill="rgba(0,0,0,0.3)"/>
-      <rect x="-15" y="-30" width="30" height="60" rx="15" fill="#C62828" filter="url(#shadow)"/>
-      <ellipse cx="0" cy="-25" rx="12" ry="8" fill="rgba(255,255,255,0.4)"/>
-    </g>
-        <g transform="translate(-30.0, 0)">
-      <ellipse cx="0" cy="30" rx="16" ry="6" fill="rgba(0,0,0,0.3)"/>
-      <rect x="-15" y="-30" width="30" height="60" rx="15" fill="#1565C0" filter="url(#shadow)"/>
-      <ellipse cx="0" cy="-25" rx="12" ry="8" fill="rgba(255,255,255,0.4)"/>
-    </g>
-        <g transform="translate(30.0, 0)">
-      <ellipse cx="0" cy="30" rx="16" ry="6" fill="rgba(0,0,0,0.3)"/>
-      <rect x="-15" y="-30" width="30" height="60" rx="15" fill="#F9A825" filter="url(#shadow)"/>
-      <ellipse cx="0" cy="-25" rx="12" ry="8" fill="rgba(255,255,255,0.4)"/>
-    </g>
-        <g transform="translate(90.0, 0)">
-      <ellipse cx="0" cy="30" rx="16" ry="6" fill="rgba(0,0,0,0.3)"/>
-      <rect x="-15" y="-30" width="30" height="60" rx="15" fill="#EF6C00" filter="url(#shadow)"/>
-      <ellipse cx="0" cy="-25" rx="12" ry="8" fill="rgba(255,255,255,0.4)"/>
-    </g>
+  <g fill="#c21807" transform="translate(156 146)">
+    <path d="M58 0c-14 18-42 33-42 63 0 17 14 31 31 31 7 0 13-2 18-6 5 4 11 6 18 6 17 0 31-14 31-31 0-30-28-45-42-63 0 0-3-3-7-3s-7 3-7 3z"/>
   </g>
+  <g fill="#111" transform="translate(306 146)">
+    <path d="M42 0c-13 0-24 11-24 24 0 16 17 28 34 41 17-13 34-25 34-41 0-13-11-24-24-24-6 0-12 3-16 7-4-4-10-7-16-7z"/>
+  </g>
+
+  <text x="256" y="336" text-anchor="middle" font-family="Montserrat, 'Helvetica Neue', Arial, sans-serif"
+        font-size="160" font-weight="900" fill="#0f5d5f" opacity="0.14">500</text>
+  <text x="256" y="320" text-anchor="middle" font-family="Montserrat, 'Helvetica Neue', Arial, sans-serif"
+        font-size="152" font-weight="800" fill="#0b2740">500</text>
+
+  <circle cx="256" cy="420" r="38" fill="#0b2740"/>
+  <path d="M256 387c6 12 20 18 20 33 0 11-8 20-20 20s-20-9-20-20c0-15 14-21 20-33z" fill="#e6b422"/>
 </svg>
