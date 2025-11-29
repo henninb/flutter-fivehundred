@@ -851,6 +851,32 @@ class GameEngine extends ChangeNotifier {
       return;
     }
 
+    // Validate game state before starting claim
+    final totalCardsRemaining =
+        _state.playerHand.length +
+        _state.partnerHand.length +
+        _state.opponentEastHand.length +
+        _state.opponentWestHand.length;
+
+    final tricksRemaining = 10 - _state.completedTricks.length;
+    final currentTrickCards = _state.currentTrick?.plays.length ?? 0;
+    final cardsNeeded = (tricksRemaining * 4) - currentTrickCards;
+
+    if (totalCardsRemaining != cardsNeeded) {
+      _debugLog('⚠️ ERROR: Invalid game state before claim');
+      _debugLog('  Total cards remaining: $totalCardsRemaining');
+      _debugLog('  Cards needed: $cardsNeeded');
+      _debugLog('  Tricks remaining: $tricksRemaining');
+      _debugLog('  Current trick cards: $currentTrickCards');
+      _updateState(
+        _state.copyWith(
+          gameStatus: 'Cannot claim - invalid game state detected',
+          canPlayerClaimRemainingTricks: false,
+        ),
+      );
+      return;
+    }
+
     // Immediately hide the claim button to prevent multiple clicks
     _updateState(_state.copyWith(canPlayerClaimRemainingTricks: false));
 
@@ -858,6 +884,7 @@ class GameEngine extends ChangeNotifier {
     _debugLog('Player claims they will win all remaining tricks');
     _debugLog('Cards in hand: ${_state.playerHand.length}');
     _debugLog('Starting from trick ${_state.completedTricks.length + 1}');
+    _debugLog('Validated: $totalCardsRemaining cards for $cardsNeeded slots');
 
     // Safety: track iterations to prevent infinite loops
     int outerLoopIterations = 0;
@@ -899,6 +926,9 @@ class GameEngine extends ChangeNotifier {
         final success = await _autoPlayCurrentTrick();
         if (!success) {
           _debugLog('⚠️ ERROR: Failed to complete trick during claim');
+          _debugLog('⚠️ Re-enabling manual play for recovery');
+          // Re-evaluate claim status to potentially re-enable button or allow manual play
+          _updateClaimStatus();
           return;
         }
       } else if (_state.completedTricks.length < 10) {
@@ -931,6 +961,9 @@ class GameEngine extends ChangeNotifier {
         final success = await _autoPlayCurrentTrick();
         if (!success) {
           _debugLog('⚠️ ERROR: Failed to complete trick during claim');
+          _debugLog('⚠️ Re-enabling manual play for recovery');
+          // Re-evaluate claim status to potentially re-enable button or allow manual play
+          _updateClaimStatus();
           return;
         }
       }
@@ -943,6 +976,11 @@ class GameEngine extends ChangeNotifier {
   /// Auto-play the current trick (called during claim)
   /// Returns true if successful, false if error occurred
   Future<bool> _autoPlayCurrentTrick() async {
+    // DEBUG: Log hand sizes at start of trick
+    _debugLog(
+        '  Hand sizes: South=${_state.playerHand.length}, North=${_state.partnerHand.length}, '
+        'East=${_state.opponentEastHand.length}, West=${_state.opponentWestHand.length}');
+
     // Safety: track iterations to prevent infinite loops within a trick
     int innerLoopIterations = 0;
     const maxInnerIterations = 10; // Should only need 4 (one per player)
@@ -1079,6 +1117,9 @@ class GameEngine extends ChangeNotifier {
         final newCompleted = [..._state.completedTricks, result.trick];
 
         _debugLog('  Trick ${newCompleted.length} won by ${_state.getName(winner)}');
+        _debugLog(
+            '  Hand sizes after trick: South=${_state.playerHand.length}, North=${_state.partnerHand.length}, '
+            'East=${_state.opponentEastHand.length}, West=${_state.opponentWestHand.length}');
 
         // Safety: verify we don't exceed 10 tricks
         if (newCompleted.length > 10) {
@@ -1120,6 +1161,20 @@ class GameEngine extends ChangeNotifier {
           await Future.delayed(const Duration(milliseconds: 1000));
           _scoreHand();
           return true;
+        }
+
+        // Safety: Check if winner has cards before starting next trick
+        final winnerHand = _state.getHand(winner);
+        if (winnerHand.isEmpty) {
+          _debugLog(
+              '⚠️ ERROR: Trick winner ${_state.getName(winner)} has no cards to lead next trick',);
+          _updateState(
+            _state.copyWith(
+              gameStatus:
+                  'Error: Trick winner has no cards - game state corrupted',
+            ),
+          );
+          return false;
         }
 
         // Start next trick with winner leading
