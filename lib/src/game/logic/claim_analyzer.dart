@@ -77,7 +77,8 @@ class ClaimAnalyzer {
 
     // Count total cards remaining (in all hands)
     final totalCardsPlayed = playedCards.length;
-    final totalCardsRemaining = 40 - totalCardsPlayed; // 40 cards in play (after kitty exchange)
+    final totalCardsRemaining =
+        40 - totalCardsPlayed; // 40 cards in play (after kitty exchange)
 
     // If player has all remaining cards, they win
     if (playerHand.length == totalCardsRemaining) {
@@ -92,8 +93,8 @@ class ClaimAnalyzer {
         .toList();
 
     // Check if player has all unplayed trumps
-    final hasAllTrumps = trumpsNotPlayed.every((trump) =>
-      trumpsInHand.any((h) => h == trump)
+    final hasAllTrumps = trumpsNotPlayed.every(
+      (trump) => trumpsInHand.any((h) => h == trump),
     );
 
     // If player has all remaining trumps and enough cards to cover remaining tricks,

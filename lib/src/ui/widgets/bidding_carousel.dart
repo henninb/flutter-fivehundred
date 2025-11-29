@@ -61,7 +61,8 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
     _handEvaluations = {
       BidSuit.spades: BiddingAI.evaluateSuit(widget.playerHand, Suit.spades),
       BidSuit.clubs: BiddingAI.evaluateSuit(widget.playerHand, Suit.clubs),
-      BidSuit.diamonds: BiddingAI.evaluateSuit(widget.playerHand, Suit.diamonds),
+      BidSuit.diamonds:
+          BiddingAI.evaluateSuit(widget.playerHand, Suit.diamonds),
       BidSuit.hearts: BiddingAI.evaluateSuit(widget.playerHand, Suit.hearts),
       BidSuit.noTrump: BiddingAI.evaluateNoTrump(widget.playerHand),
     };
@@ -134,7 +135,10 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
             height: 4,
             margin: const EdgeInsets.only(top: 8, bottom: 8),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurfaceVariant
+                  .withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -177,9 +181,9 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
               Text(
                 'Choose Bid Level:',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
               const SizedBox(height: 6),
               _buildTrickLevelSelector(context),
@@ -201,7 +205,10 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
                       onPressed: widget.onPass,
                       child: const Text(
                         'Pass',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -219,7 +226,10 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
                         },
                         child: Text(
                           'Bid: ${_selectedBid!.tricks}${_suitSymbol(_selectedBid!.suit)} (${_selectedBid!.value})',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -286,7 +296,9 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
         ),
         const SizedBox(height: 2),
         Text(
-          isPassed ? 'Pass' : '${entry.bid!.tricks}${_suitSymbol(entry.bid!.suit)}',
+          isPassed
+              ? 'Pass'
+              : '${entry.bid!.tricks}${_suitSymbol(entry.bid!.suit)}',
           style: TextStyle(
             fontSize: 10,
             fontWeight: isPassed ? FontWeight.normal : FontWeight.bold,
@@ -300,8 +312,9 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
   Widget _buildHandStrengthAndAI(BuildContext context) {
     // Calculate overall hand strength (0-10 scale)
     final maxTricks = _handEvaluations?.values
-        .map((e) => e.estimatedTricks)
-        .reduce((a, b) => a > b ? a : b) ?? 0.0;
+            .map((e) => e.estimatedTricks)
+            .reduce((a, b) => a > b ? a : b) ??
+        0.0;
 
     final strength = (maxTricks / 10.0).clamp(0.0, 1.0);
 
@@ -309,7 +322,10 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
@@ -325,8 +341,8 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
                 Text(
                   'Hand Strength',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
                 const SizedBox(height: 3),
                 ClipRRect(
@@ -334,7 +350,8 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
                   child: LinearProgressIndicator(
                     value: strength,
                     minHeight: 6,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.surfaceContainerHigh,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       _getStrengthColor(context, strength),
                     ),
@@ -345,14 +362,18 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
           ),
           const SizedBox(width: 16),
           // AI recommendation
-          if (_aiRecommendation != null && _aiRecommendation!.action != BidAction.pass)
+          if (_aiRecommendation != null &&
+              _aiRecommendation!.action != BidAction.pass)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.secondaryContainer,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .secondary
+                      .withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -411,9 +432,9 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
         Text(
           'Bid $tricks',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
         ),
 
         const SizedBox(height: 12),
@@ -449,30 +470,31 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
         _selectedBid!.tricks == tricks &&
         _selectedBid!.suit == suit;
 
+    final backgroundColor =
+        !isValid ? Colors.white.withValues(alpha: 0.5) : Colors.white;
+
     return GestureDetector(
-      onTap: isValid ? () {
-        HapticFeedback.mediumImpact();
-        setState(() {
-          _selectedBid = bid;
-          _selectedIsInkle = isInkle;
-        });
-      } : null,
-      onLongPress: isValid ? () {
-        HapticFeedback.lightImpact();
-        _showBidValueTooltip(context, tricks, suit);
-      } : null,
+      onTap: isValid
+          ? () {
+              HapticFeedback.mediumImpact();
+              setState(() {
+                _selectedBid = bid;
+                _selectedIsInkle = isInkle;
+              });
+            }
+          : null,
+      onLongPress: isValid
+          ? () {
+              HapticFeedback.lightImpact();
+              _showBidValueTooltip(context, tricks, suit);
+            }
+          : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 52,
         height: 52,
         decoration: BoxDecoration(
-          color: !isValid
-              ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
-              : isSelected
-                  ? Theme.of(context).colorScheme.primaryContainer
-                  : isAIRec
-                      ? Theme.of(context).colorScheme.secondaryContainer
-                      : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
+          color: backgroundColor,
           shape: BoxShape.circle,
           border: Border.all(
             color: !isValid
@@ -481,18 +503,24 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
                     ? Theme.of(context).colorScheme.primary
                     : isAIRec
                         ? Theme.of(context).colorScheme.secondary
-                        : Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                        : Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValues(alpha: 0.5),
             width: isSelected ? 3 : (isAIRec ? 2 : 2),
           ),
-          boxShadow: isValid && (isSelected || isAIRec) ? [
-            BoxShadow(
-              color: (isSelected
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.secondary).withValues(alpha: 0.3),
-              blurRadius: isSelected ? 12 : 8,
-              offset: const Offset(0, 2),
-            ),
-          ] : null,
+          boxShadow: isValid && (isSelected || isAIRec)
+              ? [
+                  BoxShadow(
+                    color: (isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.secondary)
+                        .withValues(alpha: 0.3),
+                    blurRadius: isSelected ? 12 : 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Center(
           child: Text(
@@ -500,7 +528,10 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
             style: TextStyle(
               fontSize: 26,
               color: !isValid
-                  ? Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3)
+                  ? Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant
+                      .withValues(alpha: 0.3)
                   : _getSuitColor(suit, context),
               fontWeight: FontWeight.bold,
             ),
@@ -576,17 +607,24 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
                         ? Theme.of(context).colorScheme.primary
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(10),
-                    border: isActive ? Border.all(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 2,
-                    ) : null,
-                    boxShadow: isActive ? [
-                      BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ] : null,
+                    border: isActive
+                        ? Border.all(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 2,
+                          )
+                        : null,
+                    boxShadow: isActive
+                        ? [
+                            BoxShadow(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withValues(alpha: 0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Center(
                     child: Text(
@@ -612,15 +650,15 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
   Color _getSuitColor(BidSuit suit, BuildContext context) {
     switch (suit) {
       case BidSuit.spades:
-        return Colors.black;
+        return Colors.black87;
       case BidSuit.clubs:
-        return Colors.green.shade700;
+        return Colors.black87;
       case BidSuit.diamonds:
         return Colors.red.shade700;
       case BidSuit.hearts:
         return Colors.red.shade700;
       case BidSuit.noTrump:
-        return Theme.of(context).colorScheme.primary;
+        return Colors.black87;
     }
   }
 
