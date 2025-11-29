@@ -171,7 +171,7 @@ class GameScreen500 extends StatelessWidget {
                   onDealCards: () => engine.dealCards(),
                   onConfirmKitty: () => engine.confirmKittyExchange(),
                   onNextHand: () => engine.startNextHand(),
-                  canClaimTricks: engine.canClaimRemainingTricks(),
+                  canClaimTricks: state.canPlayerClaimRemainingTricks,
                   onClaimTricks: () => engine.claimRemainingTricks(),
                 ),
               ],

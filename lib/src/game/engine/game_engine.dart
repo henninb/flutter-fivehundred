@@ -651,6 +651,9 @@ class GameEngine extends ChangeNotifier {
       ),
     );
 
+    // Update claim status at start of play
+    _updateClaimStatus();
+
     // If AI leads, schedule AI play
     if (leader != Position.south) {
       _scheduleAIPlay();
@@ -803,31 +806,43 @@ class GameEngine extends ChangeNotifier {
     }
   }
 
-  /// Check if the player can claim all remaining tricks
-  bool canClaimRemainingTricks() {
+  /// Update the claim status - check if player can claim all remaining tricks
+  void _updateClaimStatus() {
     // Only during play phase
-    if (!_state.isPlayPhase) return false;
-
-    // Only for human player
-    if (_state.playerHand.isEmpty) return false;
-
-    // Must have at least one card
-    if (_state.playerHand.isEmpty) return false;
+    if (!_state.isPlayPhase || _state.playerHand.isEmpty) {
+      if (_state.canPlayerClaimRemainingTricks) {
+        _updateState(_state.copyWith(canPlayerClaimRemainingTricks: false));
+      }
+      return;
+    }
 
     final trumpRules = TrumpRules(trumpSuit: _state.trumpSuit);
     final analyzer = ClaimAnalyzer(
       playerHand: _state.playerHand,
+      otherHands: {
+        Position.north: _state.partnerHand,
+        Position.east: _state.opponentEastHand,
+        Position.west: _state.opponentWestHand,
+      },
       trumpRules: trumpRules,
       completedTricks: _state.completedTricks,
       currentTrick: _state.currentTrick,
+      currentPlayer: _state.currentPlayer,
     );
 
-    return analyzer.canClaimRemainingTricks();
+    final canClaim = analyzer.canClaimRemainingTricks();
+
+    if (canClaim != _state.canPlayerClaimRemainingTricks) {
+      _updateState(_state.copyWith(canPlayerClaimRemainingTricks: canClaim));
+      if (canClaim) {
+        _debugLog('✨ Player can now claim all remaining tricks!');
+      }
+    }
   }
 
   /// Claim remaining tricks - auto-play through them with animations
   Future<void> claimRemainingTricks() async {
-    if (!canClaimRemainingTricks()) {
+    if (!_state.canPlayerClaimRemainingTricks) {
       _updateState(
         _state.copyWith(
           gameStatus: 'Cannot claim - not guaranteed to win all tricks',
@@ -842,10 +857,9 @@ class GameEngine extends ChangeNotifier {
 
     // Auto-play through remaining tricks
     while (_state.playerHand.isNotEmpty ||
-           _state.partnerHand.isNotEmpty ||
-           _state.opponentEastHand.isNotEmpty ||
-           _state.opponentWestHand.isNotEmpty) {
-
+        _state.partnerHand.isNotEmpty ||
+        _state.opponentEastHand.isNotEmpty ||
+        _state.opponentWestHand.isNotEmpty) {
       // If current trick is not complete, finish it
       if (_state.currentTrick != null && !_state.currentTrick!.isComplete) {
         await _autoPlayCurrentTrick();
@@ -935,7 +949,8 @@ class GameEngine extends ChangeNotifier {
       _updateState(
         _state.copyWith(
           currentTrick: result.trick,
-          gameStatus: 'Auto-playing: ${_state.getName(position)} plays ${card.label}',
+          gameStatus:
+              'Auto-playing: ${_state.getName(position)} plays ${card.label}',
         ),
       );
 
@@ -1135,6 +1150,9 @@ class GameEngine extends ChangeNotifier {
       ),
     );
 
+    // Update claim status after trick completion
+    _updateClaimStatus();
+
     // Check if all tricks played
     if (newCompleted.length == 10) {
       // DEBUG: Verify all cards are unique
@@ -1216,6 +1234,9 @@ class GameEngine extends ChangeNotifier {
         clearNominatedSuit: true, // Clear nominated suit for new trick
       ),
     );
+
+    // Update claim status at start of new trick
+    _updateClaimStatus();
 
     if (leader != Position.south) {
       _scheduleAIPlay();

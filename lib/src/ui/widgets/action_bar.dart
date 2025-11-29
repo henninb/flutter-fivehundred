@@ -124,16 +124,15 @@ class ActionBar500 extends StatelessWidget {
     }
 
     // Play phase - show claim button if player can claim all remaining tricks
-    if (state.currentPhase == GamePhase.play && canClaimTricks && onClaimTricks != null) {
+    if (state.currentPhase == GamePhase.play &&
+        canClaimTricks &&
+        onClaimTricks != null) {
       buttons.add(
         Expanded(
           child: FilledButton.icon(
             onPressed: onClaimTricks,
             icon: const Icon(Icons.fast_forward),
             label: const Text('Claim Remaining Tricks'),
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-            ),
           ),
         ),
       );

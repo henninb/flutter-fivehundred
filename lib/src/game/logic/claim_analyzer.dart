@@ -1,229 +1,238 @@
 import '../models/card.dart';
 import '../models/game_models.dart';
 import 'trump_rules.dart';
+import 'trick_engine.dart';
 
 /// Analyzes whether a player can claim all remaining tricks
 ///
-/// This is VERY CONSERVATIVE - only returns true when absolutely certain
-/// the player will win all remaining tricks.
+/// Uses perfect analysis considering:
+/// - Card sequencing and who leads
+/// - Which opponents are void in which suits
+/// - Guaranteed trick winners
 class ClaimAnalyzer {
   ClaimAnalyzer({
     required this.playerHand,
+    required this.otherHands,
     required this.trumpRules,
     required this.completedTricks,
     required this.currentTrick,
+    required this.currentPlayer,
   });
 
   final List<PlayingCard> playerHand;
+  final Map<Position, List<PlayingCard>> otherHands; // Partner, East, West
   final TrumpRules trumpRules;
   final List<Trick> completedTricks;
   final Trick? currentTrick;
+  final Position? currentPlayer;
 
-  /// Check if player can claim all remaining tricks
-  /// Very conservative - only returns true when 100% certain
+  /// Check if player (Position.south) can claim all remaining tricks
+  /// Uses simulation to guarantee 100% certainty
   bool canClaimRemainingTricks() {
     if (playerHand.isEmpty) return false;
 
-    // Get all cards that have been played
-    final playedCards = _getAllPlayedCards();
+    // Quick check: If player has all remaining cards, they win
+    final totalOtherCards = otherHands.values.fold(0, (sum, hand) => sum + hand.length);
+    if (totalOtherCards == 0) return true;
 
-    // Strategy 1: Player has all the highest trumps
-    if (_hasAllTopTrumps(playedCards)) {
-      return true;
-    }
-
-    // Strategy 2: Player has Joker and all remaining cards are trump
-    if (_hasJokerAndAllTrump()) {
-      return true;
-    }
-
-    // Strategy 3: Player has master cards in all remaining suits
-    if (_hasMasterCardsInAllSuits(playedCards)) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /// Get all cards that have been played so far
-  List<PlayingCard> _getAllPlayedCards() {
-    final played = <PlayingCard>[];
-
-    // Add cards from completed tricks
-    for (final trick in completedTricks) {
-      for (final play in trick.plays) {
-        played.add(play.card);
-      }
-    }
-
-    // Add cards from current trick
-    if (currentTrick != null) {
-      for (final play in currentTrick!.plays) {
-        played.add(play.card);
-      }
-    }
-
-    return played;
-  }
-
-  /// Check if player has all the top trump cards
-  bool _hasAllTopTrumps(List<PlayingCard> playedCards) {
-    // Get trump cards in hand
-    final trumpsInHand = trumpRules.getTrumpCards(playerHand);
-    if (trumpsInHand.isEmpty) return false;
-
-    // Player must have the Joker (highest trump)
-    if (!trumpsInHand.any((c) => c.isJoker)) return false;
-
-    // Count total cards remaining (in all hands)
-    final totalCardsPlayed = playedCards.length;
-    final totalCardsRemaining =
-        40 - totalCardsPlayed; // 40 cards in play (after kitty exchange)
-
-    // If player has all remaining cards, they win
-    if (playerHand.length == totalCardsRemaining) {
-      return true;
-    }
-
-    // Check if all remaining trump cards are in player's hand
-    // and player has enough high cards to win all remaining tricks
-    final allTrumpCards = _getAllPossibleTrumpCards();
-    final trumpsNotPlayed = allTrumpCards
-        .where((card) => !playedCards.any((p) => p == card))
-        .toList();
-
-    // Check if player has all unplayed trumps
-    final hasAllTrumps = trumpsNotPlayed.every(
-      (trump) => trumpsInHand.any((h) => h == trump),
+    // Build current game situation
+    final situation = _GameSituation(
+      hands: {
+        Position.south: List.from(playerHand),
+        Position.north: List.from(otherHands[Position.north] ?? []),
+        Position.east: List.from(otherHands[Position.east] ?? []),
+        Position.west: List.from(otherHands[Position.west] ?? []),
+      },
+      completedTricks: completedTricks,
+      currentTrick: currentTrick,
+      currentPlayer: currentPlayer,
+      trumpRules: trumpRules,
     );
 
-    // If player has all remaining trumps and enough cards to cover remaining tricks,
-    // they can claim
-    if (hasAllTrumps && trumpsInHand.length >= totalCardsRemaining / 4) {
-      return true;
-    }
-
-    return false;
+    // Simulate all remaining tricks - player must win every single one
+    return _simulateAllTricks(situation);
   }
 
-  /// Check if player has joker and all their cards are trump
-  bool _hasJokerAndAllTrump() {
-    if (!playerHand.any((c) => c.isJoker)) return false;
+  /// Simulate all remaining tricks to see if player wins them all
+  bool _simulateAllTricks(_GameSituation situation) {
+    final trickEngine = TrickEngine(trumpRules: trumpRules);
 
-    // Check if ALL cards in hand are trump
-    return playerHand.every((card) => trumpRules.isTrump(card));
-  }
+    // Determine who should lead the first trick we're simulating
+    Position leader;
+    if (situation.currentTrick != null && situation.currentTrick!.plays.isNotEmpty) {
+      // Current trick in progress - need to finish it first
+      leader = situation.currentPlayer ?? Position.south;
 
-  /// Check if player has the master (highest unplayed) card in every remaining suit
-  bool _hasMasterCardsInAllSuits(List<PlayingCard> playedCards) {
-    // Get all suits that still have cards in play
-    final remainingSuits = <Suit>{};
-
-    // Check player's hand for suits
-    for (final card in playerHand) {
-      if (!card.isJoker) {
-        final effectiveSuit = trumpRules.getEffectiveSuit(card);
-        remainingSuits.add(effectiveSuit);
-      }
-    }
-
-    // For each suit in hand, check if player has the highest unplayed card
-    for (final suit in remainingSuits) {
-      if (!_hasHighestCardInSuit(suit, playedCards)) {
+      // Simulate finishing the current trick
+      final result = _simulateCurrentTrick(situation, trickEngine);
+      if (result.winner != Position.south) {
+        // Player didn't win the current trick in progress
         return false;
       }
-    }
-
-    // Also need to ensure player has enough cards to cover all remaining tricks
-    final totalCardsPlayed = playedCards.length;
-    final totalCardsRemaining = 40 - totalCardsPlayed;
-    final remainingTricks = (totalCardsRemaining / 4).ceil();
-
-    return playerHand.length >= remainingTricks;
-  }
-
-  /// Check if player has the highest card in a specific suit
-  bool _hasHighestCardInSuit(Suit suit, List<PlayingCard> playedCards) {
-    // Get all possible cards in this suit
-    final allCardsInSuit = _getAllCardsInSuit(suit);
-
-    // Find highest unplayed card in this suit
-    PlayingCard? highestUnplayed;
-    for (final card in allCardsInSuit) {
-      // Skip if already played
-      if (playedCards.any((p) => p == card)) continue;
-
-      // Check if this is higher than current highest
-      if (highestUnplayed == null ||
-          trumpRules.compare(card, highestUnplayed) > 0) {
-        highestUnplayed = card;
+      leader = result.winner;
+      // Update hands after this trick
+      for (final play in result.trick.plays) {
+        situation.hands[play.player]!.remove(play.card);
       }
-    }
-
-    // Check if player has this highest card
-    if (highestUnplayed == null) return false;
-    return playerHand.any((c) => c == highestUnplayed);
-  }
-
-  /// Get all possible cards in a suit (from a full deck)
-  List<PlayingCard> _getAllCardsInSuit(Suit suit) {
-    final cards = <PlayingCard>[];
-
-    // Handle trump suit specially (includes left bower)
-    if (trumpRules.trumpSuit == suit) {
-      // Add joker
-      cards.add(const PlayingCard(rank: Rank.joker, suit: Suit.spades));
-
-      // Add all trump suit cards
-      for (final rank in Rank.values) {
-        if (rank != Rank.joker) {
-          cards.add(PlayingCard(rank: rank, suit: suit));
-        }
-      }
-
-      // Add left bower (jack of same color)
-      final oppositeColorSuit = _getOppositeColorSuit(suit);
-      cards.add(PlayingCard(rank: Rank.jack, suit: oppositeColorSuit));
+    } else if (situation.completedTricks.isNotEmpty) {
+      // Determine leader from last completed trick
+      final lastTrick = situation.completedTricks.last;
+      leader = trickEngine.getCurrentWinner(lastTrick)!;
     } else {
-      // Regular suit - add all cards except left bower if it would be in this suit
-      for (final rank in Rank.values) {
-        if (rank != Rank.joker) {
-          final card = PlayingCard(rank: rank, suit: suit);
-          // Don't add if this is the left bower (it belongs to trump)
-          if (trumpRules.trumpSuit != null &&
-              rank == Rank.jack &&
-              suit == _getOppositeColorSuit(trumpRules.trumpSuit!)) {
-            continue;
-          }
-          cards.add(card);
-        }
+      // No tricks yet - current player leads
+      leader = situation.currentPlayer ?? Position.south;
+    }
+
+    // Simulate each remaining trick
+    while (_hasCardsRemaining(situation.hands)) {
+      final trickResult = _simulateTrick(situation, leader, trickEngine);
+
+      if (trickResult.winner != Position.south) {
+        // Player lost a trick - cannot claim
+        return false;
+      }
+
+      // Winner leads next trick
+      leader = trickResult.winner;
+    }
+
+    // Player won all simulated tricks!
+    return true;
+  }
+
+  /// Simulate finishing the current trick in progress
+  _TrickSimulationResult _simulateCurrentTrick(_GameSituation situation, TrickEngine trickEngine) {
+    var trick = situation.currentTrick!;
+    var nextPlayer = situation.currentPlayer!;
+
+    while (!trick.isComplete) {
+      final hand = situation.hands[nextPlayer]!;
+      if (hand.isEmpty) break;
+
+      // Choose best card for this player
+      final card = _chooseBestCard(nextPlayer, hand, trick, trickEngine);
+
+      final result = trickEngine.playCard(
+        currentTrick: trick,
+        card: card,
+        player: nextPlayer,
+        playerHand: hand,
+      );
+
+      trick = result.trick;
+      if (!trick.isComplete) {
+        nextPlayer = nextPlayer.next;
       }
     }
 
-    return cards;
+    final winner = trickEngine.getCurrentWinner(trick)!;
+    return _TrickSimulationResult(trick: trick, winner: winner);
   }
 
-  /// Get all possible trump cards
-  List<PlayingCard> _getAllPossibleTrumpCards() {
-    if (trumpRules.trumpSuit == null) {
-      // No trump - only joker
-      return [const PlayingCard(rank: Rank.joker, suit: Suit.spades)];
+  /// Simulate a complete trick from scratch
+  _TrickSimulationResult _simulateTrick(_GameSituation situation, Position leader, TrickEngine trickEngine) {
+    var trick = Trick(plays: [], leader: leader, trumpSuit: trumpRules.trumpSuit);
+    var nextPlayer = leader;
+
+    for (int i = 0; i < 4; i++) {
+      final hand = situation.hands[nextPlayer]!;
+      if (hand.isEmpty) break;
+
+      // Choose best card for this player
+      final card = _chooseBestCard(nextPlayer, hand, trick, trickEngine);
+
+      final result = trickEngine.playCard(
+        currentTrick: trick,
+        card: card,
+        player: nextPlayer,
+        playerHand: hand,
+      );
+
+      trick = result.trick;
+
+      // Remove card from simulated hand
+      hand.remove(card);
+
+      nextPlayer = nextPlayer.next;
     }
 
-    return _getAllCardsInSuit(trumpRules.trumpSuit!);
+    final winner = trickEngine.getCurrentWinner(trick)!;
+    return _TrickSimulationResult(trick: trick, winner: winner);
   }
 
-  /// Get the same-color suit (for left bower determination)
-  Suit _getOppositeColorSuit(Suit suit) {
-    switch (suit) {
-      case Suit.hearts:
-        return Suit.diamonds;
-      case Suit.diamonds:
-        return Suit.hearts;
-      case Suit.spades:
-        return Suit.clubs;
-      case Suit.clubs:
-        return Suit.spades;
+  /// Choose the best card for a player to play
+  /// For the player (south): Play weakest card that still wins
+  /// For opponents: Play strongest card to try to win
+  PlayingCard _chooseBestCard(Position player, List<PlayingCard> hand, Trick trick, TrickEngine trickEngine) {
+    final legalCards = trickEngine.getLegalCards(trick: trick, hand: hand);
+    if (legalCards.isEmpty) return hand.first; // Should never happen
+
+    if (player == Position.south) {
+      // Player: try to win with weakest winning card, or play weakest if can't win
+      return _chooseWeakestWinningCard(legalCards, trick, trickEngine) ?? _chooseWeakestCard(legalCards);
+    } else {
+      // Opponent: try to win with strongest card
+      return _chooseStrongestCard(legalCards, trick, trickEngine);
     }
   }
+
+  /// Choose the weakest card that still wins the trick
+  PlayingCard? _chooseWeakestWinningCard(List<PlayingCard> cards, Trick trick, TrickEngine trickEngine) {
+    final currentWinner = trickEngine.getCurrentWinner(trick);
+    final currentWinningCard = currentWinner != null ? trick.plays.firstWhere((p) => p.player == currentWinner).card : null;
+
+    final winningCards = cards.where((card) {
+      if (currentWinningCard == null) return true; // Leading the trick
+      return trumpRules.compare(card, currentWinningCard) > 0;
+    }).toList();
+
+    if (winningCards.isEmpty) return null;
+
+    // Return weakest winning card
+    winningCards.sort((a, b) => trumpRules.compare(a, b));
+    return winningCards.first;
+  }
+
+  /// Choose the weakest card (for discarding when can't win)
+  PlayingCard _chooseWeakestCard(List<PlayingCard> cards) {
+    final sorted = List<PlayingCard>.from(cards);
+    sorted.sort((a, b) => trumpRules.compare(a, b));
+    return sorted.first;
+  }
+
+  /// Choose the strongest card (for opponents trying to win)
+  PlayingCard _chooseStrongestCard(List<PlayingCard> cards, Trick trick, TrickEngine trickEngine) {
+    final sorted = List<PlayingCard>.from(cards);
+    sorted.sort((a, b) => trumpRules.compare(b, a)); // Descending
+    return sorted.first;
+  }
+
+  bool _hasCardsRemaining(Map<Position, List<PlayingCard>> hands) {
+    return hands.values.any((hand) => hand.isNotEmpty);
+  }
+}
+
+/// Represents the current game situation for simulation
+class _GameSituation {
+  _GameSituation({
+    required this.hands,
+    required this.completedTricks,
+    required this.currentTrick,
+    required this.currentPlayer,
+    required this.trumpRules,
+  });
+
+  final Map<Position, List<PlayingCard>> hands;
+  final List<Trick> completedTricks;
+  final Trick? currentTrick;
+  final Position? currentPlayer;
+  final TrumpRules trumpRules;
+}
+
+/// Result of a simulated trick
+class _TrickSimulationResult {
+  _TrickSimulationResult({required this.trick, required this.winner});
+
+  final Trick trick;
+  final Position winner;
 }

@@ -70,6 +70,7 @@ class GameState {
     this.showSuitNominationDialog = false,
     this.pendingCardIndex,
     this.nominatedSuit,
+    this.canPlayerClaimRemainingTricks = false,
   });
 
   // Game setup
@@ -129,6 +130,7 @@ class GameState {
   final bool showSuitNominationDialog; // Show suit nomination dialog
   final int? pendingCardIndex; // Card index pending suit nomination
   final Suit? nominatedSuit; // Nominated suit for joker in no-trump
+  final bool canPlayerClaimRemainingTricks; // True if player can guarantee winning all remaining tricks
 
   /// Get hand for a specific position
   List<PlayingCard> getHand(Position position) {
@@ -221,6 +223,7 @@ class GameState {
     bool? showSuitNominationDialog,
     int? pendingCardIndex,
     Suit? nominatedSuit,
+    bool? canPlayerClaimRemainingTricks,
     // Special handling for nullable fields
     bool clearCurrentBidder = false,
     bool clearCurrentHighBid = false,
@@ -280,6 +283,7 @@ class GameState {
       showSuitNominationDialog: showSuitNominationDialog ?? this.showSuitNominationDialog,
       pendingCardIndex: clearPendingCardIndex ? null : (pendingCardIndex ?? this.pendingCardIndex),
       nominatedSuit: clearNominatedSuit ? null : (nominatedSuit ?? this.nominatedSuit),
+      canPlayerClaimRemainingTricks: canPlayerClaimRemainingTricks ?? this.canPlayerClaimRemainingTricks,
     );
   }
 }
