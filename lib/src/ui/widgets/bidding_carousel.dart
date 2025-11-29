@@ -40,6 +40,7 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
   Map<BidSuit, SuitEvaluation>? _handEvaluations;
   Bid? _selectedBid;
   bool _selectedIsInkle = false;
+  BidSuit? _selectedSuit; // Track selected suit separately to persist across trick levels
 
   @override
   void initState() {
@@ -160,9 +161,26 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
                 HapticFeedback.selectionClick();
                 setState(() {
                   _currentTrickLevel = index + 6;
-                  // Clear selection when changing trick level
-                  _selectedBid = null;
-                  _selectedIsInkle = false;
+
+                  // Preserve suit selection when changing trick level
+                  if (_selectedSuit != null) {
+                    final newBid = Bid(
+                      tricks: _currentTrickLevel,
+                      suit: _selectedSuit!,
+                      bidder: Position.south,
+                    );
+
+                    // Only keep the selection if the new bid is valid
+                    if (_isValidBid(_currentTrickLevel, _selectedSuit!)) {
+                      _selectedBid = newBid;
+                      _selectedIsInkle = _currentTrickLevel == 6 && widget.canInkle;
+                    } else {
+                      // Clear if new bid is invalid
+                      _selectedBid = null;
+                      _selectedIsInkle = false;
+                      _selectedSuit = null;
+                    }
+                  }
                 });
               },
               itemCount: 5, // Trick levels 6-10
@@ -480,6 +498,7 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
               setState(() {
                 _selectedBid = bid;
                 _selectedIsInkle = isInkle;
+                _selectedSuit = suit; // Remember the selected suit
               });
             }
           : null,
