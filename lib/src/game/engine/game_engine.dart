@@ -851,6 +851,9 @@ class GameEngine extends ChangeNotifier {
       return;
     }
 
+    // Immediately hide the claim button to prevent multiple clicks
+    _updateState(_state.copyWith(canPlayerClaimRemainingTricks: false));
+
     _debugLog('\n========== CLAIMING REMAINING TRICKS ==========');
     _debugLog('Player claims they will win all remaining tricks');
     _debugLog('Cards in hand: ${_state.playerHand.length}');
