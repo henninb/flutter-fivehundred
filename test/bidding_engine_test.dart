@@ -22,11 +22,13 @@ void main() {
       expect(engine.canInkle(Position.north, bids), isTrue);
       expect(engine.canInkle(Position.east, bids), isTrue);
 
-      bids.add(BidEntry(
-        bidder: Position.north,
-        action: BidAction.bid,
-        bid: Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.north),
-      ));
+      bids.add(
+        BidEntry(
+          bidder: Position.north,
+          action: BidAction.bid,
+          bid: Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.north),
+        ),
+      );
 
       expect(engine.canInkle(Position.north, bids), isFalse);
       expect(engine.canInkle(Position.south, bids), isFalse);
@@ -42,25 +44,31 @@ void main() {
         ),
       ];
 
-      final lowBid = Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.south);
+      final lowBid =
+          Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.south);
       expect(
-        engine.validateBid(
-          bidder: Position.south,
-          proposedBid: lowBid,
-          currentBids: current,
-          isInkle: false,
-        ).isValid,
+        engine
+            .validateBid(
+              bidder: Position.south,
+              proposedBid: lowBid,
+              currentBids: current,
+              isInkle: false,
+            )
+            .isValid,
         isFalse,
       );
 
-      final higher = Bid(tricks: 8, suit: BidSuit.spades, bidder: Position.south);
+      final higher =
+          Bid(tricks: 8, suit: BidSuit.spades, bidder: Position.south);
       expect(
-        engine.validateBid(
-          bidder: Position.south,
-          proposedBid: higher,
-          currentBids: current,
-          isInkle: false,
-        ).isValid,
+        engine
+            .validateBid(
+              bidder: Position.south,
+              proposedBid: higher,
+              currentBids: current,
+              isInkle: false,
+            )
+            .isValid,
         isTrue,
       );
     });

@@ -37,6 +37,12 @@ class GameEngine extends ChangeNotifier {
   // Timers for AI delays
   Timer? _aiTimer;
 
+  void _debugLog(String message) {
+    if (kDebugMode) {
+      debugPrint(message);
+    }
+  }
+
   @override
   void dispose() {
     _aiTimer?.cancel();
@@ -56,11 +62,13 @@ class GameEngine extends ChangeNotifier {
 
   /// Start a new game
   void startNewGame() {
-    _updateState(const GameState(
-      gameStarted: true,
-      currentPhase: GamePhase.setup,
-      gameStatus: 'Tap Cut for Deal to determine dealer',
-    ));
+    _updateState(
+      const GameState(
+        gameStarted: true,
+        currentPhase: GamePhase.setup,
+        gameStatus: 'Tap Cut for Deal to determine dealer',
+      ),
+    );
   }
 
   /// Perform cut for deal - each player draws a card, highest card deals
@@ -117,12 +125,15 @@ class GameEngine extends ChangeNotifier {
     if (highestPosition != null) {
       final winnerName = _state.getName(highestPosition);
       final winningCard = cutCards[highestPosition]!;
-      _updateState(_state.copyWith(
-        currentPhase: GamePhase.cutForDeal,
-        cutCards: cutCards,
-        dealer: highestPosition,
-        gameStatus: '$winnerName wins with ${winningCard.label} and will deal. Tap Deal to start.',
-      ));
+      _updateState(
+        _state.copyWith(
+          currentPhase: GamePhase.cutForDeal,
+          cutCards: cutCards,
+          dealer: highestPosition,
+          gameStatus:
+              '$winnerName wins with ${winningCard.label} and will deal. Tap Deal to start.',
+        ),
+      );
     }
   }
 
@@ -132,29 +143,37 @@ class GameEngine extends ChangeNotifier {
     final dealResult = dealHand(deck: deck, dealer: _state.dealer);
 
     // DEBUG: Log the deal
-    print('\n========== DEAL CARDS (Hand #${_state.handNumber + 1}) ==========');
-    print('Dealer: ${_state.dealer.name}');
-    print('Deck size: ${deck.length}');
+    _debugLog(
+      '\n========== DEAL CARDS (Hand #${_state.handNumber + 1}) ==========',
+    );
+    _debugLog('Dealer: ${_state.dealer.name}');
+    _debugLog('Deck size: ${deck.length}');
 
     // Check for Joker in each hand
     for (final position in Position.values) {
       final hand = dealResult.hands[position]!;
       final hasJoker = hand.any((card) => card.isJoker);
-      print('${position.name}: ${hand.length} cards${hasJoker ? ' ⭐ HAS JOKER' : ''}');
+      _debugLog(
+        '${position.name}: ${hand.length} cards${hasJoker ? ' ⭐ HAS JOKER' : ''}',
+      );
       if (hasJoker) {
-        print('  Cards: ${hand.map((c) => c.label).join(', ')}');
+        _debugLog('  Cards: ${hand.map((c) => c.label).join(', ')}');
       }
     }
 
     final kittyHasJoker = dealResult.kitty.any((card) => card.isJoker);
-    print('Kitty: ${dealResult.kitty.length} cards${kittyHasJoker ? ' ⭐ HAS JOKER' : ''}');
+    _debugLog(
+      'Kitty: ${dealResult.kitty.length} cards${kittyHasJoker ? ' ⭐ HAS JOKER' : ''}',
+    );
     if (kittyHasJoker) {
-      print('  Cards: ${dealResult.kitty.map((c) => c.label).join(', ')}');
+      _debugLog('  Cards: ${dealResult.kitty.map((c) => c.label).join(', ')}');
     }
 
     // Count total cards
-    final totalCards = dealResult.hands.values.fold(0, (sum, hand) => sum + hand.length) + dealResult.kitty.length;
-    print('Total cards dealt: $totalCards (should be 45)');
+    final totalCards =
+        dealResult.hands.values.fold(0, (sum, hand) => sum + hand.length) +
+            dealResult.kitty.length;
+    _debugLog('Total cards dealt: $totalCards (should be 45)');
 
     // Count Jokers
     var jokerCount = 0;
@@ -162,23 +181,25 @@ class GameEngine extends ChangeNotifier {
       jokerCount += hand.where((card) => card.isJoker).length;
     }
     jokerCount += dealResult.kitty.where((card) => card.isJoker).length;
-    print('Total Jokers in deal: $jokerCount (should be 1)');
-    print('========================================\n');
+    _debugLog('Total Jokers in deal: $jokerCount (should be 1)');
+    _debugLog('========================================\n');
 
     // Sort player's hand by suit for easier viewing
     final sortedPlayerHand = sortHandBySuit(dealResult.hands[Position.south]!);
 
-    _updateState(_state.copyWith(
-      currentPhase: GamePhase.dealing,
-      playerHand: sortedPlayerHand,
-      partnerHand: dealResult.hands[Position.north],
-      opponentEastHand: dealResult.hands[Position.east],
-      opponentWestHand: dealResult.hands[Position.west],
-      kitty: dealResult.kitty,
-      handNumber: _state.handNumber + 1,
-      cutCards: {}, // Clear cut cards after dealing
-      gameStatus: 'Cards dealt',
-    ));
+    _updateState(
+      _state.copyWith(
+        currentPhase: GamePhase.dealing,
+        playerHand: sortedPlayerHand,
+        partnerHand: dealResult.hands[Position.north],
+        opponentEastHand: dealResult.hands[Position.east],
+        opponentWestHand: dealResult.hands[Position.west],
+        kitty: dealResult.kitty,
+        handNumber: _state.handNumber + 1,
+        cutCards: {}, // Clear cut cards after dealing
+        gameStatus: 'Cards dealt',
+      ),
+    );
 
     // Start bidding after brief delay
     Future.delayed(const Duration(milliseconds: 500), _startBidding);
@@ -192,16 +213,18 @@ class GameEngine extends ChangeNotifier {
     final biddingEngine = BiddingEngine(dealer: _state.dealer);
     final biddingOrder = biddingEngine.getBiddingOrder();
 
-    _updateState(_state.copyWith(
-      currentPhase: GamePhase.bidding,
-      isBiddingPhase: true,
-      bidHistory: [],
-      currentBidder: biddingOrder.first,
-      gameStatus: 'Bidding: ${_state.getName(biddingOrder.first)}',
-      clearCurrentHighBid: true,
-      clearWinningBid: true,
-      clearContractor: true,
-    ));
+    _updateState(
+      _state.copyWith(
+        currentPhase: GamePhase.bidding,
+        isBiddingPhase: true,
+        bidHistory: [],
+        currentBidder: biddingOrder.first,
+        gameStatus: 'Bidding: ${_state.getName(biddingOrder.first)}',
+        clearCurrentHighBid: true,
+        clearWinningBid: true,
+        clearContractor: true,
+      ),
+    );
 
     // If first bidder is AI, trigger AI bidding
     if (biddingOrder.first != Position.south) {
@@ -226,9 +249,11 @@ class GameEngine extends ChangeNotifier {
     );
 
     if (!validation.isValid) {
-      _updateState(_state.copyWith(
-        gameStatus: validation.errorMessage ?? 'Invalid bid',
-      ));
+      _updateState(
+        _state.copyWith(
+          gameStatus: validation.errorMessage ?? 'Invalid bid',
+        ),
+      );
       return;
     }
 
@@ -250,9 +275,11 @@ class GameEngine extends ChangeNotifier {
     if (_state.currentBidder == null) return;
     if (_state.currentBidder == Position.south) return;
 
-    _updateState(_state.copyWith(
-      aiThinkingPosition: _state.currentBidder,
-    ));
+    _updateState(
+      _state.copyWith(
+        aiThinkingPosition: _state.currentBidder,
+      ),
+    );
 
     _aiTimer?.cancel();
     _aiTimer = Timer(const Duration(milliseconds: 800), () {
@@ -299,13 +326,15 @@ class GameEngine extends ChangeNotifier {
       }
     }
 
-    _updateState(_state.copyWith(
-      bidHistory: newHistory,
-      currentHighBid: newHighBid,
-      pendingBidEntry: entry,
-      gameStatus: entry.toString(),
-      clearAiThinkingPosition: true,
-    ));
+    _updateState(
+      _state.copyWith(
+        bidHistory: newHistory,
+        currentHighBid: newHighBid,
+        pendingBidEntry: entry,
+        gameStatus: entry.toString(),
+        clearAiThinkingPosition: true,
+      ),
+    );
   }
 
   void _checkAuctionComplete() {
@@ -314,12 +343,14 @@ class GameEngine extends ChangeNotifier {
     if (!biddingEngine.isComplete(_state.bidHistory)) {
       // More bids needed - advance to next bidder
       final nextBidder = biddingEngine.getNextBidder(_state.bidHistory);
-      _updateState(_state.copyWith(
-        currentBidder: nextBidder,
-        gameStatus: nextBidder != null
-            ? 'Bidding: ${_state.getName(nextBidder)}'
-            : 'Auction complete',
-      ));
+      _updateState(
+        _state.copyWith(
+          currentBidder: nextBidder,
+          gameStatus: nextBidder != null
+              ? 'Bidding: ${_state.getName(nextBidder)}'
+              : 'Auction complete',
+        ),
+      );
 
       if (nextBidder != null && nextBidder != Position.south) {
         _scheduleAIBid();
@@ -334,23 +365,27 @@ class GameEngine extends ChangeNotifier {
 
     switch (result.status) {
       case AuctionStatus.won:
-        _updateState(_state.copyWith(
-          isBiddingPhase: false,
-          winningBid: result.winningBid,
-          contractor: result.winner,
-          gameStatus: result.message,
-          clearCurrentBidder: true,
-        ));
+        _updateState(
+          _state.copyWith(
+            isBiddingPhase: false,
+            winningBid: result.winningBid,
+            contractor: result.winner,
+            gameStatus: result.message,
+            clearCurrentBidder: true,
+          ),
+        );
         // Start kitty exchange
         Future.delayed(const Duration(milliseconds: 1000), _startKittyExchange);
         break;
 
       case AuctionStatus.redeal:
-        _updateState(_state.copyWith(
-          isBiddingPhase: false,
-          gameStatus: result.message,
-          clearCurrentBidder: true,
-        ));
+        _updateState(
+          _state.copyWith(
+            isBiddingPhase: false,
+            gameStatus: result.message,
+            clearCurrentBidder: true,
+          ),
+        );
         // Redeal after delay
         Future.delayed(const Duration(milliseconds: 2000), dealCards);
         break;
@@ -369,37 +404,46 @@ class GameEngine extends ChangeNotifier {
     final contractor = _state.contractor;
     if (contractor == null) return;
 
-    print('\n========== KITTY EXCHANGE ==========');
-    print('Contractor: ${_state.getName(contractor)} (${contractor.name})');
-    print('Kitty cards: ${_state.kitty.map((c) => c.label).join(', ')}');
+    _debugLog('\n========== KITTY EXCHANGE ==========');
+    _debugLog('Contractor: ${_state.getName(contractor)} (${contractor.name})');
+    _debugLog('Kitty cards: ${_state.kitty.map((c) => c.label).join(', ')}');
 
-    _updateState(_state.copyWith(
-      currentPhase: GamePhase.kittyExchange,
-      gameStatus: '${_state.getName(contractor)} exchanges kitty',
-    ));
+    _updateState(
+      _state.copyWith(
+        currentPhase: GamePhase.kittyExchange,
+        gameStatus: '${_state.getName(contractor)} exchanges kitty',
+      ),
+    );
 
     if (contractor == Position.south) {
       // Player picks up kitty
-      print('Player hand before kitty: ${_state.playerHand.length} cards');
+      _debugLog('Player hand before kitty: ${_state.playerHand.length} cards');
       final kittyHasJoker = _state.kitty.any((c) => c.isJoker);
       final handHasJoker = _state.playerHand.any((c) => c.isJoker);
-      print('Hand has Joker: $handHasJoker, Kitty has Joker: $kittyHasJoker');
+      _debugLog(
+        'Hand has Joker: $handHasJoker, Kitty has Joker: $kittyHasJoker',
+      );
 
       final newHand = [..._state.playerHand, ..._state.kitty];
-      print('Player hand after kitty: ${newHand.length} cards');
+      _debugLog('Player hand after kitty: ${newHand.length} cards');
 
       // Sort hand with trump consideration (we know trump from winning bid)
       final trumpSuit = _getBidSuitAsTrumpSuit();
       final sortedHand = sortHandBySuit(newHand, trumpSuit: trumpSuit);
 
-      _updateState(_state.copyWith(
-        playerHand: sortedHand,
-        kitty: [],
-        gameStatus: 'Select 5 cards to discard',
-      ));
+      _updateState(
+        _state.copyWith(
+          playerHand: sortedHand,
+          kitty: [],
+          gameStatus: 'Select 5 cards to discard',
+        ),
+      );
     } else {
       // AI picks up kitty and discards
-      Future.delayed(const Duration(milliseconds: 1000), _executeAIKittyExchange);
+      Future.delayed(
+        const Duration(milliseconds: 1000),
+        _executeAIKittyExchange,
+      );
     }
   }
 
@@ -441,19 +485,21 @@ class GameEngine extends ChangeNotifier {
 
     // Must have exactly 5 cards selected
     if (_state.selectedCardIndices.length != 5) {
-      _updateState(_state.copyWith(
-        gameStatus: 'Must select exactly 5 cards to discard',
-      ));
+      _updateState(
+        _state.copyWith(
+          gameStatus: 'Must select exactly 5 cards to discard',
+        ),
+      );
       return;
     }
 
     // DEBUG: Log discarded cards
-    print('Player discarding ${_state.selectedCardIndices.length} cards:');
+    _debugLog('Player discarding ${_state.selectedCardIndices.length} cards:');
     final discardedCards = <PlayingCard>[];
     for (final index in _state.selectedCardIndices) {
       final card = _state.playerHand[index];
       discardedCards.add(card);
-      print('  - ${card.label}${card.isJoker ? ' ⭐' : ''}');
+      _debugLog('  - ${card.label}${card.isJoker ? ' ⭐' : ''}');
     }
 
     // Remove selected cards from hand
@@ -466,23 +512,27 @@ class GameEngine extends ChangeNotifier {
 
     // Should have exactly 10 cards remaining
     if (newHand.length != 10) {
-      _updateState(_state.copyWith(
-        gameStatus: 'Error: Wrong number of cards after discard',
-      ));
+      _updateState(
+        _state.copyWith(
+          gameStatus: 'Error: Wrong number of cards after discard',
+        ),
+      );
       return;
     }
 
-    print('Player hand after discard: ${newHand.length} cards');
+    _debugLog('Player hand after discard: ${newHand.length} cards');
     final hasJoker = newHand.any((c) => c.isJoker);
-    print('Hand has Joker: $hasJoker');
-    print('========================================\n');
+    _debugLog('Hand has Joker: $hasJoker');
+    _debugLog('========================================\n');
 
     // Update state and start play
-    _updateState(_state.copyWith(
-      playerHand: newHand,
-      clearSelectedCardIndices: true,
-      gameStatus: 'Discarded 5 cards',
-    ));
+    _updateState(
+      _state.copyWith(
+        playerHand: newHand,
+        clearSelectedCardIndices: true,
+        gameStatus: 'Discarded 5 cards',
+      ),
+    );
 
     _startPlay();
   }
@@ -509,10 +559,12 @@ class GameEngine extends ChangeNotifier {
         ? 'Click Discard to continue'
         : 'Select $remaining more card(s) to discard';
 
-    _updateState(_state.copyWith(
-      selectedCardIndices: selectedIndices,
-      gameStatus: statusMessage,
-    ));
+    _updateState(
+      _state.copyWith(
+        selectedCardIndices: selectedIndices,
+        gameStatus: statusMessage,
+      ),
+    );
   }
 
   Suit? _getBidSuitAsTrumpSuit() {
@@ -540,10 +592,10 @@ class GameEngine extends ChangeNotifier {
     final leader = _state.contractor!; // Contractor leads
 
     // DEBUG: Verify all hands before play starts
-    print('\n========== START PLAY PHASE ==========');
-    print('Contractor: ${_state.getName(leader)} (${leader.name})');
-    print('Trump: ${trumpSuit?.name ?? 'No Trump'}');
-    print('\nHand verification:');
+    _debugLog('\n========== START PLAY PHASE ==========');
+    _debugLog('Contractor: ${_state.getName(leader)} (${leader.name})');
+    _debugLog('Trump: ${trumpSuit?.name ?? 'No Trump'}');
+    _debugLog('\nHand verification:');
     var totalCards = 0;
     var jokerCount = 0;
     for (final position in Position.values) {
@@ -551,35 +603,40 @@ class GameEngine extends ChangeNotifier {
       final hasJoker = hand.any((c) => c.isJoker);
       jokerCount += hand.where((c) => c.isJoker).length;
       totalCards += hand.length;
-      print('${_state.getName(position)}: ${hand.length} cards${hasJoker ? ' ⭐ HAS JOKER' : ''}');
+      _debugLog(
+        '${_state.getName(position)}: ${hand.length} cards${hasJoker ? ' ⭐ HAS JOKER' : ''}',
+      );
     }
-    print('Total cards: $totalCards (should be 40)');
-    print('Total Jokers: $jokerCount (should be 1)');
+    _debugLog('Total cards: $totalCards (should be 40)');
+    _debugLog('Total Jokers: $jokerCount (should be 1)');
     if (totalCards != 40) {
-      print('⚠️ WARNING: Card count mismatch!');
+      _debugLog('⚠️ WARNING: Card count mismatch!');
     }
     if (jokerCount != 1) {
-      print('⚠️ WARNING: Joker count mismatch!');
+      _debugLog('⚠️ WARNING: Joker count mismatch!');
     }
-    print('========================================\n');
+    _debugLog('========================================\n');
 
     // Re-sort player's hand with trump consideration
     // (In case player wasn't contractor and hand still sorted by natural suits)
-    final sortedPlayerHand = sortHandBySuit(_state.playerHand, trumpSuit: trumpSuit);
+    final sortedPlayerHand =
+        sortHandBySuit(_state.playerHand, trumpSuit: trumpSuit);
 
-    _updateState(_state.copyWith(
-      currentPhase: GamePhase.play,
-      isPlayPhase: true,
-      trumpSuit: trumpSuit,
-      playerHand: sortedPlayerHand,
-      currentTrick: Trick(plays: [], leader: leader, trumpSuit: trumpSuit),
-      completedTricks: [],
-      tricksWonNS: 0,
-      tricksWonEW: 0,
-      currentPlayer: leader,
-      gameStatus: '${_state.getName(leader)} leads',
-      clearSelectedCardIndices: true,
-    ));
+    _updateState(
+      _state.copyWith(
+        currentPhase: GamePhase.play,
+        isPlayPhase: true,
+        trumpSuit: trumpSuit,
+        playerHand: sortedPlayerHand,
+        currentTrick: Trick(plays: [], leader: leader, trumpSuit: trumpSuit),
+        completedTricks: [],
+        tricksWonNS: 0,
+        tricksWonEW: 0,
+        currentPlayer: leader,
+        gameStatus: '${_state.getName(leader)} leads',
+        clearSelectedCardIndices: true,
+      ),
+    );
 
     // If AI leads, schedule AI play
     if (leader != Position.south) {
@@ -601,17 +658,21 @@ class GameEngine extends ChangeNotifier {
         _state.currentTrick!.isEmpty &&
         _state.trumpSuit == null) {
       // Store card index and show suit nomination dialog
-      _updateState(_state.copyWith(
-        showSuitNominationDialog: true,
-        pendingCardIndex: cardIndex,
-        gameStatus: 'Nominate a suit for the Joker',
-      ));
+      _updateState(
+        _state.copyWith(
+          showSuitNominationDialog: true,
+          pendingCardIndex: cardIndex,
+          gameStatus: 'Nominate a suit for the Joker',
+        ),
+      );
       return;
     }
 
     // DEBUG: Log card play
     final suitInfo = card.isJoker ? '⭐ JOKER' : '(${card.suit.name})';
-    print('[PLAY] ${_state.getName(Position.south)} plays ${card.label} $suitInfo (hand size before: ${_state.playerHand.length})');
+    _debugLog(
+      '[PLAY] ${_state.getName(Position.south)} plays ${card.label} $suitInfo (hand size before: ${_state.playerHand.length})',
+    );
 
     // Play the card
     final result = trickEngine.playCard(
@@ -631,14 +692,18 @@ class GameEngine extends ChangeNotifier {
     final newHand = List<PlayingCard>.from(_state.playerHand);
     newHand.removeAt(cardIndex);
 
-    print('[PLAY] ${_state.getName(Position.south)} hand size after: ${newHand.length}');
+    _debugLog(
+      '[PLAY] ${_state.getName(Position.south)} hand size after: ${newHand.length}',
+    );
 
-    _updateState(_state.copyWith(
-      playerHand: newHand,
-      currentTrick: result.trick,
-      gameStatus: result.message,
-      clearSelectedCardIndices: true,
-    ));
+    _updateState(
+      _state.copyWith(
+        playerHand: newHand,
+        currentTrick: result.trick,
+        gameStatus: result.message,
+        clearSelectedCardIndices: true,
+      ),
+    );
 
     if (result.status == TrickStatus.complete) {
       _handleTrickComplete(result.trick, result.winner!);
@@ -654,11 +719,13 @@ class GameEngine extends ChangeNotifier {
     if (cardIndex == null) return;
 
     // Close dialog and set nominated suit
-    _updateState(_state.copyWith(
-      showSuitNominationDialog: false,
-      nominatedSuit: nominatedSuit,
-      clearPendingCardIndex: true,
-    ));
+    _updateState(
+      _state.copyWith(
+        showSuitNominationDialog: false,
+        nominatedSuit: nominatedSuit,
+        clearPendingCardIndex: true,
+      ),
+    );
 
     // Now play the card with the nominated suit
     final card = _state.playerHand[cardIndex];
@@ -666,7 +733,9 @@ class GameEngine extends ChangeNotifier {
     final trickEngine = TrickEngine(trumpRules: trumpRules);
 
     // DEBUG: Log card play
-    print('[PLAY] ${_state.getName(Position.south)} plays ${card.label} ⭐ JOKER (nominated suit: ${nominatedSuit.name}) (hand size before: ${_state.playerHand.length})');
+    _debugLog(
+      '[PLAY] ${_state.getName(Position.south)} plays ${card.label} ⭐ JOKER (nominated suit: ${nominatedSuit.name}) (hand size before: ${_state.playerHand.length})',
+    );
 
     // Play the card with nominated suit
     final result = trickEngine.playCard(
@@ -686,14 +755,18 @@ class GameEngine extends ChangeNotifier {
     final newHand = List<PlayingCard>.from(_state.playerHand);
     newHand.removeAt(cardIndex);
 
-    print('[PLAY] ${_state.getName(Position.south)} hand size after: ${newHand.length}');
+    _debugLog(
+      '[PLAY] ${_state.getName(Position.south)} hand size after: ${newHand.length}',
+    );
 
-    _updateState(_state.copyWith(
-      playerHand: newHand,
-      currentTrick: result.trick,
-      gameStatus: result.message,
-      clearSelectedCardIndices: true,
-    ));
+    _updateState(
+      _state.copyWith(
+        playerHand: newHand,
+        currentTrick: result.trick,
+        gameStatus: result.message,
+        clearSelectedCardIndices: true,
+      ),
+    );
 
     if (result.status == TrickStatus.complete) {
       _handleTrickComplete(result.trick, result.winner!);
@@ -705,10 +778,12 @@ class GameEngine extends ChangeNotifier {
 
   void _advanceToNextPlayer() {
     final nextPlayer = _state.currentPlayer!.next;
-    _updateState(_state.copyWith(
-      currentPlayer: nextPlayer,
-      gameStatus: '${_state.getName(nextPlayer)}\'s turn',
-    ));
+    _updateState(
+      _state.copyWith(
+        currentPlayer: nextPlayer,
+        gameStatus: '${_state.getName(nextPlayer)}\'s turn',
+      ),
+    );
 
     if (nextPlayer != Position.south) {
       _scheduleAIPlay();
@@ -732,7 +807,9 @@ class GameEngine extends ChangeNotifier {
     final trickEngine = TrickEngine(trumpRules: trumpRules);
 
     // DEBUG: Log hand size before
-    print('[PLAY] ${_state.getName(position)} hand size before: ${hand.length}');
+    _debugLog(
+      '[PLAY] ${_state.getName(position)} hand size before: ${hand.length}',
+    );
 
     // AI chooses card
     final card = PlayAI.chooseCard(
@@ -746,7 +823,9 @@ class GameEngine extends ChangeNotifier {
 
     // DEBUG: Log card play
     final suitInfo = card.isJoker ? '⭐ JOKER' : '(${card.suit.name})';
-    print('[PLAY] ${_state.getName(position)} plays ${card.label} $suitInfo');
+    _debugLog(
+      '[PLAY] ${_state.getName(position)} plays ${card.label} $suitInfo',
+    );
 
     // Play the card
     final result = trickEngine.playCard(
@@ -760,7 +839,9 @@ class GameEngine extends ChangeNotifier {
     final newHand = List<PlayingCard>.from(hand);
     newHand.remove(card);
 
-    print('[PLAY] ${_state.getName(position)} hand size after: ${newHand.length}');
+    _debugLog(
+      '[PLAY] ${_state.getName(position)} hand size after: ${newHand.length}',
+    );
 
     switch (position) {
       case Position.north:
@@ -776,11 +857,13 @@ class GameEngine extends ChangeNotifier {
         break;
     }
 
-    _updateState(_state.copyWith(
-      currentTrick: result.trick,
-      gameStatus: result.message,
-      clearAiThinkingPosition: true,
-    ));
+    _updateState(
+      _state.copyWith(
+        currentTrick: result.trick,
+        gameStatus: result.message,
+        clearAiThinkingPosition: true,
+      ),
+    );
 
     if (result.status == TrickStatus.complete) {
       _handleTrickComplete(result.trick, result.winner!);
@@ -791,20 +874,27 @@ class GameEngine extends ChangeNotifier {
 
   void _handleTrickComplete(Trick trick, Position winner) {
     // DEBUG: Log trick completion
-    print('\n---------- TRICK ${_state.completedTricks.length + 1} COMPLETE ----------');
-    print('Winner: ${_state.getName(winner)} (${winner.name})');
+    _debugLog(
+      '\n---------- TRICK ${_state.completedTricks.length + 1} COMPLETE ----------',
+    );
+    _debugLog('Winner: ${_state.getName(winner)} (${winner.name})');
     final ledSuit = trick.ledSuit;
     if (ledSuit != null) {
-      print('Led suit: ${ledSuit.name}');
+      _debugLog('Led suit: ${ledSuit.name}');
     } else if (_state.nominatedSuit != null) {
-      print('Nominated suit: ${_state.nominatedSuit!.name} (joker led in no-trump)');
+      _debugLog(
+        'Nominated suit: ${_state.nominatedSuit!.name} (joker led in no-trump)',
+      );
     } else {
-      print('Led suit: joker in no-trump (no suit nominated)');
+      _debugLog('Led suit: joker in no-trump (no suit nominated)');
     }
-    print('Cards played:');
+    _debugLog('Cards played:');
     for (final play in trick.plays) {
-      final suitInfo = play.card.isJoker ? '⭐ JOKER' : '(${play.card.suit.name})';
-      print('  ${_state.getName(play.player)}: ${play.card.label} $suitInfo');
+      final suitInfo =
+          play.card.isJoker ? '⭐ JOKER' : '(${play.card.suit.name})';
+      _debugLog(
+        '  ${_state.getName(play.player)}: ${play.card.label} $suitInfo',
+      );
     }
 
     // Add trick to completed tricks
@@ -821,17 +911,19 @@ class GameEngine extends ChangeNotifier {
       newTricksEW++;
     }
 
-    print('Team ${winnerTeam.name} wins trick');
-    print('Score: N-S: $newTricksNS, E-W: $newTricksEW');
-    print('${_state.getName(winner)} will lead next trick');
-    print('----------------------------------------\n');
+    _debugLog('Team ${winnerTeam.name} wins trick');
+    _debugLog('Score: N-S: $newTricksNS, E-W: $newTricksEW');
+    _debugLog('${_state.getName(winner)} will lead next trick');
+    _debugLog('----------------------------------------\n');
 
-    _updateState(_state.copyWith(
-      completedTricks: newCompleted,
-      tricksWonNS: newTricksNS,
-      tricksWonEW: newTricksEW,
-      gameStatus: '${_state.getName(winner)} wins trick',
-    ));
+    _updateState(
+      _state.copyWith(
+        completedTricks: newCompleted,
+        tricksWonNS: newTricksNS,
+        tricksWonEW: newTricksEW,
+        gameStatus: '${_state.getName(winner)} wins trick',
+      ),
+    );
 
     // Check if all tricks played
     if (newCompleted.length == 10) {
@@ -850,7 +942,7 @@ class GameEngine extends ChangeNotifier {
 
   /// Verify that all 40 cards played are unique (no duplicates)
   void _verifyAllCardsUnique(List<Trick> completedTricks) {
-    print('\n========== VERIFYING ALL CARDS PLAYED ==========');
+    _debugLog('\n========== VERIFYING ALL CARDS PLAYED ==========');
 
     // Collect all cards played
     final allCardsPlayed = <PlayingCard>[];
@@ -860,7 +952,7 @@ class GameEngine extends ChangeNotifier {
       }
     }
 
-    print('Total cards played: ${allCardsPlayed.length} (should be 40)');
+    _debugLog('Total cards played: ${allCardsPlayed.length} (should be 40)');
 
     // Check for duplicates
     final cardCounts = <String, int>{};
@@ -876,40 +968,44 @@ class GameEngine extends ChangeNotifier {
     }
 
     if (duplicates.isEmpty) {
-      print('✅ All 40 cards are unique - no duplicates found!');
+      _debugLog('✅ All 40 cards are unique - no duplicates found!');
     } else {
-      print('⚠️⚠️⚠️ DUPLICATE CARDS FOUND! ⚠️⚠️⚠️');
+      _debugLog('⚠️⚠️⚠️ DUPLICATE CARDS FOUND! ⚠️⚠️⚠️');
       for (final entry in duplicates.entries) {
-        print('  ${entry.key} appeared ${entry.value} times');
+        _debugLog('  ${entry.key} appeared ${entry.value} times');
       }
 
       // Show which tricks had the duplicates
-      print('\nDetailed breakdown by trick:');
+      _debugLog('\nDetailed breakdown by trick:');
       for (int i = 0; i < completedTricks.length; i++) {
         final trick = completedTricks[i];
-        print('Trick ${i + 1}:');
+        _debugLog('Trick ${i + 1}:');
         for (final play in trick.plays) {
           final isDuplicate = duplicates.containsKey(play.card.label);
-          print('  ${_state.getName(play.player)}: ${play.card.label}${isDuplicate ? ' ⚠️ DUPLICATE' : ''}');
+          _debugLog(
+            '  ${_state.getName(play.player)}: ${play.card.label}${isDuplicate ? ' ⚠️ DUPLICATE' : ''}',
+          );
         }
       }
     }
 
-    print('================================================\n');
+    _debugLog('================================================\n');
   }
 
   void _startNextTrick(Position leader) {
-    _updateState(_state.copyWith(
-      currentTrick: Trick(
-        plays: [],
-        leader: leader,
-        trumpSuit: _state.trumpSuit,
+    _updateState(
+      _state.copyWith(
+        currentTrick: Trick(
+          plays: [],
+          leader: leader,
+          trumpSuit: _state.trumpSuit,
+        ),
+        currentPlayer: leader,
+        gameStatus: '${_state.getName(leader)} leads',
+        clearSelectedCardIndices: true,
+        clearNominatedSuit: true, // Clear nominated suit for new trick
       ),
-      currentPlayer: leader,
-      gameStatus: '${_state.getName(leader)} leads',
-      clearSelectedCardIndices: true,
-      clearNominatedSuit: true, // Clear nominated suit for new trick
-    ));
+    );
 
     if (leader != Position.south) {
       _scheduleAIPlay();
@@ -947,30 +1043,36 @@ class GameEngine extends ChangeNotifier {
       newScoreNS += handScore.opponentPoints;
     }
 
-    _updateState(_state.copyWith(
-      currentPhase: GamePhase.scoring,
-      isPlayPhase: false,
-      teamNorthSouthScore: newScoreNS,
-      teamEastWestScore: newScoreEW,
-      gameStatus: FiveHundredScorer.getHandResultDescription(
-        contract: _state.winningBid!,
-        score: handScore,
-        contractorTeam: contractorTeam,
+    _updateState(
+      _state.copyWith(
+        currentPhase: GamePhase.scoring,
+        isPlayPhase: false,
+        teamNorthSouthScore: newScoreNS,
+        teamEastWestScore: newScoreEW,
+        gameStatus: FiveHundredScorer.getHandResultDescription(
+          contract: _state.winningBid!,
+          score: handScore,
+          contractorTeam: contractorTeam,
+        ),
       ),
-    ));
+    );
 
     // Show score animation
     if (handScore.contractorPoints != 0) {
-      _updateState(_state.copyWith(
-        scoreAnimation: ScoreAnimation(
-          points: handScore.contractorPoints,
-          team: contractorTeam,
-          timestamp: DateTime.now().millisecondsSinceEpoch,
+      _updateState(
+        _state.copyWith(
+          scoreAnimation: ScoreAnimation(
+            points: handScore.contractorPoints,
+            team: contractorTeam,
+            timestamp: DateTime.now().millisecondsSinceEpoch,
+          ),
         ),
-      ));
+      );
 
       Timer(const Duration(seconds: 2), () {
-        _updateState(_state.copyWith(clearScoreAnimation: true));
+        _updateState(
+          _state.copyWith(clearScoreAnimation: true),
+        );
       });
     }
 
@@ -993,28 +1095,30 @@ class GameEngine extends ChangeNotifier {
   void startNextHand() {
     final nextDealer = getNextDealer(_state.dealer);
 
-    _updateState(_state.copyWith(
-      currentPhase: GamePhase.setup,
-      dealer: nextDealer,
-      playerHand: [],
-      partnerHand: [],
-      opponentEastHand: [],
-      opponentWestHand: [],
-      kitty: [],
-      bidHistory: [],
-      completedTricks: [],
-      tricksWonNS: 0,
-      tricksWonEW: 0,
-      gameStatus: 'Tap Deal for next hand',
-      clearCurrentBidder: true,
-      clearCurrentHighBid: true,
-      clearWinningBid: true,
-      clearContractor: true,
-      clearTrumpSuit: true,
-      clearCurrentTrick: true,
-      clearCurrentPlayer: true,
-      clearPendingBidEntry: true,
-    ));
+    _updateState(
+      _state.copyWith(
+        currentPhase: GamePhase.setup,
+        dealer: nextDealer,
+        playerHand: [],
+        partnerHand: [],
+        opponentEastHand: [],
+        opponentWestHand: [],
+        kitty: [],
+        bidHistory: [],
+        completedTricks: [],
+        tricksWonNS: 0,
+        tricksWonEW: 0,
+        gameStatus: 'Tap Deal for next hand',
+        clearCurrentBidder: true,
+        clearCurrentHighBid: true,
+        clearWinningBid: true,
+        clearContractor: true,
+        clearTrumpSuit: true,
+        clearCurrentTrick: true,
+        clearCurrentPlayer: true,
+        clearPendingBidEntry: true,
+      ),
+    );
   }
 
   void _handleGameOver(
@@ -1029,43 +1133,49 @@ class GameEngine extends ChangeNotifier {
 
     final playerWon = winningTeam == Team.northSouth;
 
-    _updateState(_state.copyWith(
-      currentPhase: GamePhase.gameOver,
-      showGameOverDialog: true,
-      gameOverData: GameOverData(
-        winningTeam: winningTeam,
-        finalScoreNS: finalScoreNS,
-        finalScoreEW: finalScoreEW,
-        status: status,
+    _updateState(
+      _state.copyWith(
+        currentPhase: GamePhase.gameOver,
+        showGameOverDialog: true,
+        gameOverData: GameOverData(
+          winningTeam: winningTeam,
+          finalScoreNS: finalScoreNS,
+          finalScoreEW: finalScoreEW,
+          status: status,
+          gamesWon: playerWon ? _state.gamesWon + 1 : _state.gamesWon,
+          gamesLost: playerWon ? _state.gamesLost : _state.gamesLost + 1,
+        ),
         gamesWon: playerWon ? _state.gamesWon + 1 : _state.gamesWon,
         gamesLost: playerWon ? _state.gamesLost : _state.gamesLost + 1,
+        gameStatus: FiveHundredScorer.getGameOverMessage(
+          status,
+          finalScoreNS,
+          finalScoreEW,
+        ),
       ),
-      gamesWon: playerWon ? _state.gamesWon + 1 : _state.gamesWon,
-      gamesLost: playerWon ? _state.gamesLost : _state.gamesLost + 1,
-      gameStatus: FiveHundredScorer.getGameOverMessage(
-        status,
-        finalScoreNS,
-        finalScoreEW,
-      ),
-    ));
+    );
   }
 
   /// Dismiss game over dialog and reset for new game
   void dismissGameOverDialog() {
-    _updateState(_state.copyWith(
-      showGameOverDialog: false,
-      clearGameOverData: true,
-    ));
+    _updateState(
+      _state.copyWith(
+        showGameOverDialog: false,
+        clearGameOverData: true,
+      ),
+    );
 
     // Reset to setup
-    _updateState(GameState(
-      gameStarted: true,
-      currentPhase: GamePhase.setup,
-      dealer: Position.west,
-      gamesWon: _state.gamesWon,
-      gamesLost: _state.gamesLost,
-      gameStatus: 'Tap Deal to start',
-    ));
+    _updateState(
+      GameState(
+        gameStarted: true,
+        currentPhase: GamePhase.setup,
+        dealer: Position.west,
+        gamesWon: _state.gamesWon,
+        gamesLost: _state.gamesLost,
+        gameStatus: 'Tap Deal to start',
+      ),
+    );
   }
 
   // ============================================================================

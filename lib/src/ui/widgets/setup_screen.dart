@@ -108,7 +108,8 @@ class _CutForDealDisplay extends StatelessWidget {
                     state.gameStatus,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                     textAlign: TextAlign.center,
                   ),
@@ -125,28 +126,26 @@ class _CutForDealDisplay extends StatelessWidget {
     // Layout: [North-Partner] [West-Right]
     //         [East-Left]     [South-You]
     final positions = [
-      Position.north,  // Partner (top)
-      Position.west,   // Opponent right
-      Position.east,   // Opponent left
-      Position.south   // Human player (bottom)
+      Position.north, // Partner (top)
+      Position.west, // Opponent right
+      Position.east, // Opponent left
+      Position.south, // Human player (bottom)
     ];
 
     return Wrap(
       spacing: 16,
       runSpacing: 16,
       alignment: WrapAlignment.center,
-      children: positions
-          .map((position) {
-            final card = state.cutCards[position];
-            final playerName = state.getName(position);
+      children: positions.map((position) {
+        final card = state.cutCards[position];
+        final playerName = state.getName(position);
 
-            return _CutCardItem(
-              playerName: playerName,
-              card: card,
-              isDealer: state.dealer == position,
-            );
-          })
-          .toList(),
+        return _CutCardItem(
+          playerName: playerName,
+          card: card,
+          isDealer: state.dealer == position,
+        );
+      }).toList(),
     );
   }
 }
