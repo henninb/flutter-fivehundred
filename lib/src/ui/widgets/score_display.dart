@@ -13,6 +13,8 @@ class ScoreDisplay extends StatelessWidget {
     this.trumpSuit,
     this.winningBid,
     this.dealer,
+    this.ledSuit,
+    this.currentWinner,
   });
 
   final int scoreNS;
@@ -22,9 +24,13 @@ class ScoreDisplay extends StatelessWidget {
   final Suit? trumpSuit;
   final Bid? winningBid;
   final Position? dealer;
+  final Suit? ledSuit;
+  final Position? currentWinner;
 
   @override
   Widget build(BuildContext context) {
+    final showTrickInfo = ledSuit != null || currentWinner != null;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -32,34 +38,50 @@ class ScoreDisplay extends StatelessWidget {
         border: Border.all(color: Theme.of(context).dividerColor),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildTeamScore(
-            context,
-            'N-S',
-            scoreNS,
-            tricksNS,
-            Team.northSouth,
+          // Top section: Scores and center info
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildTeamScore(
+                context,
+                'N-S',
+                scoreNS,
+                tricksNS,
+                Team.northSouth,
+              ),
+              Container(
+                width: 1,
+                height: 40,
+                color: Theme.of(context).dividerColor,
+              ),
+              _buildCenterInfo(context),
+              Container(
+                width: 1,
+                height: 40,
+                color: Theme.of(context).dividerColor,
+              ),
+              _buildTeamScore(
+                context,
+                'W-E',
+                scoreEW,
+                tricksEW,
+                Team.eastWest,
+              ),
+            ],
           ),
-          Container(
-            width: 1,
-            height: 40,
-            color: Theme.of(context).dividerColor,
-          ),
-          _buildCenterInfo(context),
-          Container(
-            width: 1,
-            height: 40,
-            color: Theme.of(context).dividerColor,
-          ),
-          _buildTeamScore(
-            context,
-            'W-E',
-            scoreEW,
-            tricksEW,
-            Team.eastWest,
-          ),
+          // Bottom section: Led suit and winning team
+          if (showTrickInfo) ...[
+            const SizedBox(height: 8),
+            Container(
+              height: 1,
+              color: Theme.of(context).dividerColor,
+            ),
+            const SizedBox(height: 8),
+            _buildTrickInfo(context),
+          ],
         ],
       ),
     );
@@ -131,25 +153,15 @@ class ScoreDisplay extends StatelessWidget {
           ),
           const SizedBox(height: 6),
         ],
-        // Trump info
-        if (trumpSuit != null) ...[
+        // Bid info
+        if (winningBid != null) ...[
           Text(
-            'Trump',
+            'Bid',
             style: Theme.of(context).textTheme.labelSmall,
           ),
           const SizedBox(height: 2),
           Text(
-            _suitLabel(trumpSuit!),
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-        ] else if (winningBid != null && winningBid!.suit == BidSuit.noTrump) ...[
-          Text(
-            'No Trump',
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'NT',
+            _bidLabel(winningBid!),
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -172,6 +184,84 @@ class ScoreDisplay extends StatelessWidget {
     }
   }
 
+  String _bidLabel(Bid bid) {
+    final tricks = bid.tricks;
+    if (bid.suit == BidSuit.noTrump) {
+      return '$tricks NT';
+    }
+
+    final suitSymbol = _suitLabelFromBidSuit(bid.suit);
+    return '$tricks $suitSymbol';
+  }
+
+  String _suitLabelFromBidSuit(BidSuit bidSuit) {
+    switch (bidSuit) {
+      case BidSuit.spades:
+        return '♠';
+      case BidSuit.hearts:
+        return '♥';
+      case BidSuit.diamonds:
+        return '♦';
+      case BidSuit.clubs:
+        return '♣';
+      case BidSuit.noTrump:
+        return 'NT';
+    }
+  }
+
+  Widget _buildTrickInfo(BuildContext context) {
+    final winningTeam = currentWinner?.team;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Led suit indicator
+        if (ledSuit != null) ...[
+          Text(
+            'Led:',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _suitLabel(ledSuit!),
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  height: 1.0,
+                ),
+          ),
+        ],
+        // Separator
+        if (ledSuit != null && winningTeam != null) ...[
+          const SizedBox(width: 16),
+          Container(
+            width: 1,
+            height: 20,
+            color: Theme.of(context).dividerColor,
+          ),
+          const SizedBox(width: 16),
+        ],
+        // Winning team indicator
+        if (winningTeam != null) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: _getTeamColor(context, winningTeam),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '${_teamLabel(winningTeam)} winning',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: _getTeamTextColor(context, winningTeam),
+                  ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   String _suitLabel(Suit suit) {
     switch (suit) {
       case Suit.spades:
@@ -182,6 +272,33 @@ class ScoreDisplay extends StatelessWidget {
         return '♦';
       case Suit.clubs:
         return '♣';
+    }
+  }
+
+  String _teamLabel(Team team) {
+    switch (team) {
+      case Team.northSouth:
+        return 'N-S';
+      case Team.eastWest:
+        return 'W-E';
+    }
+  }
+
+  Color _getTeamColor(BuildContext context, Team team) {
+    switch (team) {
+      case Team.northSouth:
+        return Theme.of(context).colorScheme.primaryContainer;
+      case Team.eastWest:
+        return Theme.of(context).colorScheme.tertiaryContainer;
+    }
+  }
+
+  Color _getTeamTextColor(BuildContext context, Team team) {
+    switch (team) {
+      case Team.northSouth:
+        return Theme.of(context).colorScheme.onPrimaryContainer;
+      case Team.eastWest:
+        return Theme.of(context).colorScheme.onTertiaryContainer;
     }
   }
 }

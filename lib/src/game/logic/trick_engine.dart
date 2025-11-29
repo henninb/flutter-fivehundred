@@ -131,16 +131,15 @@ class TrickEngine {
     }).toList();
   }
 
-  /// Determine the winner of a complete trick
-  Position _determineTrickWinner(Trick trick) {
-    if (!trick.isComplete) {
-      throw StateError('Cannot determine winner of incomplete trick');
-    }
+  /// Determine the current winner of a trick (works on incomplete tricks)
+  /// Returns null if trick is empty
+  Position? getCurrentWinner(Trick trick) {
+    if (trick.isEmpty) return null;
 
     final plays = trick.plays;
     final ledSuit = trick.ledSuit;
 
-    // Find the highest card
+    // Find the highest card so far
     CardPlay winningPlay = plays.first;
     PlayingCard winningCard = plays.first.card;
 
@@ -180,6 +179,16 @@ class TrickEngine {
     }
 
     return winningPlay.player;
+  }
+
+  /// Determine the winner of a complete trick
+  Position _determineTrickWinner(Trick trick) {
+    if (!trick.isComplete) {
+      throw StateError('Cannot determine winner of incomplete trick');
+    }
+
+    // Use the getCurrentWinner method since the logic is identical
+    return getCurrentWinner(trick)!;
   }
 
   /// Check if a player has any legal plays

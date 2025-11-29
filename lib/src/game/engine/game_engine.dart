@@ -34,6 +34,18 @@ class GameEngine extends ChangeNotifier {
 
   GameState get state => _state;
 
+  /// Get the current winner of the trick in progress
+  /// Returns null if no trick is in progress or trick is empty
+  Position? getCurrentTrickWinner() {
+    if (_state.currentTrick == null || _state.currentTrick!.isEmpty) {
+      return null;
+    }
+
+    final trumpRules = TrumpRules(trumpSuit: _state.trumpSuit);
+    final trickEngine = TrickEngine(trumpRules: trumpRules);
+    return trickEngine.getCurrentWinner(_state.currentTrick!);
+  }
+
   // Timers for AI delays
   Timer? _aiTimer;
 
