@@ -17,7 +17,7 @@ class FiveHundredApp extends StatefulWidget {
 }
 
 class _FiveHundredAppState extends State<FiveHundredApp> {
-  late CribbageTheme _currentTheme;
+  late FiveHundredTheme _currentTheme;
   late GameSettings _currentSettings;
   final _settingsRepository = SettingsRepository();
   bool _isInitialized = false;
@@ -40,7 +40,7 @@ class _FiveHundredAppState extends State<FiveHundredApp> {
     });
   }
 
-  CribbageTheme _getThemeFromSettings(GameSettings settings) {
+  FiveHundredTheme _getThemeFromSettings(GameSettings settings) {
     if (settings.selectedTheme != null) {
       // Use selected theme from settings
       return ThemeDefinitions.getThemeByType(settings.selectedTheme!);
@@ -50,7 +50,7 @@ class _FiveHundredAppState extends State<FiveHundredApp> {
     }
   }
 
-  void _handleThemeChange(CribbageTheme newTheme) {
+  void _handleThemeChange(FiveHundredTheme newTheme) {
     setState(() {
       _currentTheme = newTheme;
     });

@@ -1,10 +1,10 @@
 {
-  "name": "Cribbage",
-  "short_name": "Cribbage",
+  "name": "Five Hundred",
+  "short_name": "Five Hundred",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#00695c",
-  "description": "Play a full cribbage game built with Flutter",
+  "description": "Play a full five hundred game built with Flutter",
   "icons": []
 }

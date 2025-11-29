@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:cribbage/src/game/logic/avondale_table.dart';
-import 'package:cribbage/src/game/logic/five_hundred_scorer.dart';
-import 'package:cribbage/src/game/models/game_models.dart';
+import 'package:fivehundred/src/game/logic/avondale_table.dart';
+import 'package:fivehundred/src/game/logic/five_hundred_scorer.dart';
+import 'package:fivehundred/src/game/models/game_models.dart';
 
 void main() {
   group('FiveHundredScorer.scoreHand', () {

@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:cribbage/src/game/models/card.dart';
+import 'package:fivehundred/src/game/models/card.dart';
 
 void main() {
   group('PlayingCard encoding and values', () {

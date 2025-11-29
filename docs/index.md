@@ -1,6 +1,6 @@
-# Cribbage - Android Card Game
+# Five Hundred - Android Card Game
 
-A classic cribbage card game for Android with beautiful UI and comprehensive scoring.
+A classic five hundred card game for Android with beautiful UI and comprehensive scoring.
 
 ## Documentation
 
@@ -8,17 +8,17 @@ A classic cribbage card game for Android with beautiful UI and comprehensive sco
 
 ## About
 
-Cribbage is a free, open-source Android application that brings the classic card game to your mobile device.
+Five Hundred is a free, open-source Android application that brings the classic card game to your mobile device.
 
 **Features:**
-- Classic cribbage gameplay
+- Classic five hundred gameplay
 - Hand scoring
-- Pegging mechanics
-- Clean, modern UI built with Jetpack Compose
+- Bidding mechanics
+- Clean, modern UI built with Flutter
 
 ## Links
 
-- [GitHub Repository](https://github.com/henninb/android-cribbage)
+- [GitHub Repository](https://github.com/henninb/flutter-fivehundred)
 - [Download on Google Play](https://play.google.com/store/apps) (Coming soon)
 
 ## Contact

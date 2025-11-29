@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Theme types for the cribbage game based on seasons and US secular holidays
+/// Theme types for the five hundred game based on seasons and US secular holidays
 enum ThemeType {
   // Seasons (Astronomical)
   spring, // Mar 20 - Jun 20
@@ -54,13 +54,13 @@ class ThemeColors {
 }
 
 /// Complete theme configuration including colors and decorative elements
-class CribbageTheme {
+class FiveHundredTheme {
   final ThemeType type;
   final String name;
   final ThemeColors colors;
   final String icon; // Unicode emoji or symbol
 
-  const CribbageTheme({
+  const FiveHundredTheme({
     required this.type,
     required this.name,
     required this.colors,

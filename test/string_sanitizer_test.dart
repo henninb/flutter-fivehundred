@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cribbage/src/utils/string_sanitizer.dart';
+import 'package:fivehundred/src/utils/string_sanitizer.dart';
 
 void main() {
   group('StringSanitizer', () {

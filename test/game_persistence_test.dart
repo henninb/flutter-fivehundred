@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:cribbage/src/game/models/card.dart';
-import 'package:cribbage/src/services/game_persistence.dart';
+import 'package:fivehundred/src/game/models/card.dart';
+import 'package:fivehundred/src/services/game_persistence.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

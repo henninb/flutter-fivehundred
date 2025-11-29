@@ -304,7 +304,7 @@ class GameOverData {
   final int gamesLost;
 }
 
-/// Score animation (reused from cribbage)
+/// Score animation for showing points scored
 @immutable
 class ScoreAnimation {
   const ScoreAnimation({

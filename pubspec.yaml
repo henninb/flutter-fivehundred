@@ -1,6 +1,6 @@
-name: cribbage
+name: fivehundred
 version: 1.0.11+11
-description: Flutter implementation of the Cribbage game with full gameplay.
+description: Flutter implementation of the Five Hundred game with full gameplay.
 publish_to: 'none'
 
 environment:
@@ -32,6 +32,6 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/cribbage_icon.png"
+  image_path: "assets/fivehundred_icon.png"
   adaptive_icon_background: "#2E7D32"
-  adaptive_icon_foreground: "assets/cribbage_icon_foreground.png"
+  adaptive_icon_foreground: "assets/fivehundred_icon_foreground.png"

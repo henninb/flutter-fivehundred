@@ -5,7 +5,7 @@ import '../../models/theme_models.dart';
 class ThemeDefinitions {
   // ========== SEASONAL THEMES ==========
 
-  static const spring = CribbageTheme(
+  static const spring = FiveHundredTheme(
     type: ThemeType.spring,
     name: 'Spring Renewal',
     colors: ThemeColors(
@@ -24,7 +24,7 @@ class ThemeDefinitions {
     icon: '🌸', // Cherry blossom
   );
 
-  static const summer = CribbageTheme(
+  static const summer = FiveHundredTheme(
     type: ThemeType.summer,
     name: 'Summer Sun',
     colors: ThemeColors(
@@ -43,7 +43,7 @@ class ThemeDefinitions {
     icon: '☀️', // Sun
   );
 
-  static const fall = CribbageTheme(
+  static const fall = FiveHundredTheme(
     type: ThemeType.fall,
     name: 'Autumn Harvest',
     colors: ThemeColors(
@@ -62,7 +62,7 @@ class ThemeDefinitions {
     icon: '🍂', // Fallen leaf
   );
 
-  static const winter = CribbageTheme(
+  static const winter = FiveHundredTheme(
     type: ThemeType.winter,
     name: 'Winter Frost',
     colors: ThemeColors(
@@ -83,7 +83,7 @@ class ThemeDefinitions {
 
   // ========== HOLIDAY THEMES ==========
 
-  static const newYear = CribbageTheme(
+  static const newYear = FiveHundredTheme(
     type: ThemeType.newYear,
     name: 'New Year\'s Celebration',
     colors: ThemeColors(
@@ -102,7 +102,7 @@ class ThemeDefinitions {
     icon: '🎉', // Party popper
   );
 
-  static const mlkDay = CribbageTheme(
+  static const mlkDay = FiveHundredTheme(
     type: ThemeType.mlkDay,
     name: 'MLK Day - Equality',
     colors: ThemeColors(
@@ -121,7 +121,7 @@ class ThemeDefinitions {
     icon: '✊', // Raised fist
   );
 
-  static const valentinesDay = CribbageTheme(
+  static const valentinesDay = FiveHundredTheme(
     type: ThemeType.valentinesDay,
     name: 'Valentine\'s Hearts',
     colors: ThemeColors(
@@ -140,7 +140,7 @@ class ThemeDefinitions {
     icon: '💕', // Two hearts
   );
 
-  static const presidentsDay = CribbageTheme(
+  static const presidentsDay = FiveHundredTheme(
     type: ThemeType.presidentsDay,
     name: 'Presidents\' Day',
     colors: ThemeColors(
@@ -159,7 +159,7 @@ class ThemeDefinitions {
     icon: '🇺🇸', // US Flag
   );
 
-  static const piDay = CribbageTheme(
+  static const piDay = FiveHundredTheme(
     type: ThemeType.piDay,
     name: 'Pi Day 3.14159...',
     colors: ThemeColors(
@@ -178,7 +178,7 @@ class ThemeDefinitions {
     icon: '🥧', // Pie
   );
 
-  static const idesOfMarch = CribbageTheme(
+  static const idesOfMarch = FiveHundredTheme(
     type: ThemeType.idesOfMarch,
     name: 'Ides of March - Beware!',
     colors: ThemeColors(
@@ -197,7 +197,7 @@ class ThemeDefinitions {
     icon: '🗡️', // Dagger
   );
 
-  static const stPatricksDay = CribbageTheme(
+  static const stPatricksDay = FiveHundredTheme(
     type: ThemeType.stPatricksDay,
     name: 'St. Patrick\'s Green',
     colors: ThemeColors(
@@ -216,7 +216,7 @@ class ThemeDefinitions {
     icon: '☘️', // Shamrock
   );
 
-  static const memorialDay = CribbageTheme(
+  static const memorialDay = FiveHundredTheme(
     type: ThemeType.memorialDay,
     name: 'Memorial Day',
     colors: ThemeColors(
@@ -235,7 +235,7 @@ class ThemeDefinitions {
     icon: '🎖️', // Military medal
   );
 
-  static const independenceDay = CribbageTheme(
+  static const independenceDay = FiveHundredTheme(
     type: ThemeType.independenceDay,
     name: '4th of July',
     colors: ThemeColors(
@@ -254,7 +254,7 @@ class ThemeDefinitions {
     icon: '🎆', // Fireworks
   );
 
-  static const laborDay = CribbageTheme(
+  static const laborDay = FiveHundredTheme(
     type: ThemeType.laborDay,
     name: 'Labor Day',
     colors: ThemeColors(
@@ -273,7 +273,7 @@ class ThemeDefinitions {
     icon: '⚒️', // Hammer and pick
   );
 
-  static const halloween = CribbageTheme(
+  static const halloween = FiveHundredTheme(
     type: ThemeType.halloween,
     name: 'Halloween Spooky',
     colors: ThemeColors(
@@ -292,7 +292,7 @@ class ThemeDefinitions {
     icon: '🎃', // Jack-o-lantern
   );
 
-  static const thanksgiving = CribbageTheme(
+  static const thanksgiving = FiveHundredTheme(
     type: ThemeType.thanksgiving,
     name: 'Thanksgiving Harvest',
     colors: ThemeColors(
@@ -311,7 +311,7 @@ class ThemeDefinitions {
     icon: '🦃', // Turkey
   );
 
-  static const christmas = CribbageTheme(
+  static const christmas = FiveHundredTheme(
     type: ThemeType.christmas,
     name: 'Christmas Cheer',
     colors: ThemeColors(
@@ -331,7 +331,7 @@ class ThemeDefinitions {
   );
 
   /// Get all themes as a list
-  static List<CribbageTheme> get allThemes => [
+  static List<FiveHundredTheme> get allThemes => [
         spring,
         summer,
         fall,
@@ -352,7 +352,7 @@ class ThemeDefinitions {
       ];
 
   /// Get theme by type
-  static CribbageTheme getThemeByType(ThemeType type) {
+  static FiveHundredTheme getThemeByType(ThemeType type) {
     return allThemes.firstWhere((theme) => theme.type == type);
   }
 }

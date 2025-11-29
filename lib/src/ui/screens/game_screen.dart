@@ -25,8 +25,8 @@ class GameScreen500 extends StatelessWidget {
   });
 
   final GameEngine engine;
-  final CribbageTheme currentTheme;
-  final Function(CribbageTheme) onThemeChange;
+  final FiveHundredTheme currentTheme;
+  final Function(FiveHundredTheme) onThemeChange;
   final GameSettings currentSettings;
   final Function(GameSettings) onSettingsChange;
 
@@ -464,7 +464,7 @@ class GameScreen500 extends StatelessWidget {
   }
 }
 
-/// Game over modal with polished design (inspired by cribbage app)
+/// Game over modal with polished design
 class _GameOverModal extends StatelessWidget {
   final GameOverData data;
   final VoidCallback onDismiss;

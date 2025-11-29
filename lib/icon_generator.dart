@@ -6,7 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
-/// Modern Cribbage App Icon Generator
+/// Modern Five Hundred App Icon Generator
 /// Run this file to generate a 1024x1024 icon
 void main() {
   runApp(const IconGeneratorApp());
@@ -18,7 +18,7 @@ class IconGeneratorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Cribbage Icon Generator',
+      title: 'Five Hundred Icon Generator',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
@@ -53,7 +53,7 @@ class _IconGeneratorScreenState extends State<IconGeneratorScreen> {
 
       // Save to downloads or documents
       final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/cribbage_icon.png');
+      final file = File('${directory.path}/fivehundred_icon.png');
       await file.writeAsBytes(pngBytes);
 
       if (mounted) {
@@ -84,7 +84,7 @@ class _IconGeneratorScreenState extends State<IconGeneratorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cribbage Icon Generator'),
+        title: const Text('Five Hundred Icon Generator'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Center(
@@ -92,7 +92,7 @@ class _IconGeneratorScreenState extends State<IconGeneratorScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              'Modern Cribbage App Icon',
+              'Modern Five Hundred App Icon',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
@@ -104,7 +104,7 @@ class _IconGeneratorScreenState extends State<IconGeneratorScreen> {
                 border: Border.all(color: Colors.grey),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const CribbageIcon(),
+              child: const FiveHundredIcon(),
             ),
             const SizedBox(height: 40),
             // Full size icon (hidden)
@@ -114,7 +114,7 @@ class _IconGeneratorScreenState extends State<IconGeneratorScreen> {
                 child: const SizedBox(
                   width: 1024,
                   height: 1024,
-                  child: CribbageIcon(),
+                  child: FiveHundredIcon(),
                 ),
               ),
             ),
@@ -139,9 +139,9 @@ class _IconGeneratorScreenState extends State<IconGeneratorScreen> {
   }
 }
 
-/// Modern Cribbage Icon Design
-class CribbageIcon extends StatelessWidget {
-  const CribbageIcon({super.key});
+/// Modern Five Hundred Icon Design
+class FiveHundredIcon extends StatelessWidget {
+  const FiveHundredIcon({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -160,10 +160,10 @@ class CribbageIcon extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Cribbage board pegging holes pattern
+          // Five hundred board pegging holes pattern
           Positioned.fill(
             child: CustomPaint(
-              painter: CribbageBoardPainter(),
+              painter: FiveHundredBoardPainter(),
             ),
           ),
           // Playing cards
@@ -203,7 +203,7 @@ class CribbageIcon extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Cribbage pegs
+                // Five hundred pegs
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -278,8 +278,8 @@ class CribbageIcon extends StatelessWidget {
   }
 }
 
-/// Painter for cribbage board hole pattern
-class CribbageBoardPainter extends CustomPainter {
+/// Painter for five hundred board hole pattern
+class FiveHundredBoardPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()

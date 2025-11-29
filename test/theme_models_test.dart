@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:cribbage/src/models/theme_models.dart';
+import 'package:fivehundred/src/models/theme_models.dart';
 
 void main() {
-  group('CribbageTheme.toThemeData', () {
+  group('FiveHundredTheme.toThemeData', () {
     const brightColors = ThemeColors(
       primary: Colors.blue,
       primaryVariant: Colors.blueAccent,
@@ -34,7 +34,7 @@ void main() {
     );
 
     test('bright backgrounds select light theme with dark text', () {
-      const theme = CribbageTheme(
+      const theme = FiveHundredTheme(
         type: ThemeType.spring,
         name: 'Bright',
         colors: brightColors,
@@ -47,7 +47,7 @@ void main() {
     });
 
     test('dark backgrounds select dark theme with light text', () {
-      const theme = CribbageTheme(
+      const theme = FiveHundredTheme(
         type: ThemeType.winter,
         name: 'Dark',
         colors: darkColors,

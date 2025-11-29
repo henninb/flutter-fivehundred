@@ -1,9 +1,9 @@
 # Quick Setup Guide - Secure App Signing
 
 ## ✅ What You've Already Done
-- [x] Created keystore: `~/.android/keystores/cribbage-release-key.jks`
+- [x] Created keystore: `~/.android/keystores/fivehundred-release-key.jks`
 - [x] Paid $25 Play Store developer fee
-- [x] Created custom cribbage app icon
+- [x] Created custom five hundred app icon
 
 ## 🔐 Step 1: Set Up Secure Environment Variables
 
@@ -26,7 +26,7 @@ source ~/.config/fish/config.fish
 
 ### Verify Setup
 ```fish
-for var in CRIBBAGE_KEYSTORE_PATH CRIBBAGE_KEYSTORE_PASSWORD CRIBBAGE_KEY_ALIAS CRIBBAGE_KEY_PASSWORD
+for var in FIVEHUNDRED_KEYSTORE_PATH FIVEHUNDRED_KEYSTORE_PASSWORD FIVEHUNDRED_KEY_ALIAS FIVEHUNDRED_KEY_PASSWORD
     if set -q $var
         echo "✅ $var is set"
     else
@@ -47,10 +47,10 @@ android {
 
     signingConfigs {
         release {
-            storeFile file(System.getenv("CRIBBAGE_KEYSTORE_PATH") ?: "${System.properties['user.home']}/.android/keystores/cribbage-release-key.jks")
-            storePassword System.getenv("CRIBBAGE_KEYSTORE_PASSWORD")
-            keyAlias System.getenv("CRIBBAGE_KEY_ALIAS") ?: "cribbage-release"
-            keyPassword System.getenv("CRIBBAGE_KEY_PASSWORD")
+            storeFile file(System.getenv("FIVEHUNDRED_KEYSTORE_PATH") ?: "${System.properties['user.home']}/.android/keystores/fivehundred-release-key.jks")
+            storePassword System.getenv("FIVEHUNDRED_KEYSTORE_PASSWORD")
+            keyAlias System.getenv("FIVEHUNDRED_KEY_ALIAS") ?: "fivehundred-release"
+            keyPassword System.getenv("FIVEHUNDRED_KEY_PASSWORD")
         }
     }
 
@@ -101,7 +101,7 @@ app/build/outputs/bundle/release/app-release.aab
 - **Size**: 1024 x 500 pixels
 - **Format**: JPG or PNG
 - **Tool**: Use Canva, Photoshop, or GIMP
-- **Content**: Show your app icon + "Cribbage" text + tagline
+- **Content**: Show your app icon + "Five Hundred" text + tagline
 
 ### C. App Icon (Already Done!)
 - ✅ You have `app_icon_512.png` ready to upload
@@ -138,7 +138,7 @@ https://play.google.com/console
 ### B. Create App
 1. Click "Create app"
 2. Fill in:
-   - **App name**: Cribbage
+   - **App name**: Five Hundred
    - **Language**: English (United States)
    - **Type**: Game
    - **Free or paid**: Free
@@ -148,21 +148,21 @@ Navigate to **Store listing** and fill in:
 
 - **Short description** (80 chars):
   ```
-  Classic cribbage card game with beautiful UI and strategic gameplay
+  Classic five hundred card game with beautiful UI and strategic gameplay
   ```
 
 - **Full description** (up to 4000 chars):
   ```
-  Experience the classic card game of cribbage on your Android device!
+  Experience the classic card game of five hundred on your Android device!
 
   Features:
-  • Classic cribbage rules
+  • Classic five hundred rules
   • Beautiful, modern interface
   • Hand scoring with detailed breakdown
-  • Pegging mechanics
+  • Bidding mechanics
   • Clean, intuitive design
 
-  Perfect for both beginners learning cribbage and experienced players
+  Perfect for both beginners learning five hundred and experienced players
   looking for a digital version of this timeless card game.
   ```
 
@@ -176,7 +176,7 @@ Navigate to **Store listing** and fill in:
 ### D. Content Rating
 1. Navigate to **Content rating**
 2. Complete questionnaire
-3. For cribbage: Likely "Everyone" rating
+3. For five hundred: Likely "Everyone" rating
 
 ### E. Data Safety
 1. Navigate to **Data safety**
@@ -246,10 +246,10 @@ ls -l ~/.config/fish/secrets.fish
 ### "Build fails with signing error"
 ```fish
 # Verify keystore exists
-ls -l ~/.android/keystores/cribbage-release-key.jks
+ls -l ~/.android/keystores/fivehundred-release-key.jks
 
 # Check keystore info (will prompt for password)
-keytool -list -v -keystore ~/.android/keystores/cribbage-release-key.jks
+keytool -list -v -keystore ~/.android/keystores/fivehundred-release-key.jks
 ```
 
 ---
@@ -278,7 +278,7 @@ adb install app/build/outputs/apk/release/app-release.apk
 ./gradlew test
 
 # Check keystore
-keytool -list -v -keystore ~/.android/keystores/cribbage-release-key.jks
+keytool -list -v -keystore ~/.android/keystores/fivehundred-release-key.jks
 
 # Reload Fish config
 source ~/.config/fish/config.fish

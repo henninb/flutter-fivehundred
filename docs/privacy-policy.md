@@ -1,10 +1,10 @@
-# Privacy Policy for Cribbage
+# Privacy Policy for Five Hundred
 
 **Last updated: October 25, 2025**
 
 ## Introduction
 
-This privacy policy applies to the Cribbage app (hereby referred to as "Application") for mobile devices that was created by Brian Henning (hereby referred to as "Service Provider") as an Open Source service.
+This privacy policy applies to the Five Hundred app (hereby referred to as "Application") for mobile devices that was created by Brian Henning (hereby referred to as "Service Provider") as an Open Source service.
 
 ## Information Collection and Use
 
@@ -68,7 +68,7 @@ If you have any questions or concerns about this Privacy Policy or the Applicati
 
 **Brian Henning**
 - Email: [henninb@gmail.com]
-- GitHub: https://github.com/henninb/android-cribbage
+- GitHub: https://github.com/henninb/flutter-fivehundred
 
 ## Consent
 

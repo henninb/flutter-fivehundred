@@ -3,28 +3,28 @@
 import 'dart:io';
 import 'dart:math' as math;
 
-/// Simple SVG icon generator for Cribbage app
-/// Creates a modern, eye-catching icon with cribbage theme
+/// Simple SVG icon generator for Five Hundred app
+/// Creates a modern, eye-catching icon with five hundred theme
 void main() {
-  final iconSvg = generateCribbageIconSVG();
+  final iconSvg = generateFiveHundredIconSVG();
 
   // Save main icon
-  File('assets/cribbage_icon.svg').writeAsStringSync(iconSvg);
-  print('✓ Created assets/cribbage_icon.svg');
+  File('assets/fivehundred_icon.svg').writeAsStringSync(iconSvg);
+  print('✓ Created assets/fivehundred_icon.svg');
 
   // Save foreground (for adaptive icon)
-  final foregroundSvg = generateCribbageIconForegroundSVG();
-  File('assets/cribbage_icon_foreground.svg').writeAsStringSync(foregroundSvg);
-  print('✓ Created assets/cribbage_icon_foreground.svg');
+  final foregroundSvg = generateFiveHundredIconForegroundSVG();
+  File('assets/fivehundred_icon_foreground.svg').writeAsStringSync(foregroundSvg);
+  print('✓ Created assets/fivehundred_icon_foreground.svg');
 
   print('\nNext steps:');
   print('1. Convert SVG to PNG (1024x1024) using an online tool or ImageMagick:');
-  print('   - Visit https://svgtopng.com/ or use: convert -resize 1024x1024 assets/cribbage_icon.svg assets/cribbage_icon.png');
+  print('   - Visit https://svgtopng.com/ or use: convert -resize 1024x1024 assets/fivehundred_icon.svg assets/fivehundred_icon.png');
   print('2. Run: dart run flutter_launcher_icons');
   print('3. Rebuild your app to see the new icon!');
 }
 
-String generateCribbageIconSVG() {
+String generateFiveHundredIconSVG() {
   return '''<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -62,7 +62,7 @@ String generateCribbageIconSVG() {
     </g>
   </g>
 
-  <!-- Cribbage Pegs -->
+  <!-- Five Hundred Pegs -->
   <g transform="translate(512, 720)">
     ${_generatePeg(-90, '#C62828')}
     ${_generatePeg(-30, '#1565C0')}
@@ -75,7 +75,7 @@ String generateCribbageIconSVG() {
 </svg>''';
 }
 
-String generateCribbageIconForegroundSVG() {
+String generateFiveHundredIconForegroundSVG() {
   return '''<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -102,7 +102,7 @@ String generateCribbageIconForegroundSVG() {
     </g>
   </g>
 
-  <!-- Cribbage Pegs -->
+  <!-- Five Hundred Pegs -->
   <g transform="translate(512, 720)">
     ${_generatePeg(-90, '#C62828')}
     ${_generatePeg(-30, '#1565C0')}

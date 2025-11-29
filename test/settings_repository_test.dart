@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:cribbage/src/models/game_settings.dart';
-import 'package:cribbage/src/models/theme_models.dart';
-import 'package:cribbage/src/services/settings_repository.dart';
+import 'package:fivehundred/src/models/game_settings.dart';
+import 'package:fivehundred/src/models/theme_models.dart';
+import 'package:fivehundred/src/services/settings_repository.dart';
 
 void main() {
   group('SettingsRepository', () {

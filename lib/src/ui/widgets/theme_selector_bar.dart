@@ -4,8 +4,8 @@ import '../theme/theme_definitions.dart';
 
 /// Theme selector bar shown at top of screen
 class ThemeSelectorBar extends StatelessWidget {
-  final CribbageTheme currentTheme;
-  final Function(CribbageTheme) onThemeSelected;
+  final FiveHundredTheme currentTheme;
+  final Function(FiveHundredTheme) onThemeSelected;
   final VoidCallback? onSettingsClick;
 
   const ThemeSelectorBar({
@@ -73,7 +73,7 @@ class ThemeSelectorBar extends StatelessWidget {
 }
 
 class _ThemeButton extends StatelessWidget {
-  final CribbageTheme theme;
+  final FiveHundredTheme theme;
   final bool isSelected;
   final VoidCallback onTap;
 

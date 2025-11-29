@@ -1,6 +1,6 @@
-# cribbage
+# Five Hundred
 
-A new Flutter project.
+A Flutter implementation of the classic Five Hundred card game.
 
 ## Getting Started
 

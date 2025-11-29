@@ -4,7 +4,7 @@ import 'theme_definitions.dart';
 /// Determines the current theme based on today's date
 class ThemeCalculator {
   /// Get the current theme based on the given date
-  static CribbageTheme getCurrentTheme([DateTime? date]) {
+  static FiveHundredTheme getCurrentTheme([DateTime? date]) {
     final now = date ?? DateTime.now();
 
     // Check holidays first (they override seasons)
@@ -18,7 +18,7 @@ class ThemeCalculator {
   }
 
   /// Check if the date matches a holiday theme
-  static CribbageTheme? _getHolidayTheme(DateTime date) {
+  static FiveHundredTheme? _getHolidayTheme(DateTime date) {
     final month = date.month;
     final day = date.day;
 
@@ -91,7 +91,7 @@ class ThemeCalculator {
   }
 
   /// Get seasonal theme based on date
-  static CribbageTheme _getSeasonalTheme(DateTime date) {
+  static FiveHundredTheme _getSeasonalTheme(DateTime date) {
     final month = date.month;
     final day = date.day;
 

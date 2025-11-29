@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:cribbage/src/models/theme_models.dart';
-import 'package:cribbage/src/ui/theme/theme_calculator.dart';
+import 'package:fivehundred/src/models/theme_models.dart';
+import 'package:fivehundred/src/ui/theme/theme_calculator.dart';
 
 void main() {
   group('ThemeCalculator', () {

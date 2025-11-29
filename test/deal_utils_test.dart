@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:cribbage/src/game/logic/deal_utils.dart';
-import 'package:cribbage/src/game/models/card.dart';
-import 'package:cribbage/src/game/models/game_models.dart';
+import 'package:fivehundred/src/game/logic/deal_utils.dart';
+import 'package:fivehundred/src/game/models/card.dart';
+import 'package:fivehundred/src/game/models/game_models.dart';
 
 List<PlayingCard> _orderedDeck() {
   final cards = <PlayingCard>[

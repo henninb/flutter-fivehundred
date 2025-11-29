@@ -1,6 +1,6 @@
-# Cribbage (Flutter)
+# Five Hundred (Flutter)
 
-A full cribbage experience rebuilt in Flutter. The new implementation keeps the
+A full five hundred experience rebuilt in Flutter. The new implementation keeps the
 original gameplay loop—cut for dealer, deal, crib selection, pegging, and hand
 counting—while running with a single Dart codebase that is ready for Android,
 iOS, web, and desktop targets.
@@ -91,7 +91,7 @@ This feature is automatically disabled in release builds and is useful for:
 
 Two focused suites ensure the Dart port stays faithful to the Kotlin logic:
 
-- `test/cribbage_scorer_test.dart` – verifies detailed hand scoring and pegging
+- `test/five hundred_scorer_test.dart` – verifies detailed hand scoring and pegging
   windows.
 - `test/pegging_round_manager_test.dart` – validates resets for GO and 31.
 
