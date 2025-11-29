@@ -488,8 +488,27 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
         _selectedBid!.tricks == tricks &&
         _selectedBid!.suit == suit;
 
-    final backgroundColor =
-        !isValid ? Colors.white.withValues(alpha: 0.5) : Colors.white;
+    // Determine background color based on state
+    final Color backgroundColor;
+    if (isSelected) {
+      backgroundColor = Theme.of(context).colorScheme.primaryContainer;
+    } else {
+      // All non-selected suits get white background
+      backgroundColor = Colors.white;
+    }
+
+    // Determine suit icon color based on state
+    final Color suitColor;
+    if (!isValid) {
+      suitColor = Theme.of(context)
+          .colorScheme
+          .onSurfaceVariant
+          .withValues(alpha: 0.3);
+    } else if (isSelected) {
+      suitColor = _getSuitColor(suit, context);
+    } else {
+      suitColor = _getSuitColor(suit, context).withValues(alpha: 0.7);
+    }
 
     return GestureDetector(
       onTap: isValid
@@ -524,9 +543,9 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
                         ? Theme.of(context).colorScheme.secondary
                         : Theme.of(context)
                             .colorScheme
-                            .primary
-                            .withValues(alpha: 0.5),
-            width: isSelected ? 3 : (isAIRec ? 2 : 2),
+                            .outline
+                            .withValues(alpha: 0.3),
+            width: isSelected ? 3 : (isAIRec ? 2 : 1.5),
           ),
           boxShadow: isValid && (isSelected || isAIRec)
               ? [
@@ -545,14 +564,9 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
           child: Text(
             _suitSymbol(suit),
             style: TextStyle(
-              fontSize: 26,
-              color: !isValid
-                  ? Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant
-                      .withValues(alpha: 0.3)
-                  : _getSuitColor(suit, context),
-              fontWeight: FontWeight.bold,
+              fontSize: isSelected ? 28 : 26,
+              color: suitColor,
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
             ),
           ),
         ),
