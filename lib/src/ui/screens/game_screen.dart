@@ -263,6 +263,9 @@ class GameScreen500 extends StatelessWidget {
                         child: Text(
                           '${play.card.label}\n${play.player.name}',
                           textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                     ),)
@@ -310,6 +313,7 @@ class GameScreen500 extends StatelessWidget {
             spacing: 12,
             children: lastTrick.plays
                 .map((play) => Card(
+                      color: Colors.white,
                       elevation: 4,
                       child: Padding(
                         padding: const EdgeInsets.all(12),
@@ -319,6 +323,7 @@ class GameScreen500 extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
                         ),
                       ),
@@ -387,7 +392,7 @@ class GameScreen500 extends StatelessWidget {
       cardColor = Theme.of(context).colorScheme.errorContainer; // Highlight selected cards for discard
       textColor = Theme.of(context).colorScheme.onErrorContainer;
     } else {
-      // Default: white background for better contrast with black suits
+      // Default: white background for all cards
       cardColor = Colors.white;
       // Use suit-appropriate colors (red for hearts/diamonds, black for spades/clubs)
       textColor = _getCardColor(card.label);
