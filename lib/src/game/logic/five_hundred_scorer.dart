@@ -7,8 +7,9 @@ import 'avondale_table.dart';
 /// - Contractor makes bid: Score = bid value (from Avondale table)
 /// - Contractor fails bid: Score = -bid value (can go negative)
 /// - Opponents: Score 10 points per trick taken (always)
-/// - SLAM BONUS: If contractor wins all 10 tricks, score 250 points (instead of bid value)
-/// - No bonus for overtricks (unless it's a slam)
+/// - SLAM BONUS: If contractor wins all 10 tricks on a bid worth < 250, score is raised to 250
+///   (Bids worth 250+ keep their normal value even with a slam)
+/// - No bonus for overtricks (unless it's a slam with bid < 250)
 /// - Game ends when a team reaches 500+ (wins) or -500 (loses)
 class FiveHundredScorer {
   // Private constructor to prevent instantiation
@@ -34,8 +35,8 @@ class FiveHundredScorer {
     // Contractor scoring
     int contractorPoints;
     if (contractMade && isSlam) {
-      // SLAM BONUS: All 10 tricks = 250 points
-      contractorPoints = 250;
+      // SLAM BONUS: If bid value < 250, raise to 250. Otherwise use bid value.
+      contractorPoints = bidValue < 250 ? 250 : bidValue;
     } else if (contractMade) {
       // Normal made contract: bid value
       contractorPoints = bidValue;

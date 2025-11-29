@@ -23,16 +23,32 @@ void main() {
       expect(score.isSlam, isFalse);
     });
 
-    test('applies slam bonus when all tricks won', () {
+    test('applies slam bonus to raise score to 250 for bids < 250', () {
+      // 7 Spades is worth 140 points, should be raised to 250 on slam
+      const lowBid = Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.north);
       final score = FiveHundredScorer.scoreHand(
-        contract: contract,
+        contract: lowBid,
         contractorTricks: 10,
         opponentTricks: 0,
       );
 
       expect(score.contractMade, isTrue);
       expect(score.isSlam, isTrue);
-      expect(score.contractorPoints, 250);
+      expect(score.contractorPoints, 250); // Raised from 140
+      expect(score.tricksOver, 3); // 10 - 7 = 3 overtricks
+    });
+
+    test('keeps normal bid value for slams on bids >= 250', () {
+      // 8 Hearts is worth 300 points, should stay 300 on slam
+      final score = FiveHundredScorer.scoreHand(
+        contract: contract, // 8 Hearts = 300
+        contractorTricks: 10,
+        opponentTricks: 0,
+      );
+
+      expect(score.contractMade, isTrue);
+      expect(score.isSlam, isTrue);
+      expect(score.contractorPoints, 300); // No change, already >= 250
       expect(score.tricksOver, 2);
     });
 

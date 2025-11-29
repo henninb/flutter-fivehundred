@@ -11,6 +11,7 @@ import '../logic/trick_engine.dart';
 import '../logic/play_ai.dart';
 import '../logic/trump_rules.dart';
 import '../logic/five_hundred_scorer.dart';
+import '../logic/claim_analyzer.dart';
 import '../../services/game_persistence.dart';
 import 'game_state.dart';
 
@@ -799,6 +800,203 @@ class GameEngine extends ChangeNotifier {
 
     if (nextPlayer != Position.south) {
       _scheduleAIPlay();
+    }
+  }
+
+  /// Check if the player can claim all remaining tricks
+  bool canClaimRemainingTricks() {
+    // Only during play phase
+    if (!_state.isPlayPhase) return false;
+
+    // Only for human player
+    if (_state.playerHand.isEmpty) return false;
+
+    // Must have at least one card
+    if (_state.playerHand.isEmpty) return false;
+
+    final trumpRules = TrumpRules(trumpSuit: _state.trumpSuit);
+    final analyzer = ClaimAnalyzer(
+      playerHand: _state.playerHand,
+      trumpRules: trumpRules,
+      completedTricks: _state.completedTricks,
+      currentTrick: _state.currentTrick,
+    );
+
+    return analyzer.canClaimRemainingTricks();
+  }
+
+  /// Claim remaining tricks - auto-play through them with animations
+  Future<void> claimRemainingTricks() async {
+    if (!canClaimRemainingTricks()) {
+      _updateState(
+        _state.copyWith(
+          gameStatus: 'Cannot claim - not guaranteed to win all tricks',
+        ),
+      );
+      return;
+    }
+
+    _debugLog('\n========== CLAIMING REMAINING TRICKS ==========');
+    _debugLog('Player claims they will win all remaining tricks');
+    _debugLog('Cards in hand: ${_state.playerHand.length}');
+
+    // Auto-play through remaining tricks
+    while (_state.playerHand.isNotEmpty ||
+           _state.partnerHand.isNotEmpty ||
+           _state.opponentEastHand.isNotEmpty ||
+           _state.opponentWestHand.isNotEmpty) {
+
+      // If current trick is not complete, finish it
+      if (_state.currentTrick != null && !_state.currentTrick!.isComplete) {
+        await _autoPlayCurrentTrick();
+      } else if (_state.completedTricks.length < 10) {
+        // Start a new trick
+        // Determine who leads (winner of last trick or current leader)
+        Position leader;
+        if (_state.completedTricks.isEmpty) {
+          leader = _state.currentPlayer ?? _state.contractor!;
+        } else {
+          // Get winner of last trick
+          final trumpRules = TrumpRules(trumpSuit: _state.trumpSuit);
+          final trickEngine = TrickEngine(trumpRules: trumpRules);
+          leader = trickEngine.getCurrentWinner(_state.completedTricks.last)!;
+        }
+
+        _updateState(
+          _state.copyWith(
+            currentTrick: Trick(
+              plays: [],
+              leader: leader,
+              trumpSuit: _state.trumpSuit,
+            ),
+            currentPlayer: leader,
+          ),
+        );
+
+        await _autoPlayCurrentTrick();
+      } else {
+        break;
+      }
+    }
+
+    _debugLog('Claim complete - all tricks played');
+    _debugLog('===============================================\n');
+  }
+
+  /// Auto-play the current trick (called during claim)
+  Future<void> _autoPlayCurrentTrick() async {
+    while (_state.currentTrick != null && !_state.currentTrick!.isComplete) {
+      final position = _state.currentPlayer!;
+      final hand = _state.getHand(position);
+
+      if (hand.isEmpty) break;
+
+      final trumpRules = TrumpRules(trumpSuit: _state.trumpSuit);
+      final trickEngine = TrickEngine(trumpRules: trumpRules);
+
+      // Choose card to play
+      final card = PlayAI.chooseCard(
+        hand: hand,
+        currentTrick: _state.currentTrick!,
+        trumpRules: trumpRules,
+        position: position,
+        partner: position.partner,
+        trickEngine: trickEngine,
+      );
+
+      // Play the card
+      final result = trickEngine.playCard(
+        currentTrick: _state.currentTrick!,
+        card: card,
+        player: position,
+        playerHand: hand,
+      );
+
+      // Remove card from hand
+      final newHand = List<PlayingCard>.from(hand);
+      newHand.remove(card);
+
+      // Update the appropriate hand
+      switch (position) {
+        case Position.north:
+          _updateState(_state.copyWith(partnerHand: newHand));
+          break;
+        case Position.east:
+          _updateState(_state.copyWith(opponentEastHand: newHand));
+          break;
+        case Position.west:
+          _updateState(_state.copyWith(opponentWestHand: newHand));
+          break;
+        case Position.south:
+          _updateState(_state.copyWith(playerHand: newHand));
+          break;
+      }
+
+      _updateState(
+        _state.copyWith(
+          currentTrick: result.trick,
+          gameStatus: 'Auto-playing: ${_state.getName(position)} plays ${card.label}',
+        ),
+      );
+
+      // Brief delay for animation
+      await Future.delayed(const Duration(milliseconds: 400));
+
+      if (result.status == TrickStatus.complete) {
+        // Trick complete - update state
+        final winner = result.winner!;
+        final newCompleted = [..._state.completedTricks, result.trick];
+
+        final winnerTeam = winner.team;
+        var newTricksNS = _state.tricksWonNS;
+        var newTricksEW = _state.tricksWonEW;
+
+        if (winnerTeam == Team.northSouth) {
+          newTricksNS++;
+        } else {
+          newTricksEW++;
+        }
+
+        _updateState(
+          _state.copyWith(
+            completedTricks: newCompleted,
+            tricksWonNS: newTricksNS,
+            tricksWonEW: newTricksEW,
+            gameStatus: '${_state.getName(winner)} wins trick',
+          ),
+        );
+
+        // Delay before next trick
+        await Future.delayed(const Duration(milliseconds: 600));
+
+        // Check if all tricks complete
+        if (newCompleted.length == 10) {
+          _verifyAllCardsUnique(newCompleted);
+          await Future.delayed(const Duration(milliseconds: 1000));
+          _scoreHand();
+          return;
+        }
+
+        // Start next trick with winner leading
+        _updateState(
+          _state.copyWith(
+            currentTrick: Trick(
+              plays: [],
+              leader: winner,
+              trumpSuit: _state.trumpSuit,
+            ),
+            currentPlayer: winner,
+            clearNominatedSuit: true,
+          ),
+        );
+      } else {
+        // Advance to next player
+        _updateState(
+          _state.copyWith(
+            currentPlayer: _state.currentPlayer!.next,
+          ),
+        );
+      }
     }
   }
 

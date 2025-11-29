@@ -6,7 +6,7 @@ import '../../game/logic/bidding_engine.dart';
 import '../../models/theme_models.dart';
 import '../../models/game_settings.dart';
 import '../widgets/action_bar.dart';
-import '../widgets/bidding_panel.dart';
+import '../widgets/bidding_carousel.dart';
 import '../widgets/score_display.dart';
 import '../widgets/welcome_screen.dart';
 import '../widgets/setup_screen.dart';
@@ -112,41 +112,43 @@ class GameScreen500 extends StatelessWidget {
               // Show hand during bidding when it's player's turn
               else if (state.currentPhase == GamePhase.bidding &&
                   state.currentBidder == Position.south)
-                // Show just the hand during bidding
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Your Hand:',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: List.generate(
-                          state.playerHand.length,
-                          (index) {
-                            final card = state.playerHand[index];
-                            return Card(
-                              color: Colors.white,
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Text(
-                                  card.label,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: _getCardColor(card.label),
+                // Show just the hand during bidding - make scrollable
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Your Hand:',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children: List.generate(
+                            state.playerHand.length,
+                            (index) {
+                              final card = state.playerHand[index];
+                              return Card(
+                                color: Colors.white,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Text(
+                                    card.label,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: _getCardColor(card.label),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 )
               else
@@ -158,10 +160,9 @@ class GameScreen500 extends StatelessWidget {
                 ),
               // Show bidding panel when it's player's turn to bid
               if (state.currentPhase == GamePhase.bidding &&
-                  state.currentBidder == Position.south) ...[
-                const Spacer(),
-                _buildBiddingPanel(state),
-              ] else
+                  state.currentBidder == Position.south)
+                _buildBiddingPanel(state)
+              else
                 // Action bar for other phases
                 ActionBar500(
                   state: state,
@@ -170,6 +171,8 @@ class GameScreen500 extends StatelessWidget {
                   onDealCards: () => engine.dealCards(),
                   onConfirmKitty: () => engine.confirmKittyExchange(),
                   onNextHand: () => engine.startNextHand(),
+                  canClaimTricks: engine.canClaimRemainingTricks(),
+                  onClaimTricks: () => engine.claimRemainingTricks(),
                 ),
               ],
             ),
@@ -435,7 +438,7 @@ class GameScreen500 extends StatelessWidget {
     final biddingEngine = BiddingEngine(dealer: state.dealer);
     final canInkle = biddingEngine.canInkle(Position.south, state.bidHistory);
 
-    return BiddingPanel(
+    return BiddingCarousel(
       currentHighBid: state.currentHighBid,
       canInkle: canInkle,
       playerHand: state.playerHand,

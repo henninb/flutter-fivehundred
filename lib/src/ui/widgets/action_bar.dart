@@ -12,6 +12,8 @@ class ActionBar500 extends StatelessWidget {
     required this.onDealCards,
     required this.onConfirmKitty,
     required this.onNextHand,
+    this.canClaimTricks = false,
+    this.onClaimTricks,
   });
 
   final GameState state;
@@ -20,6 +22,8 @@ class ActionBar500 extends StatelessWidget {
   final VoidCallback onDealCards;
   final VoidCallback onConfirmKitty;
   final VoidCallback onNextHand;
+  final bool canClaimTricks;
+  final VoidCallback? onClaimTricks;
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +116,23 @@ class ActionBar500 extends StatelessWidget {
               canDiscard
                   ? 'Discard 5 Cards'
                   : 'Select ${5 - selectedCount} more',
+            ),
+          ),
+        ),
+      );
+      return buttons;
+    }
+
+    // Play phase - show claim button if player can claim all remaining tricks
+    if (state.currentPhase == GamePhase.play && canClaimTricks && onClaimTricks != null) {
+      buttons.add(
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: onClaimTricks,
+            icon: const Icon(Icons.fast_forward),
+            label: const Text('Claim Remaining Tricks'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.green.shade700,
             ),
           ),
         ),

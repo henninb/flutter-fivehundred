@@ -6,8 +6,9 @@ import 'trump_rules.dart';
 /// Basic AI for bidding in 500
 ///
 /// Strategy:
-/// - Evaluate hand strength in each suit
-/// - Count likely tricks based on high cards and trump length
+/// - Evaluate hand strength in each suit using advanced heuristics
+/// - Count likely tricks based on high cards, trump length, and distribution
+/// - Consider trump quality, side suit strength, and hand shape
 /// - Bid conservatively (won't overbid)
 /// - Considers position but doesn't model partner's hand
 class BiddingAI {
@@ -22,11 +23,11 @@ class BiddingAI {
   }) {
     // Evaluate hand for each suit
     final evaluations = {
-      BidSuit.spades: _evaluateSuit(hand, Suit.spades),
-      BidSuit.clubs: _evaluateSuit(hand, Suit.clubs),
-      BidSuit.diamonds: _evaluateSuit(hand, Suit.diamonds),
-      BidSuit.hearts: _evaluateSuit(hand, Suit.hearts),
-      BidSuit.noTrump: _evaluateNoTrump(hand),
+      BidSuit.spades: evaluateSuit(hand, Suit.spades),
+      BidSuit.clubs: evaluateSuit(hand, Suit.clubs),
+      BidSuit.diamonds: evaluateSuit(hand, Suit.diamonds),
+      BidSuit.hearts: evaluateSuit(hand, Suit.hearts),
+      BidSuit.noTrump: evaluateNoTrump(hand),
     };
 
     // Find best suit
@@ -135,60 +136,137 @@ class BiddingAI {
   }
 
   /// Evaluate hand strength for a specific trump suit
-  static SuitEvaluation _evaluateSuit(List<PlayingCard> hand, Suit trumpSuit) {
+  static SuitEvaluation evaluateSuit(List<PlayingCard> hand, Suit trumpSuit) {
     final trumpRules = TrumpRules(trumpSuit: trumpSuit);
     final trumpCards = trumpRules.getTrumpCards(hand);
     final nonTrumpCards = trumpRules.getNonTrumpCards(hand);
 
     double trickCount = 0;
 
-    // Count trump tricks
-    // Joker = 1 trick
-    if (trumpCards.any((c) => c.isJoker)) {
-      trickCount += 1.0;
+    // === TRUMP EVALUATION ===
+
+    // Count top trump honors
+    final hasJoker = trumpCards.any((c) => c.isJoker);
+    final hasRightBower = trumpCards.any((c) => trumpRules.isRightBower(c));
+    final hasLeftBower = trumpCards.any((c) => trumpRules.isLeftBower(c));
+
+    // Individual trump honors (base value)
+    if (hasJoker) trickCount += 1.0;
+    if (hasRightBower) trickCount += 0.95;
+    if (hasLeftBower) trickCount += 0.85;
+
+    // Trump honor combination bonuses (these combinations are very powerful)
+    if (hasJoker && hasRightBower) {
+      trickCount += 0.3; // Top two trumps guarantee 2 tricks
+    }
+    if (hasJoker && hasRightBower && hasLeftBower) {
+      trickCount += 0.4; // Top three trumps is devastating
     }
 
-    // Right bower = 0.9 tricks
-    if (trumpCards.any((c) => trumpRules.isRightBower(c))) {
-      trickCount += 0.9;
+    // Trump ace/king/queen (adjusted for context)
+    final trumpAces = trumpCards.where((c) => c.rank == Rank.ace && !trumpRules.isRightBower(c) && !trumpRules.isLeftBower(c)).length;
+    final trumpKings = trumpCards.where((c) => c.rank == Rank.king && !trumpRules.isRightBower(c) && !trumpRules.isLeftBower(c)).length;
+    final trumpQueens = trumpCards.where((c) => c.rank == Rank.queen && !trumpRules.isRightBower(c) && !trumpRules.isLeftBower(c)).length;
+
+    // Trump ace value depends on whether we have top honors
+    if (trumpAces > 0) {
+      if (hasJoker || hasRightBower || hasLeftBower) {
+        trickCount += trumpAces * 0.7; // Protected by higher trumps
+      } else {
+        trickCount += trumpAces * 0.5; // Might get trumped
+      }
     }
 
-    // Left bower = 0.8 tricks
-    if (trumpCards.any((c) => trumpRules.isLeftBower(c))) {
-      trickCount += 0.8;
+    // Trump king/queen are less valuable without support
+    if (trumpKings > 0) {
+      if ((hasJoker ? 1 : 0) + (hasRightBower ? 1 : 0) + (hasLeftBower ? 1 : 0) + trumpAces >= 2) {
+        trickCount += trumpKings * 0.4; // Well protected
+      } else {
+        trickCount += trumpKings * 0.2;
+      }
     }
 
-    // Trump ace/king/queen
-    final trumpAces = trumpCards.where((c) => c.rank == Rank.ace).length;
-    final trumpKings = trumpCards.where((c) => c.rank == Rank.king).length;
-    final trumpQueens = trumpCards.where((c) => c.rank == Rank.queen).length;
+    trickCount += trumpQueens * 0.15; // Queens rarely take tricks
 
-    trickCount += trumpAces * 0.8;
-    trickCount += trumpKings * 0.5;
-    trickCount += trumpQueens * 0.3;
-
-    // Trump length bonus (more trumps = more control)
-    if (trumpCards.length >= 5) {
-      trickCount += 0.5;
-    } else if (trumpCards.length >= 7) {
-      trickCount += 1.0;
+    // Trump length evaluation (FIXED LOGIC)
+    final trumpLength = trumpCards.length;
+    if (trumpLength >= 7) {
+      trickCount += 1.2; // Extremely long trumps
+    } else if (trumpLength >= 6) {
+      trickCount += 0.8; // Very long trumps
+    } else if (trumpLength >= 5) {
+      trickCount += 0.5; // Good trump length
+    } else if (trumpLength >= 4) {
+      trickCount += 0.2; // Adequate trumps
+    } else if (trumpLength <= 2) {
+      trickCount -= 0.3; // Risky with short trumps
     }
 
-    // Side suit winners (aces and kings in non-trump suits)
+    // === SIDE SUIT EVALUATION ===
+
+    // Analyze each side suit
+    final suitDistribution = <Suit, List<PlayingCard>>{};
     for (final suit in Suit.values) {
-      if (suit == trumpSuit) continue;
+      suitDistribution[suit] = nonTrumpCards.where((c) => c.suit == suit).toList();
+    }
 
-      final suitCards = nonTrumpCards.where((c) => c.suit == suit).toList();
+    // Count voids and singletons (valuable with trumps)
+    final voids = suitDistribution.values.where((cards) => cards.isEmpty).length;
+    final singletons = suitDistribution.values.where((cards) => cards.length == 1).length;
+
+    if (trumpLength >= 4) {
+      trickCount += voids * 0.8; // Can ruff multiple times
+      trickCount += singletons * 0.4; // Can ruff after one round
+    }
+
+    // Evaluate side suit winners
+    for (final entry in suitDistribution.entries) {
+      final suitCards = entry.value;
+
       if (suitCards.isEmpty) continue;
 
-      // Ace is likely a winner
-      if (suitCards.any((c) => c.rank == Rank.ace)) {
-        trickCount += 0.7;
+      final hasAce = suitCards.any((c) => c.rank == Rank.ace);
+      final hasKing = suitCards.any((c) => c.rank == Rank.king);
+      final hasQueen = suitCards.any((c) => c.rank == Rank.queen);
+      final suitLength = suitCards.length;
+
+      // Ace evaluation
+      if (hasAce) {
+        if (suitLength >= 3) {
+          trickCount += 0.85; // Likely winner with length
+        } else if (suitLength == 2) {
+          trickCount += 0.75; // Probably a winner
+        } else {
+          trickCount += 0.6; // Singleton ace, might get trumped
+        }
       }
 
-      // King might be a winner
-      if (suitCards.any((c) => c.rank == Rank.king)) {
-        trickCount += 0.3;
+      // King evaluation (more nuanced)
+      if (hasKing) {
+        if (hasAce && suitLength >= 3) {
+          trickCount += 0.7; // AK combination in long suit
+        } else if (hasAce) {
+          trickCount += 0.5; // AK in short suit
+        } else if (suitLength >= 4) {
+          trickCount += 0.4; // King in long suit without ace
+        } else {
+          trickCount += 0.15; // Unprotected king
+        }
+      }
+
+      // Queen evaluation (mostly useful in sequences)
+      if (hasQueen) {
+        if (hasAce && hasKing && suitLength >= 3) {
+          trickCount += 0.5; // AKQ sequence
+        } else if ((hasAce || hasKing) && suitLength >= 4) {
+          trickCount += 0.25; // Might promote in long suit
+        }
+        // Otherwise queen is unlikely to take a trick
+      }
+
+      // Long suit potential (small cards in long suits can become winners)
+      if (suitLength >= 5 && (hasAce || hasKing)) {
+        trickCount += 0.3; // Long suit establishment potential
       }
     }
 
@@ -196,14 +274,14 @@ class BiddingAI {
       suit: trumpSuit,
       trumpCount: trumpCards.length,
       estimatedTricks: trickCount,
-      hasJoker: trumpCards.any((c) => c.isJoker),
-      hasRightBower: trumpCards.any((c) => trumpRules.isRightBower(c)),
-      hasLeftBower: trumpCards.any((c) => trumpRules.isLeftBower(c)),
+      hasJoker: hasJoker,
+      hasRightBower: hasRightBower,
+      hasLeftBower: hasLeftBower,
     );
   }
 
   /// Evaluate hand for no-trump
-  static SuitEvaluation _evaluateNoTrump(List<PlayingCard> hand) {
+  static SuitEvaluation evaluateNoTrump(List<PlayingCard> hand) {
     double trickCount = 0;
 
     // Joker = 1 trick (always highest)
@@ -213,26 +291,73 @@ class BiddingAI {
 
     // Count high cards in each suit
     for (final suit in Suit.values) {
-      final suitCards = hand.where((c) => c.suit == suit && !c.isJoker).toList();
+      final suitCards = hand.where((c) => c.suit == suit && !c.isJoker).toList()
+        ..sort((a, b) => b.rank.index.compareTo(a.rank.index)); // Sort high to low
+
       if (suitCards.isEmpty) continue;
 
-      // Aces are winners
-      final aces = suitCards.where((c) => c.rank == Rank.ace).length;
-      trickCount += aces * 0.9;
+      final suitLength = suitCards.length;
+      final hasAce = suitCards.any((c) => c.rank == Rank.ace);
+      final hasKing = suitCards.any((c) => c.rank == Rank.king);
+      final hasQueen = suitCards.any((c) => c.rank == Rank.queen);
+      final hasJack = suitCards.any((c) => c.rank == Rank.jack);
 
-      // Kings likely winners if we have length
-      final kings = suitCards.where((c) => c.rank == Rank.king).length;
-      if (suitCards.length >= 3) {
-        trickCount += kings * 0.6;
-      } else {
-        trickCount += kings * 0.3;
+      // Aces are strong winners in NT
+      if (hasAce) {
+        trickCount += 0.95;
       }
 
-      // Queens in long suits
-      final queens = suitCards.where((c) => c.rank == Rank.queen).length;
-      if (suitCards.length >= 4) {
-        trickCount += queens * 0.4;
+      // Kings are good if suit has length
+      if (hasKing) {
+        if (hasAce && suitLength >= 3) {
+          trickCount += 0.8; // AK in decent suit
+        } else if (hasAce) {
+          trickCount += 0.6; // AK doubleton
+        } else if (suitLength >= 4) {
+          trickCount += 0.5; // King in long suit
+        } else {
+          trickCount += 0.25; // Unprotected king
+        }
       }
+
+      // Queens need support
+      if (hasQueen) {
+        if (hasAce && hasKing) {
+          trickCount += 0.6; // AKQ sequence
+        } else if ((hasAce || hasKing) && suitLength >= 4) {
+          trickCount += 0.35; // Queen in long suit with one high honor
+        } else if (suitLength >= 5) {
+          trickCount += 0.2; // Might promote in very long suit
+        }
+      }
+
+      // Jacks in strong sequences
+      if (hasJack && hasAce && hasKing && hasQueen && suitLength >= 4) {
+        trickCount += 0.3; // AKQJ is very strong
+      }
+
+      // Long suit tricks (5th and 6th cards can become winners in NT)
+      if (suitLength >= 5 && (hasAce || hasKing)) {
+        trickCount += 0.4 * (suitLength - 4); // Each extra card adds value
+      }
+    }
+
+    // Balanced hand bonus for NT (prefer 4-3-3-3 or 4-4-3-2 distributions)
+    final suitLengths = Suit.values
+        .map((s) => hand.where((c) => c.suit == s && !c.isJoker).length)
+        .toList()
+      ..sort();
+
+    // Penalty for very unbalanced hands (singletons/voids are bad in NT)
+    if (suitLengths[0] == 0) {
+      trickCount -= 1.0; // Void is very bad in NT
+    } else if (suitLengths[0] == 1) {
+      trickCount -= 0.5; // Singleton is risky in NT
+    }
+
+    // Small bonus for balanced distribution
+    if (suitLengths[0] >= 2 && suitLengths[3] <= 5) {
+      trickCount += 0.3; // Balanced hand
     }
 
     return SuitEvaluation(
