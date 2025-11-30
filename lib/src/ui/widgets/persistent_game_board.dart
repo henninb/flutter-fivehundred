@@ -63,8 +63,6 @@ class PersistentGameBoard extends StatelessWidget {
                     trumpSuit: state.trumpSuit,
                     winningBid: state.winningBid,
                     dealer: state.dealer,
-                    ledSuit: state.currentTrick?.ledSuit,
-                    currentWinner: engine.getCurrentTrickWinner(),
                   ),
                 )
               : const SizedBox.shrink(),

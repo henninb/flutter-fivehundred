@@ -48,6 +48,7 @@ class _GameScreenState extends State<GameScreen> {
   bool _setupOverlayShown = false;
   bool _biddingOverlayShown = false;
   bool _kittyOverlayShown = false;
+  bool _suitNominationDialogShown = false;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +61,8 @@ class _GameScreenState extends State<GameScreen> {
         _resetOverlayFlags(state);
 
         // Show suit nomination dialog when needed
-        if (state.showSuitNominationDialog) {
+        if (state.showSuitNominationDialog && !_suitNominationDialogShown) {
+          _suitNominationDialogShown = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _showSuitNominationDialog(context);
           });
@@ -126,6 +128,9 @@ class _GameScreenState extends State<GameScreen> {
     if (state.currentPhase != GamePhase.kittyExchange ||
         state.contractor != Position.south) {
       _kittyOverlayShown = false;
+    }
+    if (!state.showSuitNominationDialog) {
+      _suitNominationDialogShown = false;
     }
   }
 
@@ -235,7 +240,7 @@ class _GameScreenState extends State<GameScreen> {
       builder: (context) => SuitNominationDialog(
         onSuitSelected: (suit) {
           widget.engine.confirmCardPlayWithNominatedSuit(suit);
-          Navigator.of(context).pop();
+          // Note: Dialog pops itself in the button handler
         },
       ),
     );
