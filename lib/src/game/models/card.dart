@@ -79,11 +79,40 @@ class PlayingCard {
 
   static PlayingCard decode(String raw) {
     final parts = raw.split('|');
-    final rankIndex = int.tryParse(parts[0]) ?? 0;
-    final suitIndex = int.tryParse(parts[1]) ?? 0;
+
+    // Validate encoded string format
+    if (parts.length != 2) {
+      throw FormatException(
+        'Invalid card encoding: expected "rank|suit" format, got "$raw"',
+      );
+    }
+
+    final rankIndex = int.tryParse(parts[0]);
+    final suitIndex = int.tryParse(parts[1]);
+
+    // Validate that both parts are valid integers
+    if (rankIndex == null || suitIndex == null) {
+      throw FormatException(
+        'Invalid card encoding: rank and suit must be integers, got "$raw"',
+      );
+    }
+
+    // Validate indices are within valid ranges
+    if (rankIndex < 0 || rankIndex >= Rank.values.length) {
+      throw RangeError(
+        'Invalid rank index: $rankIndex (must be 0-${Rank.values.length - 1})',
+      );
+    }
+
+    if (suitIndex < 0 || suitIndex >= Suit.values.length) {
+      throw RangeError(
+        'Invalid suit index: $suitIndex (must be 0-${Suit.values.length - 1})',
+      );
+    }
+
     return PlayingCard(
-      rank: Rank.values[rankIndex.clamp(0, Rank.values.length - 1)],
-      suit: Suit.values[suitIndex.clamp(0, Suit.values.length - 1)],
+      rank: Rank.values[rankIndex],
+      suit: Suit.values[suitIndex],
     );
   }
 

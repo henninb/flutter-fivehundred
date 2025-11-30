@@ -12,10 +12,24 @@ void main() {
       expect(decoded, original);
     });
 
-    test('decode clamps invalid indices into valid enum ranges', () {
-      final decoded = PlayingCard.decode('99|99');
-      expect(decoded.rank, Rank.ace);
-      expect(decoded.suit, Suit.spades);
+    test('decode throws on invalid indices', () {
+      // Out of range indices should throw RangeError
+      expect(
+        () => PlayingCard.decode('99|99'),
+        throwsA(isA<RangeError>()),
+      );
+
+      // Invalid format should throw FormatException
+      expect(
+        () => PlayingCard.decode('not-a-card'),
+        throwsA(isA<FormatException>()),
+      );
+
+      // Non-numeric values should throw FormatException
+      expect(
+        () => PlayingCard.decode('abc|def'),
+        throwsA(isA<FormatException>()),
+      );
     });
 
     test('value maps card ranks to expected values', () {

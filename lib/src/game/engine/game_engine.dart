@@ -507,16 +507,18 @@ class GameEngine extends ChangeNotifier {
         break;
 
       case AuctionStatus.redeal:
+        // Stay in bidding phase and redeal without leaving the bid screen
         _updateState(
           _state.copyWith(
-            isBiddingPhase: false,
             gameStatus: result.message,
-            clearCurrentBidder: true,
-            cutCards: {}, // Clear cut cards to prevent setup overlay from showing
           ),
         );
-        // Redeal after delay
-        Future.delayed(const Duration(milliseconds: 2000), dealCards);
+        // Redeal after delay, then restart bidding
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          dealCards();
+          // After dealing, restart bidding automatically
+          Future.delayed(const Duration(milliseconds: 500), _startBidding);
+        });
         break;
 
       case AuctionStatus.incomplete:
@@ -1057,7 +1059,22 @@ class GameEngine extends ChangeNotifier {
           // Get winner of last trick
           final trumpRules = TrumpRules(trumpSuit: _state.trumpSuit);
           final trickEngine = TrickEngine(trumpRules: trumpRules);
-          leader = trickEngine.getCurrentWinner(_state.completedTricks.last)!;
+          final winner = trickEngine.getCurrentWinner(_state.completedTricks.last);
+
+          // Safety check: winner should never be null for a completed trick
+          if (winner == null) {
+            _debugLog('⚠️ ERROR: Cannot determine winner of last trick during claim');
+            _debugLog('⚠️ Re-enabling manual play for recovery');
+            _updateState(
+              _state.copyWith(
+                gameStatus: 'Error: Cannot determine trick winner - continue manually',
+              ),
+            );
+            _updateClaimStatus();
+            return;
+          }
+
+          leader = winner;
         }
 
         _debugLog(

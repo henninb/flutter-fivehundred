@@ -116,6 +116,9 @@ class SharedPrefsPersistence implements GamePersistence {
       final player = _prefs.getString(_playerCutKey);
       final opponent = _prefs.getString(_opponentCutKey);
       if (player == null || opponent == null) {
+        if (kDebugMode) {
+          debugPrint('[Persistence] No saved cut cards found');
+        }
         return null;
       }
 
@@ -123,13 +126,25 @@ class SharedPrefsPersistence implements GamePersistence {
       final opponentCard = PlayingCard.decode(opponent);
 
       if (kDebugMode) {
-        debugPrint('[Persistence] Cut cards loaded successfully');
+        debugPrint('[Persistence] Cut cards loaded successfully: ${playerCard.label}, ${opponentCard.label}');
       }
 
       return CutCards(
         player: playerCard,
         opponent: opponentCard,
       );
+    } on FormatException catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Persistence] ERROR: Invalid card format in saved data: $e');
+      }
+      // Return null if corrupted data - game will regenerate
+      return null;
+    } on RangeError catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Persistence] ERROR: Card data out of range: $e');
+      }
+      // Return null if corrupted data - game will regenerate
+      return null;
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[Persistence] ERROR loading cut cards: $e');

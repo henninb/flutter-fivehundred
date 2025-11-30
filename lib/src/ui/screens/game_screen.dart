@@ -196,17 +196,24 @@ class _GameScreenState extends State<GameScreen> {
             final biddingEngine = BiddingEngine(dealer: currentState.dealer);
             final canInkle = biddingEngine.canInkle(Position.south, currentState.bidHistory);
 
+            // Auto-close sheet when bidding phase ends (auction won or moving to next phase)
+            if (!currentState.isBiddingPhase) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              });
+            }
+
             return BiddingBottomSheet(
               key: ValueKey(currentState.playerHand.length + currentState.playerHand.hashCode),
               state: currentState,
               canInkle: canInkle,
               onBidSelected: (bid, isInkle) {
                 widget.engine.submitPlayerBid(bid, isInkle: isInkle);
-                Navigator.pop(context);
               },
               onPass: () {
                 widget.engine.submitPlayerBid(null);
-                Navigator.pop(context);
               },
               onTestHandSelected: (testHand) {
                 widget.engine.applyTestHand(testHand);
