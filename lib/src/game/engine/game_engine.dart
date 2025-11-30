@@ -230,9 +230,11 @@ class GameEngine extends ChangeNotifier {
     // Sort player's hand by suit for easier viewing
     final sortedPlayerHand = sortHandBySuit(dealResult.hands[Position.south]!);
 
+    _debugLog('⏱️ [TIMING] About to update state with dealt cards...');
+
+    // Update state with dealt cards but skip dealing phase - go directly to bidding
     _updateState(
       _state.copyWith(
-        currentPhase: GamePhase.dealing,
         playerHand: sortedPlayerHand,
         partnerHand: dealResult.hands[Position.north],
         opponentEastHand: dealResult.hands[Position.east],
@@ -240,12 +242,15 @@ class GameEngine extends ChangeNotifier {
         kitty: dealResult.kitty,
         handNumber: _state.handNumber + 1,
         cutCards: {}, // Clear cut cards after dealing
-        gameStatus: 'Cards dealt',
       ),
     );
 
-    // Start bidding after brief delay
-    Future.delayed(const Duration(milliseconds: 500), _startBidding);
+    _debugLog('⏱️ [TIMING] State updated, calling _startBidding()...');
+
+    // Start bidding immediately (will set phase to bidding)
+    _startBidding();
+
+    _debugLog('⏱️ [TIMING] _startBidding() completed');
   }
 
   // ============================================================================
@@ -359,8 +364,12 @@ class GameEngine extends ChangeNotifier {
   // ============================================================================
 
   void _startBidding() {
+    _debugLog('⏱️ [TIMING] _startBidding() called');
+
     final biddingEngine = BiddingEngine(dealer: _state.dealer);
     final biddingOrder = biddingEngine.getBiddingOrder();
+
+    _debugLog('⏱️ [TIMING] First bidder: ${biddingOrder.first.name}');
 
     _updateState(
       _state.copyWith(
@@ -375,11 +384,16 @@ class GameEngine extends ChangeNotifier {
       ),
     );
 
+    _debugLog('⏱️ [TIMING] State updated to bidding phase');
+
     // If first bidder is AI, trigger AI bidding
     if (biddingOrder.first != Position.south) {
+      _debugLog('⏱️ [TIMING] First bidder is AI, scheduling AI bid');
       _scheduleAIBid();
     } else {
+      _debugLog('⏱️ [TIMING] First bidder is PLAYER, showing bidding dialog');
       _updateState(_state.copyWith(showBiddingDialog: true));
+      _debugLog('⏱️ [TIMING] showBiddingDialog set to true');
     }
   }
 
@@ -440,7 +454,7 @@ class GameEngine extends ChangeNotifier {
     );
 
     _aiTimer?.cancel();
-    _aiTimer = Timer(const Duration(milliseconds: 800), () {
+    _aiTimer = Timer(const Duration(milliseconds: 400), () {
       _executeAIBid();
     });
   }

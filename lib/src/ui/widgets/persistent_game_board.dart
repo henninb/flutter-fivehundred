@@ -52,30 +52,26 @@ class PersistentGameBoard extends StatelessWidget {
         StatusBar(status: state.gameStatus),
 
         // Score display - visible during play and scoring phases
-        AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          child: _shouldShowScore()
-              ? Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ScoreDisplay(
-                    scoreNS: state.teamNorthSouthScore,
-                    scoreEW: state.teamEastWestScore,
-                    tricksNS: state.tricksWonNS,
-                    tricksEW: state.tricksWonEW,
-                    trumpSuit: state.trumpSuit,
-                    winningBid: state.winningBid,
-                    dealer: state.dealer,
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
+        // Use conditional rendering instead of AnimatedSize to avoid layout issues
+        if (_shouldShowScore())
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: ScoreDisplay(
+              scoreNS: state.teamNorthSouthScore,
+              scoreEW: state.teamEastWestScore,
+              tricksNS: state.tricksWonNS,
+              tricksEW: state.tricksWonEW,
+              trumpSuit: state.trumpSuit,
+              winningBid: state.winningBid,
+              dealer: state.dealer,
+            ),
+          ),
 
         // Trick area / Setup screen - expands to fill available space
         Expanded(
           child: Center(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
+              duration: Duration.zero, // Instant transition, no delay
               child: _buildCenterContent(),
             ),
           ),

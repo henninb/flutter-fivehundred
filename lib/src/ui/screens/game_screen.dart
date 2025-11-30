@@ -71,11 +71,27 @@ class _GameScreenState extends State<GameScreen> {
         }
 
         // Show bottom sheets based on game phase
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          // Check if widget is still mounted before handling overlays
-          if (!mounted) return;
-          _handleOverlays(context, state);
-        });
+        debugPrint('🎯 [UI TIMING] Build phase: ${state.currentPhase}, currentBidder: ${state.currentBidder}, biddingOverlayShown: $_biddingOverlayShown');
+
+        // For bidding, show immediately; for others use post-frame callback
+        if (state.currentPhase == GamePhase.bidding &&
+            state.currentBidder == Position.south &&
+            !_biddingOverlayShown) {
+          debugPrint('🎯 [UI TIMING] Scheduling bidding sheet via postFrameCallback');
+          // Show bidding sheet immediately without delay
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            debugPrint('🎯 [UI TIMING] postFrameCallback executing for bidding sheet');
+            if (!mounted) return;
+            _biddingOverlayShown = true;
+            _showBiddingSheet(context, state);
+          });
+        } else {
+          // Other overlays can use post-frame callback
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _handleOverlays(context, state);
+          });
+        }
 
         return Scaffold(
           appBar: AppBar(
@@ -156,6 +172,7 @@ class _GameScreenState extends State<GameScreen> {
     if (state.currentPhase == GamePhase.bidding &&
         state.currentBidder == Position.south &&
         !_biddingOverlayShown) {
+      debugPrint('🎯 [UI TIMING] Triggering bidding sheet in _handleOverlays');
       _biddingOverlayShown = true;
       _showBiddingSheet(context, state);
     }
@@ -181,49 +198,53 @@ class _GameScreenState extends State<GameScreen> {
 
   /// Show bidding bottom sheet
   void _showBiddingSheet(BuildContext context, GameState state) {
+    debugPrint('🎯 [UI TIMING] _showBiddingSheet() called, showing modal');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       isDismissible: false, // Must bid or pass
       enableDrag: false,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.95,
-        minChildSize: 0.6,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) => AnimatedBuilder(
-          animation: widget.engine,
-          builder: (context, _) {
-            final currentState = widget.engine.state;
-            final biddingEngine = BiddingEngine(dealer: currentState.dealer);
-            final canInkle = biddingEngine.canInkle(Position.south, currentState.bidHistory);
+      builder: (context) {
+        debugPrint('🎯 [UI TIMING] Bidding sheet builder called');
+        return DraggableScrollableSheet(
+          initialChildSize: 0.95,
+          minChildSize: 0.6,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) => AnimatedBuilder(
+            animation: widget.engine,
+            builder: (context, _) {
+              final currentState = widget.engine.state;
+              final biddingEngine = BiddingEngine(dealer: currentState.dealer);
+              final canInkle = biddingEngine.canInkle(Position.south, currentState.bidHistory);
 
-            // Auto-close sheet when bidding phase ends (auction won or moving to next phase)
-            if (!currentState.isBiddingPhase) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted && Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                }
-              });
-            }
+              // Auto-close sheet when bidding phase ends (auction won or moving to next phase)
+              if (!currentState.isBiddingPhase) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted && Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
+                });
+              }
 
-            return BiddingBottomSheet(
-              key: ValueKey(currentState.playerHand.length + currentState.playerHand.hashCode),
-              state: currentState,
-              canInkle: canInkle,
-              onBidSelected: (bid, isInkle) {
-                widget.engine.submitPlayerBid(bid, isInkle: isInkle);
-              },
-              onPass: () {
-                widget.engine.submitPlayerBid(null);
-              },
-              onTestHandSelected: (testHand) {
-                widget.engine.applyTestHand(testHand);
-                // Don't close the bidding sheet - let user bid with new hand
-              },
-            );
-          },
-        ),
-      ),
+              return BiddingBottomSheet(
+                key: ValueKey(currentState.playerHand.length + currentState.playerHand.hashCode),
+                state: currentState,
+                canInkle: canInkle,
+                onBidSelected: (bid, isInkle) {
+                  widget.engine.submitPlayerBid(bid, isInkle: isInkle);
+                },
+                onPass: () {
+                  widget.engine.submitPlayerBid(null);
+                },
+                onTestHandSelected: (testHand) {
+                  widget.engine.applyTestHand(testHand);
+                  // Don't close the bidding sheet - let user bid with new hand
+                },
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
