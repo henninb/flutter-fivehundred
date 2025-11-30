@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../game/engine/game_state.dart';
 import '../../../game/models/game_models.dart';
-import '../../../game/models/card.dart';
 
 /// Bottom sheet overlay displaying cut for deal results.
 ///
-/// Shows a 2x2 grid of cards cut by each player with the dealer highlighted.
+/// Shows cards arranged in a cross pattern (N/S/E/W) representing each player's
+/// cut card. The dealer's card is highlighted with enhanced styling and effects.
 /// This overlay is shown after the cut for deal is complete and auto-dismisses
 /// after 3 seconds.
 class SetupOverlay extends StatelessWidget {
@@ -18,9 +18,12 @@ class SetupOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dealer = state.dealer;
+    final dealerName = state.getName(dealer);
+
     return SingleChildScrollView(
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -33,153 +36,238 @@ class SetupOverlay extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
 
-            // Title
-            Text(
-              'Cut for Deal',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Highest card deals first',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 16),
-
-            // Cut cards grid
-            _buildCutCardsGrid(context),
-
-            const SizedBox(height: 16),
-
-            // Result message
-            if (state.gameStatus.isNotEmpty)
-              Card(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    state.gameStatus,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
+            // Modern title with gradient accent
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary.withAlpha(51),
+                    Theme.of(context).colorScheme.secondary.withAlpha(51),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary.withAlpha(77),
+                  width: 1,
                 ),
               ),
+              child: Column(
+                children: [
+                  Text(
+                    'Cutting for Deal',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                  ),
+                  if (dealerName.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '$dealerName wins the deal!',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Cut cards in cross pattern
+            _buildCutCardsCross(context),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCutCardsGrid(BuildContext context) {
-    // Build a 2x2 grid for the four players
-    final positions = [
-      Position.north, // Partner (top)
-      Position.west, // Opponent right
-      Position.east, // Opponent left
-      Position.south, // Human player (bottom)
-    ];
+  /// Build cards in a cross pattern (N at top, S at bottom, E at right, W at left)
+  Widget _buildCutCardsCross(BuildContext context) {
+    const cardSize = 100.0;
+    const spacing = 20.0;
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      alignment: WrapAlignment.center,
-      children: positions.map((position) {
-        final card = state.cutCards[position];
-        final playerName = state.getName(position);
+    return SizedBox(
+      width: cardSize * 3 + spacing * 2,
+      height: cardSize * 3 + spacing * 2,
+      child: Stack(
+        children: [
+          // Center decoration (table center)
+          Positioned(
+            left: cardSize + spacing,
+            top: cardSize + spacing,
+            child: Container(
+              width: cardSize,
+              height: cardSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary.withAlpha(26),
+                    Theme.of(context).colorScheme.secondary.withAlpha(26),
+                  ],
+                ),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary.withAlpha(77),
+                  width: 2,
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.cut,
+                  size: 40,
+                  color: Theme.of(context).colorScheme.primary.withAlpha(128),
+                ),
+              ),
+            ),
+          ),
 
-        return CutCardItem(
-          playerName: playerName,
-          card: card,
-          isDealer: state.dealer == position,
-        );
-      }).toList(),
+          // North (top)
+          Positioned(
+            left: cardSize + spacing,
+            top: 0,
+            child: _buildCrossCard(context, Position.north),
+          ),
+
+          // South (bottom)
+          Positioned(
+            left: cardSize + spacing,
+            bottom: 0,
+            child: _buildCrossCard(context, Position.south),
+          ),
+
+          // East (right)
+          Positioned(
+            right: 0,
+            top: cardSize + spacing,
+            child: _buildCrossCard(context, Position.east),
+          ),
+
+          // West (left)
+          Positioned(
+            left: 0,
+            top: cardSize + spacing,
+            child: _buildCrossCard(context, Position.west),
+          ),
+        ],
+      ),
     );
   }
-}
 
-/// Individual cut card display for a player (reusable component).
-class CutCardItem extends StatelessWidget {
-  const CutCardItem({
-    super.key,
-    required this.playerName,
-    required this.card,
-    required this.isDealer,
-  });
+  Widget _buildCrossCard(BuildContext context, Position position) {
+    final card = state.cutCards[position];
+    final playerName = state.getName(position);
+    final isDealer = state.dealer == position;
 
-  final String playerName;
-  final PlayingCard? card;
-  final bool isDealer;
-
-  @override
-  Widget build(BuildContext context) {
     if (card == null) {
-      return const SizedBox.shrink();
+      return const SizedBox(width: 100, height: 100);
     }
 
-    return Card(
-      elevation: isDealer ? 8 : 2,
-      color: isDealer
-          ? Theme.of(context).colorScheme.primaryContainer
-          : Theme.of(context).colorScheme.surface,
-      child: Container(
-        width: 140,
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
+    return SizedBox(
+      width: 100,
+      height: 100,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Player name with position indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDealer
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: isDealer
+                  ? [
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.primary.withAlpha(128),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Text(
               playerName,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: isDealer ? FontWeight.bold : FontWeight.normal,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontWeight: isDealer ? FontWeight.bold : FontWeight.w600,
                     color: isDealer
-                        ? Theme.of(context).colorScheme.onPrimaryContainer
+                        ? Theme.of(context).colorScheme.onPrimary
                         : Theme.of(context).colorScheme.onSurface,
+                    fontSize: 11,
                   ),
               textAlign: TextAlign.center,
             ),
-            if (isDealer) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Dealer',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+          const SizedBox(height: 6),
+
+          // Card with modern design
+          Expanded(
+            child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isDealer
                       ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.outline,
-                  width: isDealer ? 2 : 1,
+                      : Theme.of(context).colorScheme.outline.withAlpha(77),
+                  width: isDealer ? 3 : 2,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDealer
+                        ? Theme.of(context).colorScheme.primary.withAlpha(77)
+                        : Colors.black.withAlpha(26),
+                    blurRadius: isDealer ? 12 : 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: Text(
-                card!.label,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: _getCardColor(card!.label),
+              child: Center(
+                child: Text(
+                  card.label,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: _getCardColor(card.label),
+                  ),
                 ),
               ),
             ),
+          ),
+
+          // Dealer badge
+          if (isDealer) ...[
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.secondary,
+                    Theme.of(context).colorScheme.tertiary,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'DEALER',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSecondary,
+                      fontSize: 9,
+                      letterSpacing: 0.5,
+                    ),
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
