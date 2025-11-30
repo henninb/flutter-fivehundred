@@ -108,7 +108,8 @@ class PersistentGameBoard extends StatelessWidget {
 
   /// Determine if score should be shown based on game phase
   bool _shouldShowScore() {
-    return state.gameStarted &&
-        (state.isPlayPhase || state.currentPhase == GamePhase.scoring);
+    // Show score after game has started (after initial cut for deal)
+    // Hide only during initial setup phase
+    return state.gameStarted && state.currentPhase != GamePhase.setup;
   }
 }

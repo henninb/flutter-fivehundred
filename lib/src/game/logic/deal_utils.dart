@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/card.dart';
 import '../models/game_models.dart';
 
@@ -73,13 +75,42 @@ DealResult dealHand({
     }
   }
 
-  // Verify
-  assert(hands[Position.north]!.length == 10);
-  assert(hands[Position.south]!.length == 10);
-  assert(hands[Position.east]!.length == 10);
-  assert(hands[Position.west]!.length == 10);
-  assert(kitty.length == 5);
-  assert(drawDeck.isEmpty);
+  // Verify - use runtime checks instead of asserts (asserts removed in release builds)
+  final northCount = hands[Position.north]!.length;
+  final southCount = hands[Position.south]!.length;
+  final eastCount = hands[Position.east]!.length;
+  final westCount = hands[Position.west]!.length;
+  final kittyCount = kitty.length;
+  final remainingCards = drawDeck.length;
+
+  if (northCount != 10 || southCount != 10 || eastCount != 10 || westCount != 10) {
+    final error = 'Deal validation failed: Invalid hand counts - '
+        'N:$northCount S:$southCount E:$eastCount W:$westCount (expected 10 each)';
+    if (kDebugMode) {
+      debugPrint('[DealUtils] ERROR: $error');
+    }
+    throw StateError(error);
+  }
+
+  if (kittyCount != 5) {
+    final error = 'Deal validation failed: Invalid kitty count - $kittyCount (expected 5)';
+    if (kDebugMode) {
+      debugPrint('[DealUtils] ERROR: $error');
+    }
+    throw StateError(error);
+  }
+
+  if (remainingCards != 0) {
+    final error = 'Deal validation failed: Cards remaining in deck - $remainingCards (expected 0)';
+    if (kDebugMode) {
+      debugPrint('[DealUtils] ERROR: $error');
+    }
+    throw StateError(error);
+  }
+
+  if (kDebugMode) {
+    debugPrint('[DealUtils] Deal validated successfully: All hands 10 cards, kitty 5 cards');
+  }
 
   return DealResult(hands: hands, kitty: kitty);
 }

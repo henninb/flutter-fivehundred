@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/card.dart';
 import '../models/game_models.dart';
 import 'trump_rules.dart';
@@ -34,25 +36,39 @@ class PlayAI {
     }
 
     if (legalCards.length == 1) {
-      return legalCards.first; // Only one choice
+      final card = legalCards.first;
+      if (kDebugMode) {
+        debugPrint('[AI PLAY] ${position.name}: ${card.label} (only legal card)');
+      }
+      return card;
     }
 
     // Leading (first card)
     if (currentTrick.isEmpty) {
-      return _chooseLeadCard(
+      final card = _chooseLeadCard(
         legalCards: legalCards,
         hand: hand,
         trumpRules: trumpRules,
       );
+      if (kDebugMode) {
+        debugPrint('[AI PLAY] ${position.name}: LEADS ${card.label} (${legalCards.length} options)');
+      }
+      return card;
     }
 
     // Following
-    return _chooseFollowCard(
+    final currentWinner = _getCurrentWinner(currentTrick, trumpRules);
+    final partnerIsWinning = currentWinner == partner;
+    final card = _chooseFollowCard(
       legalCards: legalCards,
       currentTrick: currentTrick,
       trumpRules: trumpRules,
       partner: partner,
     );
+    if (kDebugMode) {
+      debugPrint('[AI PLAY] ${position.name}: ${card.label} (partner ${partnerIsWinning ? 'winning' : 'not winning'}, ${legalCards.length} options)');
+    }
+    return card;
   }
 
   /// Choose card to lead

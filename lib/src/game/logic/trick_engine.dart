@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/card.dart';
 import '../models/game_models.dart';
 import 'trump_rules.dart';
@@ -31,6 +33,18 @@ class TrickEngine {
     );
 
     if (!validation.isValid) {
+      // Log illegal card play attempt
+      if (kDebugMode) {
+        debugPrint('\n[TRICK PLAY VALIDATION FAILED]');
+        debugPrint('Player: ${player.name}');
+        debugPrint('Attempted card: ${card.label}');
+        debugPrint('Led suit: ${currentTrick.ledSuit?.name ?? 'none (leading)'}');
+        debugPrint('Nominated suit: ${nominatedSuit?.name ?? 'none'}');
+        debugPrint('Trump suit: ${trumpRules.trumpSuit?.name ?? 'no trump'}');
+        debugPrint('Hand size: ${playerHand.length}');
+        debugPrint('Cards in trick: ${currentTrick.plays.length}');
+        debugPrint('Reason: ${validation.errorMessage}');
+      }
       return TrickResult.error(validation.errorMessage!);
     }
 

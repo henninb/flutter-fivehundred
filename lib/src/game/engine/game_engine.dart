@@ -219,6 +219,112 @@ class GameEngine extends ChangeNotifier {
   }
 
   // ============================================================================
+  // TEST HANDS (Debug/Testing Support)
+  // ============================================================================
+
+  /// Apply a test hand to the South player
+  ///
+  /// This is a debug/testing feature that replaces the player's current hand
+  /// with a specific set of cards. The remaining cards are redistributed to
+  /// other players and the kitty.
+  ///
+  /// Can only be called during the bidding phase before the player has bid.
+  void applyTestHand(List<PlayingCard> testHand) {
+    if (_state.currentPhase != GamePhase.bidding) {
+      _debugLog('⚠️ Cannot apply test hand - not in bidding phase');
+      return;
+    }
+
+    if (testHand.length != 10) {
+      _debugLog(
+        '⚠️ Cannot apply test hand - must have exactly 10 cards (got ${testHand.length})',
+      );
+      return;
+    }
+
+    _debugLog('\n========== APPLYING TEST HAND ==========');
+    _debugLog('Test hand: ${testHand.map((c) => c.label).join(', ')}');
+
+    // Get all cards from all hands AND kitty (45 total: 4 hands * 10 + 5 kitty)
+    final allCards = <PlayingCard>[
+      ..._state.playerHand,
+      ..._state.partnerHand,
+      ..._state.opponentEastHand,
+      ..._state.opponentWestHand,
+      ..._state.kitty,
+    ];
+
+    _debugLog('Total cards before redistribution: ${allCards.length}');
+
+    // VALIDATION: Verify test hand cards exist in the current deal
+    final deck = createDeck();
+    for (final testCard in testHand) {
+      final existsInDeck = deck.any(
+        (deckCard) => deckCard.rank == testCard.rank && deckCard.suit == testCard.suit,
+      );
+      if (!existsInDeck) {
+        _debugLog('⚠️ ERROR: Test hand contains invalid card: ${testCard.label}');
+        _debugLog('⚠️ Test hand rejected - all cards must be from standard deck');
+        return;
+      }
+    }
+
+    // VALIDATION: Check for duplicate cards in test hand
+    final testHandSet = <String>{};
+    for (final card in testHand) {
+      final key = '${card.rank.name}_${card.suit.name}';
+      if (testHandSet.contains(key)) {
+        _debugLog('⚠️ ERROR: Test hand contains duplicate card: ${card.label}');
+        _debugLog('⚠️ Test hand rejected - no duplicates allowed');
+        return;
+      }
+      testHandSet.add(key);
+    }
+
+    // Remove test hand cards from available pool
+    final availableCards = <PlayingCard>[];
+    for (final card in allCards) {
+      // Check if this card is in the test hand
+      final isInTestHand = testHand.any(
+        (testCard) => testCard.rank == card.rank && testCard.suit == card.suit,
+      );
+      if (!isInTestHand) {
+        availableCards.add(card);
+      }
+    }
+
+    _debugLog('Available cards after removing test hand: ${availableCards.length} (should be 35)');
+
+    // Shuffle available cards
+    availableCards.shuffle(Random());
+
+    // Distribute to other players (10 cards each) and kitty (5 cards)
+    final newPartnerHand = availableCards.sublist(0, 10);
+    final newEastHand = availableCards.sublist(10, 20);
+    final newWestHand = availableCards.sublist(20, 30);
+    final newKitty = availableCards.sublist(30, 35);
+
+    // Sort hands
+    final sortedTestHand = sortHandBySuit(testHand);
+
+    _debugLog('✅ Test hand applied successfully');
+    _debugLog('New kitty: ${newKitty.map((c) => c.label).join(', ')}');
+    _debugLog('========================================\n');
+
+    // Update state with new hands
+    _updateState(
+      _state.copyWith(
+        playerHand: sortedTestHand,
+        partnerHand: newPartnerHand,
+        opponentEastHand: newEastHand,
+        opponentWestHand: newWestHand,
+        kitty: newKitty,
+        gameStatus: 'Test hand applied - make your bid',
+      ),
+    );
+  }
+
+  // ============================================================================
   // BIDDING PHASE
   // ============================================================================
 
@@ -262,6 +368,15 @@ class GameEngine extends ChangeNotifier {
     );
 
     if (!validation.isValid) {
+      // Log bid validation failure
+      _debugLog('\n[BID VALIDATION FAILED]');
+      _debugLog('Player: ${_state.getName(Position.south)}');
+      _debugLog('Attempted bid: ${bid != null ? '${bid.tricks}${bid.suit.name}' : 'PASS'}');
+      _debugLog('Is Inkle: $isInkle');
+      _debugLog('Current high bid: ${_state.currentHighBid != null ? '${_state.currentHighBid!.tricks}${_state.currentHighBid!.suit.name}' : 'none'}');
+      _debugLog('Reason: ${validation.errorMessage ?? 'Invalid bid'}');
+      _debugLog('Bid history: ${_state.bidHistory.map((e) => e.toString()).join(', ')}');
+
       _updateState(
         _state.copyWith(
           gameStatus: validation.errorMessage ?? 'Invalid bid',
@@ -397,6 +512,7 @@ class GameEngine extends ChangeNotifier {
             isBiddingPhase: false,
             gameStatus: result.message,
             clearCurrentBidder: true,
+            cutCards: {}, // Clear cut cards to prevent setup overlay from showing
           ),
         );
         // Redeal after delay
@@ -1605,6 +1721,16 @@ class GameEngine extends ChangeNotifier {
   // ============================================================================
 
   void _updateState(GameState newState) {
+    // Log phase transitions
+    if (_state.currentPhase != newState.currentPhase) {
+      _debugLog(
+        '\n[PHASE TRANSITION] ${_state.currentPhase.name} -> ${newState.currentPhase.name}',
+      );
+      if (newState.gameStatus.isNotEmpty) {
+        _debugLog('Status: ${newState.gameStatus}');
+      }
+    }
+
     _state = newState;
     notifyListeners();
   }

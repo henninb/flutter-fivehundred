@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../game/models/card.dart';
@@ -89,33 +90,71 @@ class SharedPrefsPersistence implements GamePersistence {
     required int doubleSkunksFor,
     required int doubleSkunksAgainst,
   }) {
-    _prefs
-      ..setInt(_gamesWonKey, gamesWon)
-      ..setInt(_gamesLostKey, gamesLost)
-      ..setInt(_skunksForKey, skunksFor)
-      ..setInt(_skunksAgainstKey, skunksAgainst)
-      ..setInt(_doubleSkunksForKey, doubleSkunksFor)
-      ..setInt(_doubleSkunksAgainstKey, doubleSkunksAgainst);
+    try {
+      _prefs
+        ..setInt(_gamesWonKey, gamesWon)
+        ..setInt(_gamesLostKey, gamesLost)
+        ..setInt(_skunksForKey, skunksFor)
+        ..setInt(_skunksAgainstKey, skunksAgainst)
+        ..setInt(_doubleSkunksForKey, doubleSkunksFor)
+        ..setInt(_doubleSkunksAgainstKey, doubleSkunksAgainst);
+
+      if (kDebugMode) {
+        debugPrint('[Persistence] Stats saved successfully: W:$gamesWon L:$gamesLost');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Persistence] ERROR saving stats: $e');
+      }
+      // Don't throw - gracefully degrade if persistence fails
+    }
   }
 
   @override
   CutCards? loadCutCards() {
-    final player = _prefs.getString(_playerCutKey);
-    final opponent = _prefs.getString(_opponentCutKey);
-    if (player == null || opponent == null) {
+    try {
+      final player = _prefs.getString(_playerCutKey);
+      final opponent = _prefs.getString(_opponentCutKey);
+      if (player == null || opponent == null) {
+        return null;
+      }
+
+      final playerCard = PlayingCard.decode(player);
+      final opponentCard = PlayingCard.decode(opponent);
+
+      if (kDebugMode) {
+        debugPrint('[Persistence] Cut cards loaded successfully');
+      }
+
+      return CutCards(
+        player: playerCard,
+        opponent: opponentCard,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Persistence] ERROR loading cut cards: $e');
+      }
+      // Return null if corrupted data - game will regenerate
       return null;
     }
-    return CutCards(
-      player: PlayingCard.decode(player),
-      opponent: PlayingCard.decode(opponent),
-    );
   }
 
   @override
   void saveCutCards(PlayingCard player, PlayingCard opponent) {
-    _prefs
-      ..setString(_playerCutKey, player.encode())
-      ..setString(_opponentCutKey, opponent.encode());
+    try {
+      _prefs
+        ..setString(_playerCutKey, player.encode())
+        ..setString(_opponentCutKey, opponent.encode());
+
+      if (kDebugMode) {
+        debugPrint('[Persistence] Cut cards saved successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Persistence] ERROR saving cut cards: $e');
+      }
+      // Don't throw - gracefully degrade if persistence fails
+    }
   }
 
   @override
@@ -130,8 +169,19 @@ class SharedPrefsPersistence implements GamePersistence {
 
   @override
   void savePlayerNames({required String playerName, required String opponentName}) {
-    _prefs
-      ..setString(_playerNameKey, playerName)
-      ..setString(_opponentNameKey, opponentName);
+    try {
+      _prefs
+        ..setString(_playerNameKey, playerName)
+        ..setString(_opponentNameKey, opponentName);
+
+      if (kDebugMode) {
+        debugPrint('[Persistence] Player names saved successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Persistence] ERROR saving player names: $e');
+      }
+      // Don't throw - gracefully degrade if persistence fails
+    }
   }
 }

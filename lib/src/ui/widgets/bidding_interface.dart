@@ -6,8 +6,8 @@ import '../../game/logic/bidding_ai.dart';
 
 /// Modern button-based bidding interface
 /// Select suit and trick level with clear button grids
-class BiddingCarousel extends StatefulWidget {
-  const BiddingCarousel({
+class BiddingInterface extends StatefulWidget {
+  const BiddingInterface({
     super.key,
     required this.currentHighBid,
     required this.canInkle,
@@ -29,10 +29,10 @@ class BiddingCarousel extends StatefulWidget {
   final Position dealer;
 
   @override
-  State<BiddingCarousel> createState() => _BiddingCarouselState();
+  State<BiddingInterface> createState() => _BiddingInterfaceState();
 }
 
-class _BiddingCarouselState extends State<BiddingCarousel> {
+class _BiddingInterfaceState extends State<BiddingInterface> {
   int? _selectedTrickLevel;
   BidSuit? _selectedSuit;
   BidDecision? _aiRecommendation;
@@ -72,38 +72,12 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
         color: colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Current bid info
-          if (widget.currentHighBid != null)
-            Container(
-              margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.gavel,
-                    size: 20,
-                    color: colorScheme.onPrimaryContainer,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Current Bid: ${widget.currentHighBid}',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+          // Show message only if no bids yet
+          if (widget.bidHistory.isEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 16, bottom: 8),
               child: Text(
@@ -111,6 +85,35 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
+              ),
+            )
+          else
+            const SizedBox(height: 16),
+
+          // Bid history - compact chips only
+          if (widget.bidHistory.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: widget.bidHistory.map((entry) {
+                  final positionName = _getPositionName(entry.bidder);
+                  final bidText = entry.action == BidAction.pass
+                      ? 'Pass'
+                      : entry.action == BidAction.inkle
+                          ? '${entry.bid!.tricks}${_suitSymbol(entry.bid!.suit)} (I)'
+                          : '${entry.bid!.tricks}${_suitSymbol(entry.bid!.suit)}';
+
+                  return Chip(
+                    label: Text(
+                      '$positionName: $bidText',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                  );
+                }).toList(),
               ),
             ),
 
@@ -286,6 +289,7 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -364,8 +368,10 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
       return true;
     }
 
-    // Must be higher trick level than current bid
-    return tricks > widget.currentHighBid!.tricks;
+    // Can select this trick level if:
+    // 1. It's higher than current bid, OR
+    // 2. It's equal to current bid (allows bidding higher suit at same level)
+    return tricks >= widget.currentHighBid!.tricks;
   }
 
   Widget _buildTrickButton(
@@ -483,6 +489,19 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
         return '♥';
       case BidSuit.noTrump:
         return 'NT';
+    }
+  }
+
+  String _getPositionName(Position position) {
+    switch (position) {
+      case Position.north:
+        return 'Partner';
+      case Position.east:
+        return 'East';
+      case Position.south:
+        return 'You';
+      case Position.west:
+        return 'West';
     }
   }
 }

@@ -1,27 +1,42 @@
 import 'package:flutter/material.dart';
 import '../../../game/engine/game_state.dart';
+import '../../../game/models/card.dart';
 import '../../../game/models/game_models.dart';
-import '../bidding_carousel.dart';
+import '../bidding_interface.dart';
 import '../hand_display.dart';
+import '../score_display.dart';
+import 'test_hands_dialog.dart';
 
 /// Bottom sheet wrapper for the bidding carousel.
 ///
 /// Displays the bidding interface in a draggable bottom sheet when it's the
 /// player's turn to bid. Includes a title bar and wraps the existing
 /// BiddingCarousel widget for consistent UI patterns.
-class BiddingBottomSheet extends StatelessWidget {
+///
+/// Hidden feature: Triple-tap on the title to access test hands menu.
+class BiddingBottomSheet extends StatefulWidget {
   const BiddingBottomSheet({
     super.key,
     required this.state,
     required this.onBidSelected,
     required this.onPass,
     required this.canInkle,
+    required this.onTestHandSelected,
   });
 
   final GameState state;
   final Function(Bid bid, bool isInkle) onBidSelected;
   final VoidCallback onPass;
   final bool canInkle;
+  final Function(List<PlayingCard> testHand) onTestHandSelected;
+
+  @override
+  State<BiddingBottomSheet> createState() => _BiddingBottomSheetState();
+}
+
+class _BiddingBottomSheetState extends State<BiddingBottomSheet> {
+  int _tapCount = 0;
+  DateTime? _lastTapTime;
 
   @override
   Widget build(BuildContext context) {
@@ -41,15 +56,33 @@ class BiddingBottomSheet extends StatelessWidget {
             ),
           ),
 
-          // Title bar
+          // Scoreboard at top of bidding sheet
+          if (widget.state.gameStarted)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ScoreDisplay(
+                scoreNS: widget.state.teamNorthSouthScore,
+                scoreEW: widget.state.teamEastWestScore,
+                tricksNS: widget.state.tricksWonNS,
+                tricksEW: widget.state.tricksWonEW,
+                trumpSuit: widget.state.trumpSuit,
+                winningBid: widget.state.winningBid,
+                dealer: widget.state.dealer,
+              ),
+            ),
+
+          // Title bar with triple-tap gesture
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Your Bid',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+              GestureDetector(
+                onTap: _handleTitleTap,
+                child: Text(
+                  'Your Bid',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.help_outline),
@@ -61,7 +94,7 @@ class BiddingBottomSheet extends StatelessWidget {
           const SizedBox(height: 8),
 
           // Current bid status
-          if (state.currentHighBid != null)
+          if (widget.state.currentHighBid != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -78,7 +111,7 @@ class BiddingBottomSheet extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Current bid: ${state.currentHighBid}',
+                    'Current bid: ${widget.state.currentHighBid}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -101,10 +134,10 @@ class BiddingBottomSheet extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               HandDisplay(
-                hand: state.playerHand,
+                hand: widget.state.playerHand,
                 onCardTap: (_) {}, // No interaction during bidding
                 selectedIndices: const {},
-                phase: state.currentPhase,
+                phase: widget.state.currentPhase,
                 enabled: false, // Cards not tappable during bidding
                 allowPeek: true, // Allow peeking at overlapping cards
               ),
@@ -112,20 +145,53 @@ class BiddingBottomSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Bidding carousel
+          // Bidding interface
           Expanded(
-            child: BiddingCarousel(
-              currentHighBid: state.currentHighBid,
-              canInkle: canInkle,
-              onBidSelected: onBidSelected,
-              onPass: onPass,
-              playerHand: state.playerHand,
-              bidHistory: state.bidHistory,
-              currentBidder: state.currentBidder,
-              dealer: state.dealer,
+            child: BiddingInterface(
+              currentHighBid: widget.state.currentHighBid,
+              canInkle: widget.canInkle,
+              onBidSelected: widget.onBidSelected,
+              onPass: widget.onPass,
+              playerHand: widget.state.playerHand,
+              bidHistory: widget.state.bidHistory,
+              currentBidder: widget.state.currentBidder,
+              dealer: widget.state.dealer,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _handleTitleTap() {
+    final now = DateTime.now();
+
+    // Reset tap count if too much time has elapsed (> 1 second)
+    if (_lastTapTime == null ||
+        now.difference(_lastTapTime!).inMilliseconds > 1000) {
+      _tapCount = 1;
+    } else {
+      _tapCount++;
+    }
+
+    _lastTapTime = now;
+
+    // Open test hands dialog on triple tap
+    if (_tapCount >= 3) {
+      _tapCount = 0;
+      _lastTapTime = null;
+      _showTestHandsDialog(context);
+    }
+  }
+
+  void _showTestHandsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => TestHandsDialog(
+        onTestHandSelected: (testHand) {
+          widget.onTestHandSelected(testHand);
+          Navigator.pop(context); // Close dialog
+        },
       ),
     );
   }

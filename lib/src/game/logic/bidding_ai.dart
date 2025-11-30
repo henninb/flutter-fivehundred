@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
+
 import '../models/card.dart';
 import '../models/game_models.dart';
 import 'trump_rules.dart';
@@ -55,18 +57,26 @@ class BiddingAI {
     }
 
     // Decide whether to bid
-    // Conservative: only bid if we estimate at least 1 trick above minimum
-    if (estimatedTricks < 6) {
-      return BidDecision.pass(reasoning: 'Hand too weak (estimated $estimatedTricks tricks)');
+    // More aggressive: bid with 5.5+ estimated tricks (accounts for partner's help)
+    if (estimatedTricks < 5.5) {
+      final decision = BidDecision.pass(reasoning: 'Hand too weak (estimated $estimatedTricks tricks)');
+      if (kDebugMode) {
+        debugPrint('[AI BIDDING] ${position.name}: PASS - ${decision.reasoning}');
+      }
+      return decision;
     }
 
     // Check if we should inkle
-    if (canInkle && estimatedTricks == 6) {
+    if (canInkle && estimatedTricks >= 5.5 && estimatedTricks <= 6.5) {
       final inkleBid = Bid(tricks: 6, suit: bestSuit, bidder: position);
-      return BidDecision.inkle(
+      final decision = BidDecision.inkle(
         bid: inkleBid,
         reasoning: 'Inkle with $bestSuit (estimated $estimatedTricks tricks)',
       );
+      if (kDebugMode) {
+        debugPrint('[AI BIDDING] ${position.name}: INKLE 6${_suitLabel(bestSuit)} - ${decision.reasoning}');
+      }
+      return decision;
     }
 
     // Can we beat current high bid?
@@ -85,22 +95,34 @@ class BiddingAI {
       );
 
       if (minBeatingBid == null) {
-        return BidDecision.pass(
+        final decision = BidDecision.pass(
           reasoning: 'Cannot beat current bid of ${currentHighBid.tricks}${_suitLabel(currentHighBid.suit)}',
         );
+        if (kDebugMode) {
+          debugPrint('[AI BIDDING] ${position.name}: PASS - ${decision.reasoning}');
+        }
+        return decision;
       }
 
-      return BidDecision.bid(
+      final decision = BidDecision.bid(
         bid: minBeatingBid,
         reasoning: 'Bidding ${minBeatingBid.tricks}${_suitLabel(minBeatingBid.suit)} (estimated ${evaluations[minBeatingBid.suit]!.estimatedTricks.toStringAsFixed(1)} tricks)',
       );
+      if (kDebugMode) {
+        debugPrint('[AI BIDDING] ${position.name}: BID ${minBeatingBid.tricks}${_suitLabel(minBeatingBid.suit)} - ${decision.reasoning}');
+      }
+      return decision;
     }
 
     // No competition or we can beat it - bid our best
-    return BidDecision.bid(
+    final decision = BidDecision.bid(
       bid: ourBid,
       reasoning: 'Bidding $estimatedTricks$bestSuit (${bestEval.trumpCount} trumps)',
     );
+    if (kDebugMode) {
+      debugPrint('[AI BIDDING] ${position.name}: BID $estimatedTricks${_suitLabel(bestSuit)} - ${decision.reasoning}');
+    }
+    return decision;
   }
 
   /// Find minimum bid that beats current high bid and we can make
@@ -116,8 +138,8 @@ class BiddingAI {
       final suit = BidSuit.values[suitIndex];
       final eval = evaluations[suit]!;
 
-      // Can we make this bid? (conservative: need to estimate at least that many tricks)
-      if (eval.estimatedTricks >= currentHighBid.tricks) {
+      // More aggressive: allow bidding with 0.5 tricks less (partner will contribute)
+      if (eval.estimatedTricks >= currentHighBid.tricks - 0.5) {
         return Bid(tricks: currentHighBid.tricks, suit: suit, bidder: bidder);
       }
     }
@@ -126,7 +148,8 @@ class BiddingAI {
     for (int tricks = currentHighBid.tricks + 1; tricks <= 10; tricks++) {
       for (final suit in BidSuit.values) {
         final eval = evaluations[suit]!;
-        if (eval.estimatedTricks >= tricks) {
+        // More aggressive: allow bidding with 0.5 tricks less
+        if (eval.estimatedTricks >= tricks - 0.5) {
           return Bid(tricks: tricks, suit: suit, bidder: bidder);
         }
       }
@@ -150,17 +173,17 @@ class BiddingAI {
     final hasRightBower = trumpCards.any((c) => trumpRules.isRightBower(c));
     final hasLeftBower = trumpCards.any((c) => trumpRules.isLeftBower(c));
 
-    // Individual trump honors (base value)
-    if (hasJoker) trickCount += 1.0;
-    if (hasRightBower) trickCount += 0.95;
-    if (hasLeftBower) trickCount += 0.85;
+    // Individual trump honors (base value) - increased for aggression
+    if (hasJoker) trickCount += 1.1;
+    if (hasRightBower) trickCount += 1.0;
+    if (hasLeftBower) trickCount += 0.9;
 
     // Trump honor combination bonuses (these combinations are very powerful)
     if (hasJoker && hasRightBower) {
-      trickCount += 0.3; // Top two trumps guarantee 2 tricks
+      trickCount += 0.4; // Top two trumps guarantee 2 tricks
     }
     if (hasJoker && hasRightBower && hasLeftBower) {
-      trickCount += 0.4; // Top three trumps is devastating
+      trickCount += 0.5; // Top three trumps is devastating
     }
 
     // Trump ace/king/queen (adjusted for context)
@@ -188,18 +211,18 @@ class BiddingAI {
 
     trickCount += trumpQueens * 0.15; // Queens rarely take tricks
 
-    // Trump length evaluation (FIXED LOGIC)
+    // Trump length evaluation (more aggressive)
     final trumpLength = trumpCards.length;
     if (trumpLength >= 7) {
-      trickCount += 1.2; // Extremely long trumps
+      trickCount += 1.5; // Extremely long trumps
     } else if (trumpLength >= 6) {
-      trickCount += 0.8; // Very long trumps
+      trickCount += 1.0; // Very long trumps
     } else if (trumpLength >= 5) {
-      trickCount += 0.5; // Good trump length
+      trickCount += 0.7; // Good trump length
     } else if (trumpLength >= 4) {
-      trickCount += 0.2; // Adequate trumps
+      trickCount += 0.3; // Adequate trumps
     } else if (trumpLength <= 2) {
-      trickCount -= 0.3; // Risky with short trumps
+      trickCount -= 0.2; // Less penalty for short trumps
     }
 
     // === SIDE SUIT EVALUATION ===

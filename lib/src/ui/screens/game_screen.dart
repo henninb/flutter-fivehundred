@@ -64,12 +64,16 @@ class _GameScreenState extends State<GameScreen> {
         if (state.showSuitNominationDialog && !_suitNominationDialogShown) {
           _suitNominationDialogShown = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            // Check if widget is still mounted before showing dialog
+            if (!mounted) return;
             _showSuitNominationDialog(context);
           });
         }
 
         // Show bottom sheets based on game phase
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          // Check if widget is still mounted before handling overlays
+          if (!mounted) return;
           _handleOverlays(context, state);
         });
 
@@ -136,6 +140,9 @@ class _GameScreenState extends State<GameScreen> {
 
   /// Handle showing bottom sheet overlays based on game state
   void _handleOverlays(BuildContext context, GameState state) {
+    // Additional safety check - should not be needed but prevents edge cases
+    if (!mounted) return;
+
     // Show setup overlay after cut for deal
     if (state.currentPhase == GamePhase.cutForDeal &&
         state.cutCards.isNotEmpty &&
@@ -173,28 +180,39 @@ class _GameScreenState extends State<GameScreen> {
 
   /// Show bidding bottom sheet
   void _showBiddingSheet(BuildContext context, GameState state) {
-    final biddingEngine = BiddingEngine(dealer: state.dealer);
-    final canInkle = biddingEngine.canInkle(Position.south, state.bidHistory);
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       isDismissible: false, // Must bid or pass
       enableDrag: false,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
+        initialChildSize: 0.95,
         minChildSize: 0.6,
         maxChildSize: 0.95,
-        builder: (context, scrollController) => BiddingBottomSheet(
-          state: state,
-          canInkle: canInkle,
-          onBidSelected: (bid, isInkle) {
-            widget.engine.submitPlayerBid(bid, isInkle: isInkle);
-            Navigator.pop(context);
-          },
-          onPass: () {
-            widget.engine.submitPlayerBid(null);
-            Navigator.pop(context);
+        builder: (context, scrollController) => AnimatedBuilder(
+          animation: widget.engine,
+          builder: (context, _) {
+            final currentState = widget.engine.state;
+            final biddingEngine = BiddingEngine(dealer: currentState.dealer);
+            final canInkle = biddingEngine.canInkle(Position.south, currentState.bidHistory);
+
+            return BiddingBottomSheet(
+              key: ValueKey(currentState.playerHand.length + currentState.playerHand.hashCode),
+              state: currentState,
+              canInkle: canInkle,
+              onBidSelected: (bid, isInkle) {
+                widget.engine.submitPlayerBid(bid, isInkle: isInkle);
+                Navigator.pop(context);
+              },
+              onPass: () {
+                widget.engine.submitPlayerBid(null);
+                Navigator.pop(context);
+              },
+              onTestHandSelected: (testHand) {
+                widget.engine.applyTestHand(testHand);
+                // Don't close the bidding sheet - let user bid with new hand
+              },
+            );
           },
         ),
       ),
