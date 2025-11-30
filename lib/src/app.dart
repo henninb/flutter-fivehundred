@@ -84,7 +84,7 @@ class _FiveHundredAppState extends State<FiveHundredApp> {
         return MaterialApp(
           title: 'Five Hundred',
           theme: _currentTheme.toThemeData(),
-          home: GameScreen500(
+          home: GameScreen(
             engine: engine,
             currentTheme: _currentTheme,
             onThemeChange: _handleThemeChange,

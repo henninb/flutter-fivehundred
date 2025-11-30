@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
 import '../../game/engine/game_engine.dart';
 import '../../game/engine/game_state.dart';
-import '../../game/models/game_models.dart';
 import '../../game/logic/bidding_engine.dart';
-import '../../models/theme_models.dart';
+import '../../game/models/game_models.dart';
 import '../../models/game_settings.dart';
-import '../widgets/action_bar.dart';
-import '../widgets/bidding_carousel.dart';
-import '../widgets/score_display.dart';
-import '../widgets/welcome_screen.dart';
-import '../widgets/setup_screen.dart';
+import '../../models/theme_models.dart';
+import '../widgets/overlays/bidding_bottom_sheet.dart';
+import '../widgets/overlays/game_over_modal.dart';
+import '../widgets/overlays/kitty_exchange_bottom_sheet.dart';
+import '../widgets/overlays/setup_overlay.dart';
+import '../widgets/overlays/welcome_overlay.dart';
+import '../widgets/persistent_game_board.dart';
 import '../widgets/suit_nomination_dialog.dart';
 import 'settings_screen.dart';
 
-/// Simplified game screen for 500
-class GameScreen500 extends StatelessWidget {
-  const GameScreen500({
+/// Main game screen for Five Hundred using single-page overlay design.
+///
+/// The screen uses a Stack layout with:
+/// - PersistentGameBoard as the base layer (always visible)
+/// - Overlays that appear based on game phase (welcome, bidding, etc.)
+/// - Bottom sheets for contextual interactions (bidding, kitty exchange)
+///
+/// This design ensures the core game board (score, trick, hand, actions) is
+/// always visible while phase-specific UI appears as overlays.
+class GameScreen extends StatefulWidget {
+  const GameScreen({
     super.key,
     required this.engine,
     required this.currentTheme,
@@ -31,11 +40,24 @@ class GameScreen500 extends StatelessWidget {
   final Function(GameSettings) onSettingsChange;
 
   @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  // Track which overlays have been shown to prevent duplicates
+  bool _setupOverlayShown = false;
+  bool _biddingOverlayShown = false;
+  bool _kittyOverlayShown = false;
+
+  @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: engine,
+      animation: widget.engine,
       builder: (context, _) {
-        final state = engine.state;
+        final state = widget.engine.state;
+
+        // Reset overlay flags on phase changes
+        _resetOverlayFlags(state);
 
         // Show suit nomination dialog when needed
         if (state.showSuitNominationDialog) {
@@ -44,720 +66,192 @@ class GameScreen500 extends StatelessWidget {
           });
         }
 
+        // Show bottom sheets based on game phase
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _handleOverlays(context, state);
+        });
+
         return Scaffold(
           appBar: AppBar(
             title: const Text('Five Hundred'),
             actions: [
               IconButton(
                 icon: const Icon(Icons.settings),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => SettingsScreen(
-                        currentSettings: currentSettings,
-                        onSettingsChange: onSettingsChange,
-                        onBackPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    ),
-                  );
-                },
+                onPressed: () => _showSettings(context),
               ),
             ],
           ),
           body: Stack(
             children: [
-              Column(
-                children: [
-              // Score display - only show when past setup/cut phases
-              if (state.gameStarted &&
-                  state.currentPhase != GamePhase.setup &&
-                  state.currentPhase != GamePhase.cutForDeal) ...[
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ScoreDisplay(
-                    scoreNS: state.teamNorthSouthScore,
-                    scoreEW: state.teamEastWestScore,
-                    tricksNS: state.tricksWonNS,
-                    tricksEW: state.tricksWonEW,
-                    trumpSuit: state.trumpSuit,
-                    winningBid: state.winningBid,
-                    dealer: state.dealer,
-                    ledSuit: state.currentTrick?.ledSuit,
-                    currentWinner: engine.getCurrentTrickWinner(),
-                  ),
-                ),
-                // Status message
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Text(
-                    state.gameStatus,
-                    style: Theme.of(context).textTheme.titleMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-              // Game area - show welcome screen if game not started
+              // Persistent game board (always visible)
+              PersistentGameBoard(
+                state: state,
+                engine: widget.engine,
+                onStartGame: () => widget.engine.startNewGame(),
+                onCutForDeal: () => widget.engine.cutForDeal(),
+                onDealCards: () => widget.engine.dealCards(),
+                onConfirmKitty: () => widget.engine.confirmKittyExchange(),
+                onNextHand: () => widget.engine.startNextHand(),
+                onClaimTricks: () => widget.engine.claimRemainingTricks(),
+              ),
+
+              // Welcome overlay (when game not started)
               if (!state.gameStarted)
-                const Expanded(
-                  child: WelcomeScreen(),
-                )
-              // Show setup screen during setup/cut for deal phases
-              else if (state.currentPhase == GamePhase.setup ||
-                  state.currentPhase == GamePhase.cutForDeal)
-                Expanded(
-                  child: SetupScreen(state: state),
-                )
-              // Show hand during bidding when it's player's turn
-              else if (state.currentPhase == GamePhase.bidding &&
-                  state.currentBidder == Position.south)
-                // Show just the hand during bidding - make scrollable
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Your Hand:',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          children: List.generate(
-                            state.playerHand.length,
-                            (index) {
-                              final card = state.playerHand[index];
-                              return Card(
-                                color: Colors.white,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Text(
-                                    card.label,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: _getCardColor(card.label),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                // Full game area for other phases
-                Expanded(
-                  child: Center(
-                    child: _buildGameArea(context, state),
-                  ),
+                WelcomeOverlay(
+                  onStartGame: () => widget.engine.startNewGame(),
                 ),
-              // Show bidding panel when it's player's turn to bid
-              if (state.currentPhase == GamePhase.bidding &&
-                  state.currentBidder == Position.south)
-                _buildBiddingPanel(state)
-              else
-                // Action bar for other phases
-                ActionBar500(
-                  state: state,
-                  onStartGame: () => engine.startNewGame(),
-                  onCutForDeal: () => engine.cutForDeal(),
-                  onDealCards: () => engine.dealCards(),
-                  onConfirmKitty: () => engine.confirmKittyExchange(),
-                  onNextHand: () => engine.startNextHand(),
-                  canClaimTricks: state.canPlayerClaimRemainingTricks,
-                  onClaimTricks: () => engine.claimRemainingTricks(),
+
+              // Game over modal
+              if (state.showGameOverDialog && state.gameOverData != null)
+                GameOverModal(
+                  data: state.gameOverData!,
+                  onDismiss: () => widget.engine.dismissGameOverDialog(),
                 ),
-              ],
-            ),
-            // Game over modal overlay
-            if (state.showGameOverDialog && state.gameOverData != null)
-              _GameOverModal(
-                data: state.gameOverData!,
-                onDismiss: () => engine.dismissGameOverDialog(),
-              ),
-          ],
-        ),
-      );
+            ],
+          ),
+        );
       },
     );
   }
 
-  Widget _buildGameArea(BuildContext context, GameState state) {
-    // Show cut cards during cut for deal phase
+  /// Reset overlay shown flags when phase changes
+  void _resetOverlayFlags(GameState state) {
+    if (state.currentPhase != GamePhase.cutForDeal) {
+      _setupOverlayShown = false;
+    }
+    if (state.currentPhase != GamePhase.bidding ||
+        state.currentBidder != Position.south) {
+      _biddingOverlayShown = false;
+    }
+    if (state.currentPhase != GamePhase.kittyExchange ||
+        state.contractor != Position.south) {
+      _kittyOverlayShown = false;
+    }
+  }
+
+  /// Handle showing bottom sheet overlays based on game state
+  void _handleOverlays(BuildContext context, GameState state) {
+    // Show setup overlay after cut for deal
     if (state.currentPhase == GamePhase.cutForDeal &&
-        state.cutCards.isNotEmpty) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Cut for Deal Results:',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Display each player's cut card
-          ...Position.values.map((position) {
-            final card = state.cutCards[position];
-            if (card == null) return const SizedBox.shrink();
-
-            final playerName = state.getName(position);
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Card(
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 100,
-                        child: Text(
-                          playerName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        card.label,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
-      );
+        state.cutCards.isNotEmpty &&
+        !_setupOverlayShown) {
+      _setupOverlayShown = true;
+      _showSetupOverlay(context, state);
     }
 
-    // During play/scoring, if there's a current trick to show, always show it
-    // (This handles the 10th trick when hand is empty)
-    if (state.currentTrick != null &&
-        state.currentTrick!.plays.isNotEmpty &&
-        (state.isPlayPhase || state.currentPhase == GamePhase.scoring)) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Current Trick:',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: state.currentTrick!.plays
-                .map((play) => Card(
-                      color: Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Text(
-                          '${play.card.label}\n${play.player.name}',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ),)
-                .toList(),
-          ),
-          const SizedBox(height: 24),
-          // Show remaining hand if any cards left
-          if (state.playerHand.isNotEmpty) ...[
-            Text(
-              'Your Hand:',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: List.generate(
-                state.playerHand.length,
-                (index) => _buildCard(
-                  context,
-                  state.playerHand[index],
-                  index,
-                  state,
-                ),
-              ),
-            ),
-          ],
-        ],
-      );
+    // Show bidding sheet when player's turn
+    if (state.currentPhase == GamePhase.bidding &&
+        state.currentBidder == Position.south &&
+        !_biddingOverlayShown) {
+      _biddingOverlayShown = true;
+      _showBiddingSheet(context, state);
     }
 
-    // During scoring phase, show last completed trick
-    if (state.currentPhase == GamePhase.scoring && state.completedTricks.isNotEmpty) {
-      final lastTrick = state.completedTricks.last;
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Last Trick:',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            children: lastTrick.plays
-                .map((play) => Card(
-                      color: Colors.white,
-                      elevation: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          '${play.card.label}\n${play.player.name}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ),)
-                .toList(),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Hand Complete',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ],
-      );
+    // Show kitty exchange when contractor
+    if (state.currentPhase == GamePhase.kittyExchange &&
+        state.contractor == Position.south &&
+        !_kittyOverlayShown) {
+      _kittyOverlayShown = true;
+      _showKittyExchange(context, state);
     }
+  }
 
-    // Regular play - show hand only (trick is shown in first check above)
-    if (state.playerHand.isEmpty) {
-      return const Text('Waiting for cards...');
-    }
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Your Hand:',
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: List.generate(
-            state.playerHand.length,
-            (index) => _buildCard(
-              context,
-              state.playerHand[index],
-              index,
-              state,
-            ),
-          ),
-        ),
-      ],
+  /// Show setup overlay (cut for deal results)
+  void _showSetupOverlay(BuildContext context, GameState state) {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: true,
+      enableDrag: true,
+      builder: (context) => SetupOverlay(state: state),
     );
   }
 
-  Widget _buildCard(
-    BuildContext context,
-    card,
-    int index,
-    GameState state,
-  ) {
-    final bool canPlay =
-        state.isPlayPhase && state.currentPlayer == Position.south;
-    final bool isKittyExchange =
-        state.currentPhase == GamePhase.kittyExchange &&
-        state.contractor == Position.south;
-    final bool isSelected = state.selectedCardIndices.contains(index);
-    final bool isJoker = card.label == 'JOKER';
+  /// Show bidding bottom sheet
+  void _showBiddingSheet(BuildContext context, GameState state) {
+    final biddingEngine = BiddingEngine(dealer: state.dealer);
+    final canInkle = biddingEngine.canInkle(Position.south, state.bidHistory);
 
-    // Determine card color
-    Color cardColor;
-    Color textColor;
-
-    if (isKittyExchange && isSelected) {
-      cardColor = Theme.of(context).colorScheme.errorContainer; // Highlight selected cards for discard
-      textColor = Theme.of(context).colorScheme.onErrorContainer;
-    } else {
-      // Default: white background for all cards
-      cardColor = Colors.white;
-      // Use suit-appropriate colors (red for hearts/diamonds, black for spades/clubs)
-      textColor = _getCardColor(card.label);
-    }
-
-    return InkWell(
-      onTap: () {
-        if (isKittyExchange) {
-          // Kitty exchange: tap to toggle selection
-          engine.toggleCardSelection(index);
-        } else if (canPlay) {
-          // Play phase: tap to play card
-          engine.playCard(index);
-        }
-      },
-      child: Card(
-        color: cardColor,
-        elevation: isSelected ? 8 : 1,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            card.label,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: isJoker || isSelected ? FontWeight.bold : FontWeight.normal,
-              letterSpacing: isJoker ? 1.5 : 0,
-              color: textColor,
-            ),
-          ),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false, // Must bid or pass
+      enableDrag: false,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.6,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => BiddingBottomSheet(
+          state: state,
+          canInkle: canInkle,
+          onBidSelected: (bid, isInkle) {
+            widget.engine.submitPlayerBid(bid, isInkle: isInkle);
+            Navigator.pop(context);
+          },
+          onPass: () {
+            widget.engine.submitPlayerBid(null);
+            Navigator.pop(context);
+          },
         ),
       ),
     );
   }
 
-  Widget _buildBiddingPanel(GameState state) {
-    // Check if player can inkle
-    final biddingEngine = BiddingEngine(dealer: state.dealer);
-    final canInkle = biddingEngine.canInkle(Position.south, state.bidHistory);
-
-    return BiddingCarousel(
-      currentHighBid: state.currentHighBid,
-      canInkle: canInkle,
-      playerHand: state.playerHand,
-      bidHistory: state.bidHistory,
-      currentBidder: state.currentBidder,
-      dealer: state.dealer,
-      onBidSelected: (bid, isInkle) {
-        engine.submitPlayerBid(bid, isInkle: isInkle);
-      },
-      onPass: () {
-        engine.submitPlayerBid(null);
-      },
+  /// Show kitty exchange bottom sheet
+  void _showKittyExchange(BuildContext context, GameState state) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false, // Must complete exchange
+      enableDrag: false,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.6,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) => KittyExchangeBottomSheet(
+          hand: state.playerHand,
+          kitty: state.kitty,
+          onConfirm: (selectedIndices) {
+            // Clear existing selections
+            for (var i in state.selectedCardIndices) {
+              widget.engine.toggleCardSelection(i);
+            }
+            // Apply new selections
+            for (var i in selectedIndices) {
+              widget.engine.toggleCardSelection(i);
+            }
+            // Confirm the exchange
+            widget.engine.confirmKittyExchange();
+          },
+        ),
+      ),
     );
   }
 
+  /// Show suit nomination dialog for joker in no-trump
   void _showSuitNominationDialog(BuildContext context) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => SuitNominationDialog(
         onSuitSelected: (suit) {
-          engine.confirmCardPlayWithNominatedSuit(suit);
+          widget.engine.confirmCardPlayWithNominatedSuit(suit);
+          Navigator.of(context).pop();
         },
       ),
     );
   }
 
-  Color _getCardColor(String label) {
-    // Red for hearts and diamonds, black for clubs and spades
-    if (label.contains('♥') || label.contains('♦')) {
-      return Colors.red.shade800;
-    }
-    return Colors.black;
-  }
-}
-
-/// Game over modal with polished design
-class _GameOverModal extends StatelessWidget {
-  final GameOverData data;
-  final VoidCallback onDismiss;
-
-  const _GameOverModal({
-    required this.data,
-    required this.onDismiss,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final playerWon = data.winningTeam == Team.northSouth;
-    final winnerName = playerWon ? 'North-South' : 'East-West';
-
-    return GestureDetector(
-      onTap: onDismiss,
-      child: Container(
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: GestureDetector(
-                onTap: onDismiss,
-                child: Card(
-                  elevation: 12,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 400),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          playerWon
-                              ? Theme.of(context).colorScheme.primaryContainer
-                              : Theme.of(context).colorScheme.errorContainer,
-                          playerWon
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.error,
-                        ],
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Trophy/Crown Icon
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: playerWon
-                                  ? Theme.of(context)
-                                      .colorScheme
-                                      .primary
-                                      .withValues(alpha: 0.3)
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .error
-                                      .withValues(alpha: 0.3),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              playerWon
-                                  ? Icons.emoji_events
-                                  : Icons.close,
-                              size: 40,
-                              color: playerWon
-                                  ? Theme.of(context)
-                                      .colorScheme
-                                      .onPrimaryContainer
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onErrorContainer,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Winner Name
-                          Text(
-                            '$winnerName Won!',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineLarge
-                                ?.copyWith(
-                                  color: playerWon
-                                      ? Theme.of(context)
-                                          .colorScheme
-                                          .onPrimaryContainer
-                                      : Theme.of(context)
-                                          .colorScheme
-                                          .onErrorContainer,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 26,
-                                ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Final Score
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: playerWon
-                                  ? Theme.of(context)
-                                      .colorScheme
-                                      .primary
-                                      .withValues(alpha: 0.3)
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .error
-                                      .withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Final Score',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(
-                                        color: playerWon
-                                            ? Theme.of(context)
-                                                .colorScheme
-                                                .onPrimaryContainer
-                                            : Theme.of(context)
-                                                .colorScheme
-                                                .onErrorContainer,
-                                        letterSpacing: 1.0,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${data.finalScoreNS} - ${data.finalScoreEW}',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineMedium
-                                      ?.copyWith(
-                                        color: playerWon
-                                            ? Theme.of(context)
-                                                .colorScheme
-                                                .onPrimaryContainer
-                                            : Theme.of(context)
-                                                .colorScheme
-                                                .onErrorContainer,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 28,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Statistics Grid
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: playerWon
-                                  ? Theme.of(context)
-                                      .colorScheme
-                                      .primary
-                                      .withValues(alpha: 0.2)
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .error
-                                      .withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Overall Statistics',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
-                                      ?.copyWith(
-                                        color: playerWon
-                                            ? Theme.of(context)
-                                                .colorScheme
-                                                .onPrimaryContainer
-                                            : Theme.of(context)
-                                                .colorScheme
-                                                .onErrorContainer,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                                const SizedBox(height: 8),
-                                _StatRow(
-                                  label: 'Record',
-                                  value:
-                                      '${data.gamesWon} - ${data.gamesLost}',
-                                  icon: Icons.sports_score,
-                                  isPlayerWin: playerWon,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Tap anywhere instruction
-                          Text(
-                            'Tap anywhere to continue',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: playerWon
-                                      ? Theme.of(context)
-                                          .colorScheme
-                                          .onPrimaryContainer
-                                          .withValues(alpha: 0.8)
-                                      : Theme.of(context)
-                                          .colorScheme
-                                          .onErrorContainer
-                                          .withValues(alpha: 0.8),
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+  /// Show settings overlay
+  void _showSettings(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        child: SettingsScreen(
+          currentSettings: widget.currentSettings,
+          onSettingsChange: widget.onSettingsChange,
+          onBackPressed: () => Navigator.pop(context),
         ),
       ),
-    );
-  }
-}
-
-/// Stat row widget for statistics display
-class _StatRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final bool isPlayerWin;
-
-  const _StatRow({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.isPlayerWin,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = isPlayerWin
-        ? Theme.of(context).colorScheme.onPrimaryContainer
-        : Theme.of(context).colorScheme.onErrorContainer;
-
-    return Row(
-      children: [
-        Icon(
-          icon,
-          color: textColor.withValues(alpha: 0.7),
-          size: 20,
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: textColor.withValues(alpha: 0.8),
-                ),
-          ),
-        ),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: textColor,
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-      ],
     );
   }
 }

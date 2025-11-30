@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../../game/engine/game_state.dart';
 import '../../game/models/game_models.dart';
 
-/// Simplified action bar for 500
-class ActionBar500 extends StatelessWidget {
-  const ActionBar500({
+/// Simplified action bar for Five Hundred
+class ActionBar extends StatelessWidget {
+  const ActionBar({
     super.key,
     required this.state,
     required this.onStartGame,
