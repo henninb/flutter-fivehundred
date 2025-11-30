@@ -5,6 +5,7 @@ import '../../game/models/game_models.dart';
 import 'action_bar.dart';
 import 'hand_display.dart';
 import 'score_display.dart';
+import 'setup_screen.dart';
 import 'status_bar.dart';
 import 'trick_area.dart';
 
@@ -26,6 +27,7 @@ class PersistentGameBoard extends StatelessWidget {
     required this.engine,
     required this.onStartGame,
     required this.onCutForDeal,
+    required this.onSelectCutCard,
     required this.onDealCards,
     required this.onConfirmKitty,
     required this.onNextHand,
@@ -36,6 +38,7 @@ class PersistentGameBoard extends StatelessWidget {
   final GameEngine engine;
   final VoidCallback onStartGame;
   final VoidCallback onCutForDeal;
+  final Function(int) onSelectCutCard;
   final VoidCallback onDealCards;
   final VoidCallback onConfirmKitty;
   final VoidCallback onNextHand;
@@ -68,16 +71,12 @@ class PersistentGameBoard extends StatelessWidget {
               : const SizedBox.shrink(),
         ),
 
-        // Trick area - expands to fill available space
+        // Trick area / Setup screen - expands to fill available space
         Expanded(
           child: Center(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
-              child: TrickArea(
-                key: ValueKey(state.currentTrick?.plays.length ?? 0),
-                trick: state.currentTrick,
-                currentWinner: engine.getCurrentTrickWinner(),
-              ),
+              child: _buildCenterContent(),
             ),
           ),
         ),
@@ -108,8 +107,29 @@ class PersistentGameBoard extends StatelessWidget {
 
   /// Determine if score should be shown based on game phase
   bool _shouldShowScore() {
-    // Show score after game has started (after initial cut for deal)
-    // Hide only during initial setup phase
-    return state.gameStarted && state.currentPhase != GamePhase.setup;
+    // Show score after game has started, but hide during setup and cut for deal
+    return state.gameStarted &&
+           state.currentPhase != GamePhase.setup &&
+           state.currentPhase != GamePhase.cutForDeal;
+  }
+
+  /// Build the center content - either setup screen or trick area
+  Widget _buildCenterContent() {
+    // Show setup screen during setup and cut for deal phases
+    if (state.currentPhase == GamePhase.setup ||
+        state.currentPhase == GamePhase.cutForDeal) {
+      return SetupScreen(
+        key: ValueKey(state.currentPhase),
+        state: state,
+        onSelectCutCard: onSelectCutCard,
+      );
+    }
+
+    // Show trick area during other phases
+    return TrickArea(
+      key: ValueKey(state.currentTrick?.plays.length ?? 0),
+      trick: state.currentTrick,
+      currentWinner: engine.getCurrentTrickWinner(),
+    );
   }
 }

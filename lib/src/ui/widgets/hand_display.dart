@@ -36,6 +36,11 @@ class _HandDisplayState extends State<HandDisplay> {
   @override
   Widget build(BuildContext context) {
     if (widget.hand.isEmpty) {
+      // Hide "No cards" message during setup and cut for deal phases
+      if (widget.phase == GamePhase.setup || widget.phase == GamePhase.cutForDeal) {
+        return const SizedBox(height: 80);
+      }
+
       return Container(
         height: 80,
         alignment: Alignment.center,

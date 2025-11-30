@@ -84,26 +84,54 @@ class GameEngine extends ChangeNotifier {
     );
   }
 
-  /// Perform cut for deal - each player draws a card, highest card deals
+  /// Perform cut for deal - show spread deck for player to tap
   void cutForDeal() {
     final deck = createDeck();
 
-    // Each player cuts (draws) a random card from the deck
-    final cutCards = <Position, PlayingCard>{};
-    final usedIndices = <int>{};
-    final random = Random();
+    // Initialize the spread deck and reset selection state
+    _updateState(
+      _state.copyWith(
+        currentPhase: GamePhase.cutForDeal,
+        cutDeck: deck,
+        cutCards: {},
+        playerHasSelectedCutCard: false,
+        gameStatus: 'Tap the deck to cut for dealer',
+      ),
+    );
+  }
 
-    for (final position in Position.values) {
-      int index;
-      do {
-        index = random.nextInt(deck.length);
-      } while (usedIndices.contains(index));
-
-      usedIndices.add(index);
-      cutCards[position] = deck[index];
+  /// Player selects a card from the spread deck
+  void selectCutCard(int index) {
+    if (_state.playerHasSelectedCutCard) {
+      return; // Already selected
     }
 
-    // Determine winner immediately
+    if (index < 0 || index >= _state.cutDeck.length) {
+      return; // Invalid index
+    }
+
+    final deck = _state.cutDeck;
+    final random = Random();
+
+    // Player (South) selects their card
+    final playerCard = deck[index];
+    final cutCards = <Position, PlayingCard>{
+      Position.south: playerCard,
+    };
+    final usedIndices = <int>{index};
+
+    // AI players automatically select random cards (different from player's card)
+    for (final position in [Position.north, Position.east, Position.west]) {
+      int aiIndex;
+      do {
+        aiIndex = random.nextInt(deck.length);
+      } while (usedIndices.contains(aiIndex));
+
+      usedIndices.add(aiIndex);
+      cutCards[position] = deck[aiIndex];
+    }
+
+    // Determine winner
     Position? highestPosition;
     int highestRank = -1;
     int highestSuit = 999; // Lower is better (hearts=0 is best)
@@ -134,14 +162,14 @@ class GameEngine extends ChangeNotifier {
       }
     }
 
-    // Set dealer and update status - show cut results on same screen
+    // Update state with results
     if (highestPosition != null) {
       final winnerName = _state.getName(highestPosition);
       final winningCard = cutCards[highestPosition]!;
       _updateState(
         _state.copyWith(
-          currentPhase: GamePhase.cutForDeal,
           cutCards: cutCards,
+          playerHasSelectedCutCard: true,
           dealer: highestPosition,
           gameStatus:
               '$winnerName wins with ${winningCard.label} and will deal. Tap Deal to start.',

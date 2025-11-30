@@ -95,6 +95,7 @@ class _GameScreenState extends State<GameScreen> {
                 engine: widget.engine,
                 onStartGame: () => widget.engine.startNewGame(),
                 onCutForDeal: () => widget.engine.cutForDeal(),
+                onSelectCutCard: (index) => widget.engine.selectCutCard(index),
                 onDealCards: () => widget.engine.dealCards(),
                 onConfirmKitty: () => widget.engine.confirmKittyExchange(),
                 onNextHand: () => widget.engine.startNextHand(),

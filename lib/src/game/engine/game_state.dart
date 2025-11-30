@@ -26,7 +26,9 @@ class GameState {
     this.dealer = Position.west, // Default dealer (player is South, dealer rotates)
     this.handNumber = 0,
     // Cut for deal
+    this.cutDeck = const [],
     this.cutCards = const {},
+    this.playerHasSelectedCutCard = false,
     // Scores
     this.teamNorthSouthScore = 0,
     this.teamEastWestScore = 0,
@@ -80,7 +82,9 @@ class GameState {
   final int handNumber;
 
   // Cut for deal
+  final List<PlayingCard> cutDeck; // Spread deck shown to player for cutting
   final Map<Position, PlayingCard> cutCards; // Cards drawn during cut for deal
+  final bool playerHasSelectedCutCard; // Whether player has tapped a card from spread deck
 
   // Scores
   final int teamNorthSouthScore;
@@ -185,7 +189,9 @@ class GameState {
     GamePhase? currentPhase,
     Position? dealer,
     int? handNumber,
+    List<PlayingCard>? cutDeck,
     Map<Position, PlayingCard>? cutCards,
+    bool? playerHasSelectedCutCard,
     int? teamNorthSouthScore,
     int? teamEastWestScore,
     int? gamesWon,
@@ -245,7 +251,9 @@ class GameState {
       currentPhase: currentPhase ?? this.currentPhase,
       dealer: dealer ?? this.dealer,
       handNumber: handNumber ?? this.handNumber,
+      cutDeck: cutDeck ?? this.cutDeck,
       cutCards: cutCards ?? this.cutCards,
+      playerHasSelectedCutCard: playerHasSelectedCutCard ?? this.playerHasSelectedCutCard,
       teamNorthSouthScore: teamNorthSouthScore ?? this.teamNorthSouthScore,
       teamEastWestScore: teamEastWestScore ?? this.teamEastWestScore,
       gamesWon: gamesWon ?? this.gamesWon,

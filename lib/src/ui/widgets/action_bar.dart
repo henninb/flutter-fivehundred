@@ -63,9 +63,9 @@ class ActionBar extends StatelessWidget {
       return buttons;
     }
 
-    // Setup phase - Cut for Deal or Deal
+    // Setup phase - show Cut for Deal button only when ready
     if (state.currentPhase == GamePhase.setup) {
-      // Show "Cut for Deal" button if status mentions cutting
+      // Show "Cut for Deal" button to initialize the spread deck
       if (state.gameStatus.contains('Cut for Deal')) {
         buttons.add(
           Expanded(
@@ -89,16 +89,19 @@ class ActionBar extends StatelessWidget {
       return buttons;
     }
 
-    // Cut for deal phase - show Deal button once winner is determined
+    // Cut for deal phase - show Deal button only after player has selected a card
     if (state.currentPhase == GamePhase.cutForDeal) {
-      buttons.add(
-        Expanded(
-          child: FilledButton(
-            onPressed: onDealCards,
-            child: const Text('Deal'),
+      // Only show Deal button if player has selected their cut card
+      if (state.playerHasSelectedCutCard) {
+        buttons.add(
+          Expanded(
+            child: FilledButton(
+              onPressed: onDealCards,
+              child: const Text('Deal'),
+            ),
           ),
-        ),
-      );
+        );
+      }
       return buttons;
     }
 

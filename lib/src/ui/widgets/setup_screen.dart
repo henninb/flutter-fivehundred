@@ -1,25 +1,30 @@
 import 'package:flutter/material.dart';
 import '../../game/engine/game_state.dart';
-import '../../game/models/game_models.dart';
 
 /// Setup screen shown during initial setup and cut for deal phases
 class SetupScreen extends StatelessWidget {
   final GameState state;
+  final Function(int)? onSelectCutCard;
 
   const SetupScreen({
     super.key,
     required this.state,
+    this.onSelectCutCard,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Show cut for deal results if cards have been cut
+    // Show spread deck if in cut for deal phase and deck is available
     if (state.currentPhase == GamePhase.cutForDeal &&
-        state.cutCards.isNotEmpty) {
-      return _CutForDealDisplay(state: state);
+        state.cutDeck.isNotEmpty &&
+        !state.playerHasSelectedCutCard) {
+      return _SpreadDeckDisplay(
+        state: state,
+        onSelectCard: onSelectCutCard,
+      );
     }
 
-    // Show ready to start message
+    // Show ready to start message (including after cut is complete)
     return _ReadyToStartDisplay(state: state);
   }
 }
@@ -66,172 +71,122 @@ class _ReadyToStartDisplay extends StatelessWidget {
   }
 }
 
-/// Display the cut for deal results
-class _CutForDealDisplay extends StatelessWidget {
+/// Display spread deck for player to tap and cut
+class _SpreadDeckDisplay extends StatelessWidget {
   final GameState state;
+  final Function(int)? onSelectCard;
 
-  const _CutForDealDisplay({required this.state});
+  const _SpreadDeckDisplay({
+    required this.state,
+    this.onSelectCard,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'Cut for Deal',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+            Icon(
+              Icons.help_outline,
+              size: 32,
+              color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 12),
             Text(
-              'Highest card deals first',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+              state.gameStatus,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            // Display each player's cut card in a grid
-            _buildCutCardsGrid(context),
-            const SizedBox(height: 24),
-            // Show result message
-            if (state.gameStatus.isNotEmpty)
-              Card(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    state.gameStatus,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color:
-                              Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
+            _buildSpreadDeck(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCutCardsGrid(BuildContext context) {
-    // Build a 2x2 grid for the four players
-    // Layout: [North-Partner] [West-Right]
-    //         [East-Left]     [South-You]
-    final positions = [
-      Position.north, // Partner (top)
-      Position.west, // Opponent right
-      Position.east, // Opponent left
-      Position.south, // Human player (bottom)
-    ];
+  Widget _buildSpreadDeck(BuildContext context) {
+    final deckSize = state.cutDeck.length;
+    if (deckSize == 0) {
+      return const SizedBox.shrink();
+    }
 
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      alignment: WrapAlignment.center,
-      children: positions.map((position) {
-        final card = state.cutCards[position];
-        final playerName = state.getName(position);
+    // Get screen width
+    final screenWidth = MediaQuery.of(context).size.width;
 
-        return _CutCardItem(
-          playerName: playerName,
-          card: card,
-          isDealer: state.dealer == position,
-        );
-      }).toList(),
+    // Card dimensions
+    const cardWidth = 60.0;
+    const cardHeight = 90.0;
+
+    // Calculate spacing to fit all cards on screen with overlap
+    final availableWidth = screenWidth - 32; // 16px padding on each side
+    final spacing = (availableWidth - cardWidth) / (deckSize - 1);
+    final finalSpacing = spacing.clamp(0.0, cardWidth * 0.8); // Max 80% overlap
+    final totalWidth = ((deckSize - 1) * finalSpacing + cardWidth);
+
+    return SizedBox(
+      height: cardHeight,
+      width: totalWidth,
+      child: Stack(
+        children: List.generate(deckSize, (index) {
+          return Positioned(
+            left: index * finalSpacing,
+            child: GestureDetector(
+              onTap: onSelectCard != null ? () => onSelectCard!(index) : null,
+              child: _CardBackWidget(
+                width: cardWidth,
+                height: cardHeight,
+              ),
+            ),
+          );
+        }),
+      ),
     );
   }
 }
 
-/// Individual cut card display for a player
-class _CutCardItem extends StatelessWidget {
-  final String playerName;
-  final dynamic card;
-  final bool isDealer;
+/// Widget displaying card back
+class _CardBackWidget extends StatelessWidget {
+  final double width;
+  final double height;
 
-  const _CutCardItem({
-    required this.playerName,
-    required this.card,
-    required this.isDealer,
+  const _CardBackWidget({
+    required this.width,
+    required this.height,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (card == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Card(
-      elevation: isDealer ? 8 : 2,
-      color: isDealer
-          ? Theme.of(context).colorScheme.primaryContainer
-          : Theme.of(context).colorScheme.surface,
-      child: Container(
-        width: 140,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              playerName,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: isDealer ? FontWeight.bold : FontWeight.normal,
-                    color: isDealer
-                        ? Theme.of(context).colorScheme.onPrimaryContainer
-                        : Theme.of(context).colorScheme.onSurface,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            if (isDealer) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Dealer',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-              ),
-            ],
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: isDealer
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.outline,
-                  width: isDealer ? 2 : 1,
-                ),
-              ),
-              child: Text(
-                card.label,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: _getCardColor(card.label),
-                ),
-              ),
-            ),
-          ],
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.tertiary,
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Icon(
+          Icons.style,
+          color: Theme.of(context).colorScheme.tertiary,
+          size: 24,
         ),
       ),
     );
-  }
-
-  Color _getCardColor(String label) {
-    // Red for hearts and diamonds, black for clubs and spades
-    if (label.contains('♥') || label.contains('♦')) {
-      return Colors.red.shade800;
-    }
-    return Colors.black;
   }
 }
