@@ -29,8 +29,6 @@ class ScoreDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showTrickInfo = ledSuit != null || currentWinner != null;
-
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -38,50 +36,34 @@ class ScoreDisplay extends StatelessWidget {
         border: Border.all(color: Theme.of(context).dividerColor),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          // Top section: Scores and center info
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildTeamScore(
-                context,
-                'N-S',
-                scoreNS,
-                tricksNS,
-                Team.northSouth,
-              ),
-              Container(
-                width: 1,
-                height: 40,
-                color: Theme.of(context).dividerColor,
-              ),
-              _buildCenterInfo(context),
-              Container(
-                width: 1,
-                height: 40,
-                color: Theme.of(context).dividerColor,
-              ),
-              _buildTeamScore(
-                context,
-                'W-E',
-                scoreEW,
-                tricksEW,
-                Team.eastWest,
-              ),
-            ],
+          _buildTeamScore(
+            context,
+            'N-S',
+            scoreNS,
+            tricksNS,
+            Team.northSouth,
           ),
-          // Bottom section: Led suit and winning team
-          if (showTrickInfo) ...[
-            const SizedBox(height: 8),
-            Container(
-              height: 1,
-              color: Theme.of(context).dividerColor,
-            ),
-            const SizedBox(height: 8),
-            _buildTrickInfo(context),
-          ],
+          Container(
+            width: 1,
+            height: 40,
+            color: Theme.of(context).dividerColor,
+          ),
+          _buildCenterInfo(context),
+          Container(
+            width: 1,
+            height: 40,
+            color: Theme.of(context).dividerColor,
+          ),
+          _buildTeamScore(
+            context,
+            'W-E',
+            scoreEW,
+            tricksEW,
+            Team.eastWest,
+          ),
         ],
       ),
     );

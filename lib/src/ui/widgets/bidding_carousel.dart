@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../game/models/card.dart';
 import '../../game/models/game_models.dart';
-import '../../game/logic/avondale_table.dart';
 import '../../game/logic/bidding_ai.dart';
 
-/// Modern carousel-based bidding interface
-/// Swipe through trick levels, tap suit icons to bid
+/// Modern button-based bidding interface
+/// Select suit and trick level with clear button grids
 class BiddingCarousel extends StatefulWidget {
   const BiddingCarousel({
     super.key,
@@ -34,21 +33,13 @@ class BiddingCarousel extends StatefulWidget {
 }
 
 class _BiddingCarouselState extends State<BiddingCarousel> {
-  late PageController _pageController;
-  int _currentTrickLevel = 7; // Start at 7 (minimum normal bid)
+  int? _selectedTrickLevel;
+  BidSuit? _selectedSuit;
   BidDecision? _aiRecommendation;
-  Map<BidSuit, SuitEvaluation>? _handEvaluations;
-  Bid? _selectedBid;
-  bool _selectedIsInkle = false;
-  BidSuit? _selectedSuit; // Track selected suit separately to persist across trick levels
 
   @override
   void initState() {
     super.initState();
-
-    // Find first valid trick level to start on
-    _currentTrickLevel = _findInitialTrickLevel();
-    _pageController = PageController(initialPage: _currentTrickLevel - 6);
 
     // Get AI recommendation
     _aiRecommendation = BiddingAI.chooseBid(
@@ -57,516 +48,301 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
       position: widget.currentBidder ?? Position.south,
       canInkle: widget.canInkle,
     );
-
-    // Get hand evaluations for strength indicator
-    _handEvaluations = {
-      BidSuit.spades: BiddingAI.evaluateSuit(widget.playerHand, Suit.spades),
-      BidSuit.clubs: BiddingAI.evaluateSuit(widget.playerHand, Suit.clubs),
-      BidSuit.diamonds:
-          BiddingAI.evaluateSuit(widget.playerHand, Suit.diamonds),
-      BidSuit.hearts: BiddingAI.evaluateSuit(widget.playerHand, Suit.hearts),
-      BidSuit.noTrump: BiddingAI.evaluateNoTrump(widget.playerHand),
-    };
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+  Bid? get _currentBid {
+    if (_selectedTrickLevel == null || _selectedSuit == null) return null;
+    return Bid(
+      tricks: _selectedTrickLevel!,
+      suit: _selectedSuit!,
+      bidder: Position.south,
+    );
   }
 
-  /// Find first valid trick level to display
-  int _findInitialTrickLevel() {
-    // If we can inkle, start at 6
-    if (widget.canInkle) return 6;
-
-    // Otherwise start at minimum beating level
-    if (widget.currentHighBid != null) {
-      return widget.currentHighBid!.tricks;
-    }
-
-    // Default to 7
-    return 7;
-  }
-
-  /// Get previous bids made before current player
-  List<BidEntry> _getPreviousBids() {
-    if (widget.currentBidder == null) return [];
-
-    final biddingOrder = _getBiddingOrder();
-    final currentBidderIndex = biddingOrder.indexOf(widget.currentBidder!);
-
-    return widget.bidHistory.where((entry) {
-      final entryIndex = biddingOrder.indexOf(entry.bidder);
-      return entryIndex < currentBidderIndex;
-    }).toList();
-  }
-
-  /// Get bidding order starting from dealer's left
-  List<Position> _getBiddingOrder() {
-    final order = <Position>[];
-    var current = widget.dealer.next;
-    for (int i = 0; i < 4; i++) {
-      order.add(current);
-      current = current.next;
-    }
-    return order;
-  }
+  bool get _isInkle =>
+      _selectedTrickLevel == 6 && widget.canInkle;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(top: 8, bottom: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurfaceVariant
-                  .withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
-          // Mini avatars with previous bids
-          if (_getPreviousBids().isNotEmpty) _buildBidHistory(context),
-
-          // Hand strength and AI recommendation
-          _buildHandStrengthAndAI(context),
-
-          const SizedBox(height: 4),
-
-          // Carousel with trick levels
-          SizedBox(
-            height: 150,
-            child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  _currentTrickLevel = index + 6;
-
-                  // Preserve suit selection when changing trick level
-                  if (_selectedSuit != null) {
-                    final newBid = Bid(
-                      tricks: _currentTrickLevel,
-                      suit: _selectedSuit!,
-                      bidder: Position.south,
-                    );
-
-                    // Only keep the selection if the new bid is valid
-                    if (_isValidBid(_currentTrickLevel, _selectedSuit!)) {
-                      _selectedBid = newBid;
-                      _selectedIsInkle = _currentTrickLevel == 6 && widget.canInkle;
-                    } else {
-                      // Clear if new bid is invalid
-                      _selectedBid = null;
-                      _selectedIsInkle = false;
-                      _selectedSuit = null;
-                    }
-                  }
-                });
-              },
-              itemCount: 5, // Trick levels 6-10
-              itemBuilder: (context, index) {
-                final tricks = index + 6;
-                return _buildTrickLevelPage(context, tricks);
-              },
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Trick level selector label + buttons
-          Column(
-            children: [
-              Text(
-                'Choose Bid Level:',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-              const SizedBox(height: 6),
-              _buildTrickLevelSelector(context),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          // Action buttons (Pass and Confirm)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Row(
-              children: [
-                // Pass button
-                Expanded(
-                  child: SizedBox(
-                    height: 44,
-                    child: FilledButton(
-                      onPressed: widget.onPass,
-                      child: const Text(
-                        'Pass',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                // Confirm bid button (shown when bid selected)
-                if (_selectedBid != null) ...[
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 2,
-                    child: SizedBox(
-                      height: 44,
-                      child: FilledButton(
-                        onPressed: () {
-                          widget.onBidSelected(_selectedBid!, _selectedIsInkle);
-                        },
-                        child: Text(
-                          'Bid: ${_selectedBid!.tricks}${_suitSymbol(_selectedBid!.suit)} (${_selectedBid!.value})',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBidHistory(BuildContext context) {
-    final previousBids = _getPreviousBids();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: previousBids.map((entry) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: _buildPlayerBidAvatar(context, entry),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildPlayerBidAvatar(BuildContext context, BidEntry entry) {
-    final isPassed = entry.action == BidAction.pass;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: isPassed
-                ? Theme.of(context).colorScheme.surfaceContainerHighest
-                : Theme.of(context).colorScheme.primaryContainer,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isPassed
-                  ? Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)
-                  : Theme.of(context).colorScheme.primary,
-              width: 2,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              _getPositionInitial(entry.bidder),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: isPassed
-                    ? Theme.of(context).colorScheme.onSurfaceVariant
-                    : Theme.of(context).colorScheme.onPrimaryContainer,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          isPassed
-              ? 'Pass'
-              : '${entry.bid!.tricks}${_suitSymbol(entry.bid!.suit)}',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: isPassed ? FontWeight.normal : FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHandStrengthAndAI(BuildContext context) {
-    // Calculate overall hand strength (0-10 scale)
-    final maxTricks = _handEvaluations?.values
-            .map((e) => e.estimatedTricks)
-            .reduce((a, b) => a > b ? a : b) ??
-        0.0;
-
-    final strength = (maxTricks / 10.0).clamp(0.0, 1.0);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Theme.of(context)
-            .colorScheme
-            .surfaceContainerHighest
-            .withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Hand strength indicator
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hand Strength',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                ),
-                const SizedBox(height: 3),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: strength,
-                    minHeight: 6,
-                    backgroundColor:
-                        Theme.of(context).colorScheme.surfaceContainerHigh,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _getStrengthColor(context, strength),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          // AI recommendation
-          if (_aiRecommendation != null &&
-              _aiRecommendation!.action != BidAction.pass)
+          // Current bid info
+          if (widget.currentHighBid != null)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .secondary
-                      .withValues(alpha: 0.3),
-                ),
+                color: colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.lightbulb_outline,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+                    Icons.gavel,
+                    size: 20,
+                    color: colorScheme.onPrimaryContainer,
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 8),
                   Text(
-                    'AI: ${_aiRecommendation!.bid!.tricks}${_suitSymbol(_aiRecommendation!.bid!.suit)}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSecondaryContainer,
+                    'Current Bid: ${widget.currentHighBid}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onPrimaryContainer,
                     ),
                   ),
                 ],
               ),
             )
-          else if (_aiRecommendation != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(8),
-              ),
+          else
+            Padding(
+              padding: const EdgeInsets.only(top: 16, bottom: 8),
               child: Text(
-                'AI: Pass',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                'No bids yet - Start the bidding!',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
+
+          // AI Recommendation (if available)
+          if (_aiRecommendation != null &&
+              _aiRecommendation!.action != BidAction.pass)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: colorScheme.secondary.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.lightbulb,
+                    size: 18,
+                    color: colorScheme.onSecondaryContainer,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'AI Suggests: ${_aiRecommendation!.bid!.tricks}${_suitSymbol(_aiRecommendation!.bid!.suit)}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSecondaryContainer,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          const SizedBox(height: 16),
+
+          // Suit selection buttons
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Choose Suit:',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: BidSuit.values.map((suit) {
+                    final isSelected = _selectedSuit == suit;
+                    final isAIRec = _aiRecommendation?.bid?.suit == suit;
+
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: _buildSuitButton(
+                          context,
+                          suit,
+                          isSelected,
+                          isAIRec,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Trick level selection buttons
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Choose Tricks:',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: List.generate(5, (index) {
+                    final tricks = index + 6;
+                    final isSelected = _selectedTrickLevel == tricks;
+                    final isAIRec = _aiRecommendation?.bid?.tricks == tricks;
+                    final canSelect = _canSelectTrickLevel(tricks);
+
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: _buildTrickButton(
+                          context,
+                          tricks,
+                          isSelected,
+                          isAIRec,
+                          canSelect,
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Action buttons at bottom
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Row(
+              children: [
+                // Pass button
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: OutlinedButton(
+                      onPressed: widget.onPass,
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: colorScheme.outline,
+                          width: 2,
+                        ),
+                      ),
+                      child: Text(
+                        'Pass',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                // Confirm bid button
+                Expanded(
+                  flex: 2,
+                  child: SizedBox(
+                    height: 50,
+                    child: FilledButton(
+                      onPressed: _currentBid != null && _isValidBid(_currentBid!)
+                          ? () {
+                              widget.onBidSelected(_currentBid!, _isInkle);
+                            }
+                          : null,
+                      child: Text(
+                        _currentBid != null
+                            ? 'Bid $_selectedTrickLevel${_suitSymbol(_selectedSuit!)} (${_currentBid!.value} pts)'
+                            : 'Select Suit & Tricks',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Color _getStrengthColor(BuildContext context, double strength) {
-    if (strength < 0.4) {
-      return Theme.of(context).colorScheme.error;
-    } else if (strength < 0.7) {
-      return Colors.orange;
-    } else {
-      return Colors.green;
-    }
-  }
+  Widget _buildSuitButton(
+    BuildContext context,
+    BidSuit suit,
+    bool isSelected,
+    bool isAIRec,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-  Widget _buildTrickLevelPage(BuildContext context, int tricks) {
-    return Column(
-      children: [
-        // Bid level number
-        Text(
-          'Bid $tricks',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          setState(() {
+            _selectedSuit = suit;
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 70,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? colorScheme.primaryContainer
+                : colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? colorScheme.primary
+                  : isAIRec
+                      ? colorScheme.secondary
+                      : colorScheme.outline.withValues(alpha: 0.3),
+              width: isSelected ? 3 : (isAIRec ? 2 : 1),
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: Text(
+              _suitSymbol(suit),
+              style: TextStyle(
+                fontSize: isSelected ? 36 : 32,
+                color: _getSuitColor(suit, context),
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
               ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // Suit icons in a row
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: BidSuit.values.map((suit) {
-              return _buildSuitIcon(context, tricks, suit);
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSuitIcon(BuildContext context, int tricks, BidSuit suit) {
-    final bid = Bid(tricks: tricks, suit: suit, bidder: Position.south);
-
-    // Check if valid
-    bool isValid = _isValidBid(tricks, suit);
-    bool isInkle = tricks == 6 && widget.canInkle;
-
-    // Check if this is the AI recommendation
-    final isAIRec = _aiRecommendation?.bid != null &&
-        _aiRecommendation!.bid!.tricks == tricks &&
-        _aiRecommendation!.bid!.suit == suit;
-
-    // Check if this bid is currently selected
-    final isSelected = _selectedBid != null &&
-        _selectedBid!.tricks == tricks &&
-        _selectedBid!.suit == suit;
-
-    // Determine background color based on state
-    final Color backgroundColor;
-    if (isSelected) {
-      backgroundColor = Theme.of(context).colorScheme.primaryContainer;
-    } else {
-      // All non-selected suits get white background
-      backgroundColor = Colors.white;
-    }
-
-    // Determine suit icon color based on state
-    final Color suitColor;
-    if (!isValid) {
-      suitColor = Theme.of(context)
-          .colorScheme
-          .onSurfaceVariant
-          .withValues(alpha: 0.3);
-    } else if (isSelected) {
-      suitColor = _getSuitColor(suit, context);
-    } else {
-      suitColor = _getSuitColor(suit, context).withValues(alpha: 0.7);
-    }
-
-    return GestureDetector(
-      onTap: isValid
-          ? () {
-              HapticFeedback.mediumImpact();
-              setState(() {
-                _selectedBid = bid;
-                _selectedIsInkle = isInkle;
-                _selectedSuit = suit; // Remember the selected suit
-              });
-            }
-          : null,
-      onLongPress: isValid
-          ? () {
-              HapticFeedback.lightImpact();
-              _showBidValueTooltip(context, tricks, suit);
-            }
-          : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: !isValid
-                ? Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)
-                : isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : isAIRec
-                        ? Theme.of(context).colorScheme.secondary
-                        : Theme.of(context)
-                            .colorScheme
-                            .outline
-                            .withValues(alpha: 0.3),
-            width: isSelected ? 3 : (isAIRec ? 2 : 1.5),
-          ),
-          boxShadow: isValid && (isSelected || isAIRec)
-              ? [
-                  BoxShadow(
-                    color: (isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.secondary)
-                        .withValues(alpha: 0.3),
-                    blurRadius: isSelected ? 12 : 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: Text(
-            _suitSymbol(suit),
-            style: TextStyle(
-              fontSize: isSelected ? 28 : 26,
-              color: suitColor,
-              fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
             ),
           ),
         ),
@@ -574,14 +350,101 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
     );
   }
 
-  bool _isValidBid(int tricks, BidSuit suit) {
-    final bid = Bid(tricks: tricks, suit: suit, bidder: Position.south);
-
+  bool _canSelectTrickLevel(int tricks) {
     // Check inkle rules
     if (tricks == 6 && widget.canInkle) {
       return true;
     }
     if (tricks == 6 && !widget.canInkle) {
+      return false;
+    }
+
+    // If no current bid, all levels >= 6 are valid
+    if (widget.currentHighBid == null) {
+      return true;
+    }
+
+    // Must be higher trick level than current bid
+    return tricks > widget.currentHighBid!.tricks;
+  }
+
+  Widget _buildTrickButton(
+    BuildContext context,
+    int tricks,
+    bool isSelected,
+    bool isAIRec,
+    bool canSelect,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: canSelect
+            ? () {
+                HapticFeedback.selectionClick();
+                setState(() {
+                  _selectedTrickLevel = tricks;
+                });
+              }
+            : null,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 70,
+          decoration: BoxDecoration(
+            color: !canSelect
+                ? colorScheme.surfaceContainerLowest.withValues(alpha: 0.3)
+                : isSelected
+                    ? colorScheme.primaryContainer
+                    : colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: !canSelect
+                  ? colorScheme.outline.withValues(alpha: 0.1)
+                  : isSelected
+                      ? colorScheme.primary
+                      : isAIRec
+                          ? colorScheme.secondary
+                          : colorScheme.outline.withValues(alpha: 0.3),
+              width: isSelected ? 3 : (isAIRec ? 2 : 1),
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: Text(
+              tricks.toString(),
+              style: TextStyle(
+                fontSize: isSelected ? 28 : 24,
+                fontWeight: FontWeight.bold,
+                color: !canSelect
+                    ? colorScheme.onSurface.withValues(alpha: 0.3)
+                    : isSelected
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool _isValidBid(Bid bid) {
+    // Check inkle rules
+    if (bid.tricks == 6 && widget.canInkle) {
+      return true;
+    }
+    if (bid.tricks == 6 && !widget.canInkle) {
       return false;
     }
 
@@ -591,93 +454,6 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
     }
 
     return true;
-  }
-
-  void _showBidValueTooltip(BuildContext context, int tricks, BidSuit suit) {
-    final value = AvondaleTable.getBidValue(tricks, suit);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$tricks${_suitSymbol(suit)} is worth $value points',
-          textAlign: TextAlign.center,
-        ),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-        width: 250,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
-  }
-
-  Widget _buildTrickLevelSelector(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(5, (index) {
-          final tricks = index + 6;
-          final isActive = tricks == _currentTrickLevel;
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  width: 48,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(10),
-                    border: isActive
-                        ? Border.all(
-                            color: Theme.of(context).colorScheme.primary,
-                            width: 2,
-                          )
-                        : null,
-                    boxShadow: isActive
-                        ? [
-                            BoxShadow(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withValues(alpha: 0.4),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Center(
-                    child: Text(
-                      tricks.toString(),
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: isActive
-                            ? Theme.of(context).colorScheme.onPrimary
-                            : Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
   }
 
   Color _getSuitColor(BidSuit suit, BuildContext context) {
@@ -691,7 +467,7 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
       case BidSuit.hearts:
         return Colors.red.shade700;
       case BidSuit.noTrump:
-        return Colors.black87;
+        return Theme.of(context).colorScheme.primary;
     }
   }
 
@@ -707,19 +483,6 @@ class _BiddingCarouselState extends State<BiddingCarousel> {
         return '♥';
       case BidSuit.noTrump:
         return 'NT';
-    }
-  }
-
-  String _getPositionInitial(Position position) {
-    switch (position) {
-      case Position.north:
-        return 'N';
-      case Position.south:
-        return 'S';
-      case Position.east:
-        return 'E';
-      case Position.west:
-        return 'W';
     }
   }
 }
