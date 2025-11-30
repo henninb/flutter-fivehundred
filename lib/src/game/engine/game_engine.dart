@@ -82,6 +82,8 @@ class GameEngine extends ChangeNotifier {
         gameStatus: 'Tap Cut for Deal to determine dealer',
       ),
     );
+    // Immediately show the cut for deal deck
+    cutForDeal();
   }
 
   /// Perform cut for deal - show spread deck for player to tap
