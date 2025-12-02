@@ -31,7 +31,9 @@ void main() {
       expect(validation.errorMessage, contains('follow suit'));
     });
 
-    test('blocks joker in no-trump when player still has led suit', () {
+    test('allows joker to be played voluntarily in no-trump even when player has led suit', () {
+      // BUG FIX: Joker in no-trump can ALWAYS be played voluntarily
+      // The player is NOT required to play it when void - it's optional
       final trick = Trick(
         plays: [CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.west)],
         leader: Position.west,
@@ -41,16 +43,77 @@ void main() {
         _card(Rank.four, Suit.hearts),
       ];
 
-    final engine = TrickEngine(trumpRules: const TrumpRules());
-    final validation = engine.validatePlay(
-      trick: trick,
-      card: hand.first,
-      hand: hand,
-    );
+      final engine = TrickEngine(trumpRules: const TrumpRules());
+      final validation = engine.validatePlay(
+        trick: trick,
+        card: hand.first, // Playing Joker
+        hand: hand,
+      );
 
-    expect(validation.isValid, isFalse);
-    expect(validation.errorMessage, contains('follow suit'));
-  });
+      // Joker can be played voluntarily (it's the highest card but optional)
+      expect(validation.isValid, isTrue);
+    });
+
+    test('still requires following suit for non-joker cards in no-trump', () {
+      // Normal follow-suit rules still apply to regular cards
+      final trick = Trick(
+        plays: [CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.west)],
+        leader: Position.west,
+      );
+      final hand = [
+        const PlayingCard(rank: Rank.joker, suit: Suit.spades),
+        _card(Rank.four, Suit.hearts),
+        _card(Rank.ten, Suit.clubs),
+      ];
+
+      final engine = TrickEngine(trumpRules: const TrumpRules());
+      final validation = engine.validatePlay(
+        trick: trick,
+        card: hand.last, // Playing clubs when we have hearts
+        hand: hand,
+      );
+
+      expect(validation.isValid, isFalse);
+      expect(validation.errorMessage, contains('follow suit'));
+    });
+
+    test('allows playing any card (including joker) when void of led suit in no-trump', () {
+      final trick = Trick(
+        plays: [CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.west)],
+        leader: Position.west,
+      );
+      final hand = [
+        const PlayingCard(rank: Rank.joker, suit: Suit.spades),
+        _card(Rank.ten, Suit.clubs),
+        _card(Rank.seven, Suit.diamonds),
+      ];
+
+      final engine = TrickEngine(trumpRules: const TrumpRules());
+
+      // Can play Joker
+      final jokerValidation = engine.validatePlay(
+        trick: trick,
+        card: hand[0],
+        hand: hand,
+      );
+      expect(jokerValidation.isValid, isTrue);
+
+      // Can also discard clubs
+      final clubsValidation = engine.validatePlay(
+        trick: trick,
+        card: hand[1],
+        hand: hand,
+      );
+      expect(clubsValidation.isValid, isTrue);
+
+      // Can also discard diamonds
+      final diamondsValidation = engine.validatePlay(
+        trick: trick,
+        card: hand[2],
+        hand: hand,
+      );
+      expect(diamondsValidation.isValid, isTrue);
+    });
   });
 
   test('getLegalCards respects nominated suit after joker lead in no-trump', () {

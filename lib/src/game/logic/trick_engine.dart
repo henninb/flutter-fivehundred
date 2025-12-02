@@ -109,19 +109,23 @@ class TrickEngine {
 
     // Normal case: must follow led suit if able
     if (ledSuit != null) {
+      // Special case for Joker in no-trump: Joker can ALWAYS be played voluntarily
+      // It's the highest card but playing it is optional - you can discard any suit
+      if (card.isJoker && trumpRules.trumpSuit == null) {
+        if (kDebugMode) {
+          debugPrint('[TRICK ENGINE] Joker played in no-trump - always legal (voluntary play)');
+        }
+        return PlayValidation.valid();
+      }
+
       final cardEffectiveSuit = trumpRules.getEffectiveSuit(card);
-      final hasLedSuit = hand.any((c) => trumpRules.getEffectiveSuit(c) == ledSuit);
+      final hasLedSuit = hand.any((c) => !c.isJoker && trumpRules.getEffectiveSuit(c) == ledSuit);
 
       if (hasLedSuit && cardEffectiveSuit != ledSuit) {
+        if (kDebugMode) {
+          debugPrint('[TRICK ENGINE] Must follow suit ${_suitLabel(ledSuit)} - player has led suit');
+        }
         return PlayValidation.invalid('Must follow suit ${_suitLabel(ledSuit)}');
-      }
-    }
-
-    // Special rule: Joker can only be played when void (in no-trump)
-    if (card.isJoker && trumpRules.trumpSuit == null && ledSuit != null) {
-      final hasLedSuit = hand.any((c) => !c.isJoker && trumpRules.getEffectiveSuit(c) == ledSuit);
-      if (hasLedSuit) {
-        return PlayValidation.invalid('Can only play joker when void in no-trump');
       }
     }
 
@@ -148,10 +152,21 @@ class TrickEngine {
   /// Determine the current winner of a trick (works on incomplete tricks)
   /// Returns null if trick is empty
   Position? getCurrentWinner(Trick trick) {
-    if (trick.isEmpty) return null;
+    if (trick.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('[TRICK ENGINE] getCurrentWinner called on empty trick');
+      }
+      return null;
+    }
 
     final plays = trick.plays;
     final ledSuit = trick.ledSuit;
+
+    if (kDebugMode) {
+      debugPrint('[TRICK ENGINE] Determining winner of ${plays.length}-card trick');
+      debugPrint('  Led suit: ${ledSuit?.name ?? 'none (joker in no-trump)'}');
+      debugPrint('  Trump suit: ${trumpRules.trumpSuit?.name ?? 'no trump'}');
+    }
 
     // Find the highest card so far
     CardPlay winningPlay = plays.first;
@@ -165,6 +180,9 @@ class TrickEngine {
       final currentIsTrump = trumpRules.isTrump(currentCard);
 
       if (currentIsTrump && !winningIsTrump) {
+        if (kDebugMode) {
+          debugPrint('  ${plays[i].player.name}\'s ${currentCard.label} (trump) beats ${winningPlay.player.name}\'s ${winningCard.label}');
+        }
         winningPlay = plays[i];
         winningCard = currentCard;
       } else if (!currentIsTrump && winningIsTrump) {
@@ -172,6 +190,9 @@ class TrickEngine {
       } else if (currentIsTrump && winningIsTrump) {
         // Both trump: compare trump ranks
         if (trumpRules.compare(currentCard, winningCard) > 0) {
+          if (kDebugMode) {
+            debugPrint('  ${plays[i].player.name}\'s ${currentCard.label} (higher trump) beats ${winningPlay.player.name}\'s ${winningCard.label}');
+          }
           winningPlay = plays[i];
           winningCard = currentCard;
         }
@@ -181,15 +202,25 @@ class TrickEngine {
         final winningSuit = trumpRules.getEffectiveSuit(winningCard);
 
         if (currentSuit == ledSuit && winningSuit != ledSuit) {
+          if (kDebugMode) {
+            debugPrint('  ${plays[i].player.name}\'s ${currentCard.label} (follows led suit) beats ${winningPlay.player.name}\'s ${winningCard.label}');
+          }
           winningPlay = plays[i];
           winningCard = currentCard;
         } else if (currentSuit == ledSuit && winningSuit == ledSuit) {
           if (trumpRules.compare(currentCard, winningCard) > 0) {
+            if (kDebugMode) {
+              debugPrint('  ${plays[i].player.name}\'s ${currentCard.label} (higher rank) beats ${winningPlay.player.name}\'s ${winningCard.label}');
+            }
             winningPlay = plays[i];
             winningCard = currentCard;
           }
         }
       }
+    }
+
+    if (kDebugMode) {
+      debugPrint('  Winner: ${winningPlay.player.name} with ${winningCard.label}');
     }
 
     return winningPlay.player;

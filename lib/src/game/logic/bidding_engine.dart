@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/game_models.dart';
 
 /// Manages the bidding auction for 500 (American variant)
@@ -106,49 +108,74 @@ class BiddingEngine {
 
   /// Determine auction result after all players have bid
   AuctionResult determineWinner(List<BidEntry> bids) {
+    if (kDebugMode) {
+      debugPrint('\n[BIDDING ENGINE] Determining auction winner');
+      debugPrint('  Total bids received: ${bids.length}');
+    }
+
     // Must have 4 bids (one per player)
     if (bids.length != 4) {
-      return AuctionResult.incomplete(
-        message: 'Waiting for ${4 - bids.length} more bid(s)',
-      );
+      final message = 'Waiting for ${4 - bids.length} more bid(s)';
+      if (kDebugMode) {
+        debugPrint('  Result: INCOMPLETE - $message');
+      }
+      return AuctionResult.incomplete(message: message);
     }
 
     final highestBid = getHighestBid(bids);
     final highestInkle = getHighestInkle(bids);
 
+    if (kDebugMode) {
+      debugPrint('  Highest bid: ${highestBid != null ? '${highestBid.tricks}${_suitLabel(highestBid.suit)} by ${highestBid.bidder.name}' : 'none'}');
+      debugPrint('  Highest inkle: ${highestInkle != null ? '${highestInkle.tricks}${_suitLabel(highestInkle.suit)} by ${highestInkle.bidder.name}' : 'none'}');
+    }
+
     // If there's a valid bid (7+), that wins
     if (highestBid != null && highestBid.tricks >= 7) {
+      final message = '${highestBid.bidder.name} wins with ${highestBid.tricks}${_suitLabel(highestBid.suit)}';
+      if (kDebugMode) {
+        debugPrint('  Result: WON - $message');
+      }
       return AuctionResult.winner(
         winningBid: highestBid,
-        message: '${highestBid.bidder.name} wins with ${highestBid.tricks}${_suitLabel(highestBid.suit)}',
+        message: message,
       );
     }
 
     // Only inkles (no bid 7+) - need to redeal
     if (highestInkle != null && highestBid == null) {
-      return AuctionResult.redeal(
-        message: 'Only inkles bid - redeal required',
-      );
+      const message = 'Only inkles bid - redeal required';
+      if (kDebugMode) {
+        debugPrint('  Result: REDEAL - $message');
+      }
+      return AuctionResult.redeal(message: message);
     }
 
     // No bids at all - redeal
     if (highestBid == null && highestInkle == null) {
-      return AuctionResult.redeal(
-        message: 'No bids - redeal required',
-      );
+      const message = 'No bids - redeal required';
+      if (kDebugMode) {
+        debugPrint('  Result: REDEAL - $message');
+      }
+      return AuctionResult.redeal(message: message);
     }
 
     // Highest bid is 6 but not inkle - redeal
     if (highestBid != null && highestBid.tricks == 6) {
-      return AuctionResult.redeal(
-        message: 'Auction must reach level 7 - redeal required',
-      );
+      const message = 'Auction must reach level 7 - redeal required';
+      if (kDebugMode) {
+        debugPrint('  Result: REDEAL - $message');
+      }
+      return AuctionResult.redeal(message: message);
     }
 
     // Should not reach here, but just in case
-    return AuctionResult.redeal(
-      message: 'Invalid auction state - redeal required',
-    );
+    const message = 'Invalid auction state - redeal required';
+    if (kDebugMode) {
+      debugPrint('  Result: REDEAL (UNEXPECTED) - $message');
+      debugPrint('  ⚠️  WARNING: Reached unexpected auction state!');
+    }
+    return AuctionResult.redeal(message: message);
   }
 
   /// Check if auction is complete (all 4 players have bid)

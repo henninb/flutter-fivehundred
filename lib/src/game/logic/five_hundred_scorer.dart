@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/game_models.dart';
 import 'avondale_table.dart';
 
@@ -21,32 +23,63 @@ class FiveHundredScorer {
     required int contractorTricks,
     required int opponentTricks,
   }) {
+    if (kDebugMode) {
+      debugPrint('\n[SCORER] Scoring hand');
+      debugPrint('  Contract: ${contract.tricks}${_suitLabel(contract.suit)} by ${contract.bidder.name}');
+      debugPrint('  Contractor tricks: $contractorTricks');
+      debugPrint('  Opponent tricks: $opponentTricks');
+    }
+
     // Validate trick counts
     if (contractorTricks + opponentTricks != 10) {
-      throw ArgumentError(
-        'Total tricks must equal 10 (got ${contractorTricks + opponentTricks})',
-      );
+      final error = 'Total tricks must equal 10 (got ${contractorTricks + opponentTricks})';
+      if (kDebugMode) {
+        debugPrint('  ⚠️  ERROR: $error');
+      }
+      throw ArgumentError(error);
     }
 
     final bidValue = AvondaleTable.getBidValueFromBid(contract);
     final contractMade = contractorTricks >= contract.tricks;
     final isSlam = contractorTricks == 10;
 
+    if (kDebugMode) {
+      debugPrint('  Bid value: $bidValue');
+      debugPrint('  Contract made: $contractMade');
+      debugPrint('  Is slam: $isSlam');
+    }
+
     // Contractor scoring
     int contractorPoints;
     if (contractMade && isSlam) {
       // SLAM BONUS: If bid value < 250, raise to 250. Otherwise use bid value.
       contractorPoints = bidValue < 250 ? 250 : bidValue;
+      if (kDebugMode) {
+        debugPrint('  SLAM! Contractor points: $contractorPoints (bid value was $bidValue)');
+      }
     } else if (contractMade) {
       // Normal made contract: bid value
       contractorPoints = bidValue;
+      if (kDebugMode) {
+        final overtricks = contractorTricks - contract.tricks;
+        debugPrint('  Contract made with $overtricks overtrick(s). Contractor points: $contractorPoints');
+      }
     } else {
       // Failed contract: negative bid value
       contractorPoints = -bidValue;
+      if (kDebugMode) {
+        final undertricks = contract.tricks - contractorTricks;
+        debugPrint('  Contract failed by $undertricks trick(s). Contractor points: $contractorPoints');
+      }
     }
 
     // Opponents always score 10 per trick
     final opponentPoints = opponentTricks * 10;
+
+    if (kDebugMode) {
+      debugPrint('  Opponent points: $opponentPoints ($opponentTricks tricks × 10)');
+      debugPrint('  Final: Contractor ${contractorPoints > 0 ? '+' : ''}$contractorPoints, Opponents +$opponentPoints');
+    }
 
     return HandScore(
       contractorPoints: contractorPoints,
@@ -63,34 +96,61 @@ class FiveHundredScorer {
     required int teamNSScore,
     required int teamEWScore,
   }) {
+    if (kDebugMode) {
+      debugPrint('\n[SCORER] Checking game over status');
+      debugPrint('  North-South score: $teamNSScore');
+      debugPrint('  East-West score: $teamEWScore');
+    }
+
     // Check for wins (500+)
     if (teamNSScore >= 500 && teamEWScore >= 500) {
       // Both teams reached 500+ - highest score wins
       if (teamNSScore > teamEWScore) {
+        if (kDebugMode) {
+          debugPrint('  GAME OVER: Both teams reached 500+, North-South wins ($teamNSScore > $teamEWScore)');
+        }
         return GameOverStatus.teamNSWins;
       } else {
+        if (kDebugMode) {
+          debugPrint('  GAME OVER: Both teams reached 500+, East-West wins ($teamEWScore > $teamNSScore)');
+        }
         return GameOverStatus.teamEWWins;
       }
     }
 
     if (teamNSScore >= 500) {
+      if (kDebugMode) {
+        debugPrint('  GAME OVER: North-South reaches 500+ ($teamNSScore)');
+      }
       return GameOverStatus.teamNSWins;
     }
 
     if (teamEWScore >= 500) {
+      if (kDebugMode) {
+        debugPrint('  GAME OVER: East-West reaches 500+ ($teamEWScore)');
+      }
       return GameOverStatus.teamEWWins;
     }
 
     // Check for losses (-500 or below)
     if (teamNSScore <= -500) {
+      if (kDebugMode) {
+        debugPrint('  GAME OVER: North-South drops to -500 or below ($teamNSScore)');
+      }
       return GameOverStatus.teamNSLoses;
     }
 
     if (teamEWScore <= -500) {
+      if (kDebugMode) {
+        debugPrint('  GAME OVER: East-West drops to -500 or below ($teamEWScore)');
+      }
       return GameOverStatus.teamEWLoses;
     }
 
     // Game continues
+    if (kDebugMode) {
+      debugPrint('  Game continues (no win/lose condition met)');
+    }
     return null;
   }
 
