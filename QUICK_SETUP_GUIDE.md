@@ -228,7 +228,7 @@ Before submitting to Play Store:
 ### "Environment variable not set"
 ```fish
 # Check variables
-env | grep CRIBBAGE
+env | grep FIVEHUNDRED
 
 # Reload config
 source ~/.config/fish/config.fish
