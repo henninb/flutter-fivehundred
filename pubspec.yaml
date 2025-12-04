@@ -1,5 +1,5 @@
 name: fivehundred
-version: 1.0.23+23
+version: 1.0.24+24
 description: Flutter implementation of the Five Hundred game with full gameplay.
 publish_to: 'none'
 
@@ -32,6 +32,6 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/fivehundred_icon.png"
-  adaptive_icon_background: "#2E7D32"
-  adaptive_icon_foreground: "assets/fivehundred_icon_foreground.png"
+  image_path: "assets/app_icon.png"
+  adaptive_icon_background: "#0b2740"
+  adaptive_icon_foreground: "assets/app_icon.png"

@@ -1,13 +1,14 @@
-import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
-import 'dart:typed_data';
-import 'dart:math' as math;
-import 'package:flutter/rendering.dart';
 import 'dart:io';
+import 'dart:math' as math;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Modern Five Hundred App Icon Generator
-/// Run this file to generate a 1024x1024 icon
+/// Run this file to generate 1024x1024 + 512x512 icons (Play Store size)
 void main() {
   runApp(const IconGeneratorApp());
 }
@@ -47,19 +48,22 @@ class _IconGeneratorScreenState extends State<IconGeneratorScreen> {
     try {
       RenderRepaintBoundary boundary =
           _iconKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      ui.Image image = await boundary.toImage(pixelRatio: 1.0);
-      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
+      // Save both full-res (1024) and Play Store (512) variants
+      final icon1024 = await boundary.toImage(pixelRatio: 1.0);
+      final icon512 = await boundary.toImage(pixelRatio: 0.5);
 
-      // Save to downloads or documents
       final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/fivehundred_icon.png');
-      await file.writeAsBytes(pngBytes);
+      final saved1024 = await _writeImage(
+          icon1024, '${directory.path}/fivehundred_icon_1024.png');
+      final saved512 = await _writeImage(
+          icon512, '${directory.path}/fivehundred_icon_512.png');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Icon saved to ${file.path}'),
+            content: Text(
+              'Icons saved: ${saved1024.path.split('/').last}, ${saved512.path.split('/').last}',
+            ),
             duration: const Duration(seconds: 5),
           ),
         );
@@ -127,9 +131,10 @@ class _IconGeneratorScreenState extends State<IconGeneratorScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.download),
-              label: Text(_isSaving ? 'Saving...' : 'Save Icon (1024x1024)'),
+              label: Text(_isSaving ? 'Saving...' : 'Save Icons (1024 & 512)'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               ),
             ),
           ],
@@ -275,6 +280,14 @@ class FiveHundredIcon extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<File> _writeImage(ui.Image image, String path) async {
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    final pngBytes = byteData!.buffer.asUint8List();
+    final file = File(path);
+    await file.writeAsBytes(pngBytes);
+    return file;
   }
 }
 
