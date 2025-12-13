@@ -176,8 +176,10 @@ void main() {
 
   group('AvondaleTable.getMinimumBeatBid', () {
     test('returns higher suit at same level when available', () {
-      final currentBid = Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.north);
-      final beatBid = AvondaleTable.getMinimumBeatBid(currentBid, Position.south);
+      final currentBid =
+          Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.north);
+      final beatBid =
+          AvondaleTable.getMinimumBeatBid(currentBid, Position.south);
 
       expect(beatBid, isNotNull);
       expect(beatBid!.tricks, 7);
@@ -186,8 +188,10 @@ void main() {
     });
 
     test('returns next trick level when no higher suit available', () {
-      final currentBid = Bid(tricks: 7, suit: BidSuit.noTrump, bidder: Position.north);
-      final beatBid = AvondaleTable.getMinimumBeatBid(currentBid, Position.east);
+      final currentBid =
+          Bid(tricks: 7, suit: BidSuit.noTrump, bidder: Position.north);
+      final beatBid =
+          AvondaleTable.getMinimumBeatBid(currentBid, Position.east);
 
       expect(beatBid, isNotNull);
       expect(beatBid!.tricks, 8);
@@ -196,15 +200,19 @@ void main() {
     });
 
     test('returns null when 10 no-trump cannot be beaten', () {
-      final currentBid = Bid(tricks: 10, suit: BidSuit.noTrump, bidder: Position.west);
-      final beatBid = AvondaleTable.getMinimumBeatBid(currentBid, Position.south);
+      final currentBid =
+          Bid(tricks: 10, suit: BidSuit.noTrump, bidder: Position.west);
+      final beatBid =
+          AvondaleTable.getMinimumBeatBid(currentBid, Position.south);
 
       expect(beatBid, isNull);
     });
 
     test('works correctly for middle suits', () {
-      final currentBid = Bid(tricks: 8, suit: BidSuit.clubs, bidder: Position.north);
-      final beatBid = AvondaleTable.getMinimumBeatBid(currentBid, Position.south);
+      final currentBid =
+          Bid(tricks: 8, suit: BidSuit.clubs, bidder: Position.north);
+      final beatBid =
+          AvondaleTable.getMinimumBeatBid(currentBid, Position.south);
 
       expect(beatBid, isNotNull);
       expect(beatBid!.tricks, 8);
@@ -216,8 +224,10 @@ void main() {
         for (final suit in BidSuit.values) {
           if (tricks == 10 && suit == BidSuit.noTrump) continue; // Skip max bid
 
-          final currentBid = Bid(tricks: tricks, suit: suit, bidder: Position.north);
-          final beatBid = AvondaleTable.getMinimumBeatBid(currentBid, Position.south);
+          final currentBid =
+              Bid(tricks: tricks, suit: suit, bidder: Position.north);
+          final beatBid =
+              AvondaleTable.getMinimumBeatBid(currentBid, Position.south);
 
           expect(beatBid, isNotNull);
           expect(beatBid!.beats(currentBid), isTrue);
@@ -226,8 +236,10 @@ void main() {
     });
 
     test('preserves bidder position', () {
-      final currentBid = Bid(tricks: 7, suit: BidSuit.hearts, bidder: Position.north);
-      final beatBid = AvondaleTable.getMinimumBeatBid(currentBid, Position.west);
+      final currentBid =
+          Bid(tricks: 7, suit: BidSuit.hearts, bidder: Position.north);
+      final beatBid =
+          AvondaleTable.getMinimumBeatBid(currentBid, Position.west);
 
       expect(beatBid, isNotNull);
       expect(beatBid!.bidder, Position.west);

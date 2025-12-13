@@ -63,7 +63,8 @@ void main() {
   });
 
   group('Hand sorting', () {
-    test('sortHandBySuit groups by suit with joker first before trump declared', () {
+    test('sortHandBySuit groups by suit with joker first before trump declared',
+        () {
       final hand = [
         const PlayingCard(rank: Rank.king, suit: Suit.spades),
         const PlayingCard(rank: Rank.four, suit: Suit.clubs),
@@ -76,7 +77,10 @@ void main() {
       expect(sorted.first.isJoker, isTrue);
       expect(sorted[1], const PlayingCard(rank: Rank.king, suit: Suit.spades));
       expect(sorted[2], const PlayingCard(rank: Rank.jack, suit: Suit.hearts));
-      expect(sorted[3], const PlayingCard(rank: Rank.five, suit: Suit.diamonds));
+      expect(
+        sorted[3],
+        const PlayingCard(rank: Rank.five, suit: Suit.diamonds),
+      );
       expect(sorted.last, const PlayingCard(rank: Rank.four, suit: Suit.clubs));
     });
 
@@ -84,7 +88,10 @@ void main() {
       final hand = [
         const PlayingCard(rank: Rank.joker, suit: Suit.spades),
         const PlayingCard(rank: Rank.jack, suit: Suit.hearts), // Right bower
-        const PlayingCard(rank: Rank.jack, suit: Suit.diamonds), // Left bower for hearts
+        const PlayingCard(
+          rank: Rank.jack,
+          suit: Suit.diamonds,
+        ), // Left bower for hearts
         const PlayingCard(rank: Rank.ace, suit: Suit.spades),
         const PlayingCard(rank: Rank.king, suit: Suit.clubs),
       ];

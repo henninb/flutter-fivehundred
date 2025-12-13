@@ -56,10 +56,8 @@ class WelcomeOverlay extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withAlpha(51),
+                        color:
+                            Theme.of(context).colorScheme.primary.withAlpha(51),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -78,13 +76,16 @@ class WelcomeOverlay extends StatelessWidget {
                           width: 96,
                           height: 96,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer,
+                            color:
+                                Theme.of(context).colorScheme.primaryContainer,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Icon(
                             Icons.style,
                             size: 48,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer,
                           ),
                         );
                       },

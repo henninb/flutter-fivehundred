@@ -59,9 +59,13 @@ class BiddingAI {
     // Decide whether to bid
     // More aggressive: bid with 5.5+ estimated tricks (accounts for partner's help)
     if (estimatedTricks < 5.5) {
-      final decision = BidDecision.pass(reasoning: 'Hand too weak (estimated $estimatedTricks tricks)');
+      final decision = BidDecision.pass(
+        reasoning: 'Hand too weak (estimated $estimatedTricks tricks)',
+      );
       if (kDebugMode) {
-        debugPrint('[AI BIDDING] ${position.name}: PASS - ${decision.reasoning}');
+        debugPrint(
+          '[AI BIDDING] ${position.name}: PASS - ${decision.reasoning}',
+        );
       }
       return decision;
     }
@@ -74,7 +78,9 @@ class BiddingAI {
         reasoning: 'Inkle with $bestSuit (estimated $estimatedTricks tricks)',
       );
       if (kDebugMode) {
-        debugPrint('[AI BIDDING] ${position.name}: INKLE 6${_suitLabel(bestSuit)} - ${decision.reasoning}');
+        debugPrint(
+          '[AI BIDDING] ${position.name}: INKLE 6${_suitLabel(bestSuit)} - ${decision.reasoning}',
+        );
       }
       return decision;
     }
@@ -96,20 +102,26 @@ class BiddingAI {
 
       if (minBeatingBid == null) {
         final decision = BidDecision.pass(
-          reasoning: 'Cannot beat current bid of ${currentHighBid.tricks}${_suitLabel(currentHighBid.suit)}',
+          reasoning:
+              'Cannot beat current bid of ${currentHighBid.tricks}${_suitLabel(currentHighBid.suit)}',
         );
         if (kDebugMode) {
-          debugPrint('[AI BIDDING] ${position.name}: PASS - ${decision.reasoning}');
+          debugPrint(
+            '[AI BIDDING] ${position.name}: PASS - ${decision.reasoning}',
+          );
         }
         return decision;
       }
 
       final decision = BidDecision.bid(
         bid: minBeatingBid,
-        reasoning: 'Bidding ${minBeatingBid.tricks}${_suitLabel(minBeatingBid.suit)} (estimated ${evaluations[minBeatingBid.suit]!.estimatedTricks.toStringAsFixed(1)} tricks)',
+        reasoning:
+            'Bidding ${minBeatingBid.tricks}${_suitLabel(minBeatingBid.suit)} (estimated ${evaluations[minBeatingBid.suit]!.estimatedTricks.toStringAsFixed(1)} tricks)',
       );
       if (kDebugMode) {
-        debugPrint('[AI BIDDING] ${position.name}: BID ${minBeatingBid.tricks}${_suitLabel(minBeatingBid.suit)} - ${decision.reasoning}');
+        debugPrint(
+          '[AI BIDDING] ${position.name}: BID ${minBeatingBid.tricks}${_suitLabel(minBeatingBid.suit)} - ${decision.reasoning}',
+        );
       }
       return decision;
     }
@@ -117,10 +129,13 @@ class BiddingAI {
     // No competition or we can beat it - bid our best
     final decision = BidDecision.bid(
       bid: ourBid,
-      reasoning: 'Bidding $estimatedTricks$bestSuit (${bestEval.trumpCount} trumps)',
+      reasoning:
+          'Bidding $estimatedTricks$bestSuit (${bestEval.trumpCount} trumps)',
     );
     if (kDebugMode) {
-      debugPrint('[AI BIDDING] ${position.name}: BID $estimatedTricks${_suitLabel(bestSuit)} - ${decision.reasoning}');
+      debugPrint(
+        '[AI BIDDING] ${position.name}: BID $estimatedTricks${_suitLabel(bestSuit)} - ${decision.reasoning}',
+      );
     }
     return decision;
   }
@@ -187,9 +202,30 @@ class BiddingAI {
     }
 
     // Trump ace/king/queen (adjusted for context)
-    final trumpAces = trumpCards.where((c) => c.rank == Rank.ace && !trumpRules.isRightBower(c) && !trumpRules.isLeftBower(c)).length;
-    final trumpKings = trumpCards.where((c) => c.rank == Rank.king && !trumpRules.isRightBower(c) && !trumpRules.isLeftBower(c)).length;
-    final trumpQueens = trumpCards.where((c) => c.rank == Rank.queen && !trumpRules.isRightBower(c) && !trumpRules.isLeftBower(c)).length;
+    final trumpAces = trumpCards
+        .where(
+          (c) =>
+              c.rank == Rank.ace &&
+              !trumpRules.isRightBower(c) &&
+              !trumpRules.isLeftBower(c),
+        )
+        .length;
+    final trumpKings = trumpCards
+        .where(
+          (c) =>
+              c.rank == Rank.king &&
+              !trumpRules.isRightBower(c) &&
+              !trumpRules.isLeftBower(c),
+        )
+        .length;
+    final trumpQueens = trumpCards
+        .where(
+          (c) =>
+              c.rank == Rank.queen &&
+              !trumpRules.isRightBower(c) &&
+              !trumpRules.isLeftBower(c),
+        )
+        .length;
 
     // Trump ace value depends on whether we have top honors
     if (trumpAces > 0) {
@@ -202,7 +238,11 @@ class BiddingAI {
 
     // Trump king/queen are less valuable without support
     if (trumpKings > 0) {
-      if ((hasJoker ? 1 : 0) + (hasRightBower ? 1 : 0) + (hasLeftBower ? 1 : 0) + trumpAces >= 2) {
+      if ((hasJoker ? 1 : 0) +
+              (hasRightBower ? 1 : 0) +
+              (hasLeftBower ? 1 : 0) +
+              trumpAces >=
+          2) {
         trickCount += trumpKings * 0.4; // Well protected
       } else {
         trickCount += trumpKings * 0.2;
@@ -230,12 +270,15 @@ class BiddingAI {
     // Analyze each side suit
     final suitDistribution = <Suit, List<PlayingCard>>{};
     for (final suit in Suit.values) {
-      suitDistribution[suit] = nonTrumpCards.where((c) => c.suit == suit).toList();
+      suitDistribution[suit] =
+          nonTrumpCards.where((c) => c.suit == suit).toList();
     }
 
     // Count voids and singletons (valuable with trumps)
-    final voids = suitDistribution.values.where((cards) => cards.isEmpty).length;
-    final singletons = suitDistribution.values.where((cards) => cards.length == 1).length;
+    final voids =
+        suitDistribution.values.where((cards) => cards.isEmpty).length;
+    final singletons =
+        suitDistribution.values.where((cards) => cards.length == 1).length;
 
     if (trumpLength >= 4) {
       trickCount += voids * 0.8; // Can ruff multiple times
@@ -315,7 +358,9 @@ class BiddingAI {
     // Count high cards in each suit
     for (final suit in Suit.values) {
       final suitCards = hand.where((c) => c.suit == suit && !c.isJoker).toList()
-        ..sort((a, b) => b.rank.index.compareTo(a.rank.index)); // Sort high to low
+        ..sort(
+          (a, b) => b.rank.index.compareTo(a.rank.index),
+        ); // Sort high to low
 
       if (suitCards.isEmpty) continue;
 

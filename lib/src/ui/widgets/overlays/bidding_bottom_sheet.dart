@@ -51,7 +51,8 @@ class _BiddingBottomSheetState extends State<BiddingBottomSheet> {
             height: 4,
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withAlpha(128),
+              color:
+                  Theme.of(context).colorScheme.onSurfaceVariant.withAlpha(128),
               borderRadius: BorderRadius.circular(2),
             ),
           ),

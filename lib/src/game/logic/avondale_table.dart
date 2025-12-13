@@ -87,8 +87,11 @@ class AvondaleTable {
     for (int suitIndex = currentBid.suit.index + 1;
         suitIndex < BidSuit.values.length;
         suitIndex++) {
-      final bid =
-          Bid(tricks: currentBid.tricks, suit: BidSuit.values[suitIndex], bidder: bidder);
+      final bid = Bid(
+        tricks: currentBid.tricks,
+        suit: BidSuit.values[suitIndex],
+        bidder: bidder,
+      );
       if (bid.beats(currentBid)) return bid;
     }
 

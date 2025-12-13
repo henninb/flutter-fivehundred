@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -54,9 +53,13 @@ class _IconGeneratorScreenState extends State<IconGeneratorScreen> {
 
       final directory = await getApplicationDocumentsDirectory();
       final saved1024 = await _writeImage(
-          icon1024, '${directory.path}/fivehundred_icon_1024.png');
+        icon1024,
+        '${directory.path}/fivehundred_icon_1024.png',
+      );
       final saved512 = await _writeImage(
-          icon512, '${directory.path}/fivehundred_icon_512.png');
+        icon512,
+        '${directory.path}/fivehundred_icon_512.png',
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -105,8 +105,8 @@ class PersistentGameBoard extends StatelessWidget {
   bool _shouldShowScore() {
     // Show score after game has started, but hide during setup and cut for deal
     return state.gameStarted &&
-           state.currentPhase != GamePhase.setup &&
-           state.currentPhase != GamePhase.cutForDeal;
+        state.currentPhase != GamePhase.setup &&
+        state.currentPhase != GamePhase.cutForDeal;
   }
 
   /// Build the center content - either setup screen or trick area

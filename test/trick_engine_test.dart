@@ -11,7 +11,9 @@ void main() {
   group('TrickEngine.validatePlay', () {
     test('requires following suit when player can', () {
       final trick = Trick(
-        plays: [CardPlay(card: _card(Rank.ace, Suit.spades), player: Position.north)],
+        plays: [
+          CardPlay(card: _card(Rank.ace, Suit.spades), player: Position.north),
+        ],
         leader: Position.north,
         trumpSuit: Suit.hearts,
       );
@@ -20,7 +22,8 @@ void main() {
         _card(Rank.ten, Suit.clubs),
       ];
 
-      final engine = TrickEngine(trumpRules: const TrumpRules(trumpSuit: Suit.hearts));
+      final engine =
+          TrickEngine(trumpRules: const TrumpRules(trumpSuit: Suit.hearts));
       final validation = engine.validatePlay(
         trick: trick,
         card: hand.last,
@@ -31,11 +34,15 @@ void main() {
       expect(validation.errorMessage, contains('follow suit'));
     });
 
-    test('allows joker to be played voluntarily in no-trump even when player has led suit', () {
+    test(
+        'allows joker to be played voluntarily in no-trump even when player has led suit',
+        () {
       // BUG FIX: Joker in no-trump can ALWAYS be played voluntarily
       // The player is NOT required to play it when void - it's optional
       final trick = Trick(
-        plays: [CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.west)],
+        plays: [
+          CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.west),
+        ],
         leader: Position.west,
       );
       final hand = [
@@ -57,7 +64,9 @@ void main() {
     test('still requires following suit for non-joker cards in no-trump', () {
       // Normal follow-suit rules still apply to regular cards
       final trick = Trick(
-        plays: [CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.west)],
+        plays: [
+          CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.west),
+        ],
         leader: Position.west,
       );
       final hand = [
@@ -77,9 +86,13 @@ void main() {
       expect(validation.errorMessage, contains('follow suit'));
     });
 
-    test('allows playing any card (including joker) when void of led suit in no-trump', () {
+    test(
+        'allows playing any card (including joker) when void of led suit in no-trump',
+        () {
       final trick = Trick(
-        plays: [CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.west)],
+        plays: [
+          CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.west),
+        ],
         leader: Position.west,
       );
       final hand = [
@@ -116,7 +129,8 @@ void main() {
     });
   });
 
-  test('getLegalCards respects nominated suit after joker lead in no-trump', () {
+  test('getLegalCards respects nominated suit after joker lead in no-trump',
+      () {
     final trick = Trick(
       plays: [
         const CardPlay(
@@ -140,7 +154,10 @@ void main() {
     );
 
     expect(legal, contains(_card(Rank.queen, Suit.clubs)));
-    expect(legal, contains(const PlayingCard(rank: Rank.joker, suit: Suit.spades)));
+    expect(
+      legal,
+      contains(const PlayingCard(rank: Rank.joker, suit: Suit.spades)),
+    );
     expect(legal, isNot(contains(_card(Rank.seven, Suit.hearts))));
   });
 
@@ -156,7 +173,8 @@ void main() {
       trumpSuit: Suit.hearts,
     );
 
-    final engine = TrickEngine(trumpRules: const TrumpRules(trumpSuit: Suit.hearts));
+    final engine =
+        TrickEngine(trumpRules: const TrumpRules(trumpSuit: Suit.hearts));
     final winner = engine.getCurrentWinner(trick);
 
     expect(winner, Position.east); // Left bower outranks other trump cards
@@ -172,7 +190,8 @@ void main() {
       _card(Rank.jack, Suit.hearts),
     ];
 
-    final engine = TrickEngine(trumpRules: const TrumpRules(trumpSuit: Suit.hearts));
+    final engine =
+        TrickEngine(trumpRules: const TrumpRules(trumpSuit: Suit.hearts));
     final result = engine.playCard(
       currentTrick: trick,
       card: _card(Rank.ace, Suit.hearts),

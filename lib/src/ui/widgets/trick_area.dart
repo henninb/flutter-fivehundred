@@ -48,10 +48,12 @@ class TrickArea extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withAlpha(77),
+                      color:
+                          Theme.of(context).colorScheme.outline.withAlpha(77),
                       width: 2,
                     ),
                   ),

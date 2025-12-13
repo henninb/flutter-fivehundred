@@ -83,7 +83,10 @@ DealResult dealHand({
   final kittyCount = kitty.length;
   final remainingCards = drawDeck.length;
 
-  if (northCount != 10 || southCount != 10 || eastCount != 10 || westCount != 10) {
+  if (northCount != 10 ||
+      southCount != 10 ||
+      eastCount != 10 ||
+      westCount != 10) {
     final error = 'Deal validation failed: Invalid hand counts - '
         'N:$northCount S:$southCount E:$eastCount W:$westCount (expected 10 each)';
     if (kDebugMode) {
@@ -93,7 +96,8 @@ DealResult dealHand({
   }
 
   if (kittyCount != 5) {
-    final error = 'Deal validation failed: Invalid kitty count - $kittyCount (expected 5)';
+    final error =
+        'Deal validation failed: Invalid kitty count - $kittyCount (expected 5)';
     if (kDebugMode) {
       debugPrint('[DealUtils] ERROR: $error');
     }
@@ -101,7 +105,8 @@ DealResult dealHand({
   }
 
   if (remainingCards != 0) {
-    final error = 'Deal validation failed: Cards remaining in deck - $remainingCards (expected 0)';
+    final error =
+        'Deal validation failed: Cards remaining in deck - $remainingCards (expected 0)';
     if (kDebugMode) {
       debugPrint('[DealUtils] ERROR: $error');
     }
@@ -109,7 +114,9 @@ DealResult dealHand({
   }
 
   if (kDebugMode) {
-    debugPrint('[DealUtils] Deal validated successfully: All hands 10 cards, kitty 5 cards');
+    debugPrint(
+      '[DealUtils] Deal validated successfully: All hands 10 cards, kitty 5 cards',
+    );
   }
 
   return DealResult(hands: hands, kitty: kitty);

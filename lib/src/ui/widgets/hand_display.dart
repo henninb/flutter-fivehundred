@@ -37,7 +37,8 @@ class _HandDisplayState extends State<HandDisplay> {
   Widget build(BuildContext context) {
     if (widget.hand.isEmpty) {
       // Hide "No cards" message during setup and cut for deal phases
-      if (widget.phase == GamePhase.setup || widget.phase == GamePhase.cutForDeal) {
+      if (widget.phase == GamePhase.setup ||
+          widget.phase == GamePhase.cutForDeal) {
         return const SizedBox(height: 80);
       }
 
@@ -91,12 +92,17 @@ class _HandDisplayState extends State<HandDisplay> {
         }
 
         // Add peeking card last so it appears on top
-        if (_peekingCardIndex != null && _peekingCardIndex! < widget.hand.length) {
+        if (_peekingCardIndex != null &&
+            _peekingCardIndex! < widget.hand.length) {
           cardWidgets.add(
             Positioned(
               left: _peekingCardIndex! * cardSpacing,
               top: 0,
-              child: _buildCard(context, widget.hand[_peekingCardIndex!], _peekingCardIndex!),
+              child: _buildCard(
+                context,
+                widget.hand[_peekingCardIndex!],
+                _peekingCardIndex!,
+              ),
             ),
           );
         }
@@ -170,8 +176,9 @@ class _HandDisplayState extends State<HandDisplay> {
               card.label,
               style: TextStyle(
                 fontSize: 16,
-                fontWeight:
-                    isJoker || isSelected || isPeeking ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isJoker || isSelected || isPeeking
+                    ? FontWeight.bold
+                    : FontWeight.normal,
                 letterSpacing: isJoker ? 1.5 : 0,
                 color: textColor,
               ),

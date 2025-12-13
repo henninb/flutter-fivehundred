@@ -217,18 +217,20 @@ class GameOverModal extends StatelessWidget {
                           // Tap anywhere instruction
                           Text(
                             'Tap anywhere to continue',
-                            style:
-                                Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: playerWon
-                                          ? Theme.of(context)
-                                              .colorScheme
-                                              .onPrimaryContainer
-                                              .withAlpha(204)
-                                          : Theme.of(context)
-                                              .colorScheme
-                                              .onErrorContainer
-                                              .withAlpha(204),
-                                    ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: playerWon
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryContainer
+                                          .withAlpha(204)
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onErrorContainer
+                                          .withAlpha(204),
+                                ),
                           ),
                         ],
                       ),

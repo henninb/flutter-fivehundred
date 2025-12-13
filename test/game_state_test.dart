@@ -70,7 +70,8 @@ void main() {
         team: Team.northSouth,
         timestamp: 1,
       ),
-      pendingBidEntry: BidEntry(bidder: Position.north, action: BidAction.bid, bid: bid),
+      pendingBidEntry:
+          BidEntry(bidder: Position.north, action: BidAction.bid, bid: bid),
       aiThinkingPosition: Position.east,
       pendingCardIndex: 3,
       nominatedSuit: Suit.clubs,

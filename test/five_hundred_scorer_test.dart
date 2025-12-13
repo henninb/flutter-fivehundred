@@ -6,7 +6,8 @@ import 'package:fivehundred/src/game/models/game_models.dart';
 
 void main() {
   group('FiveHundredScorer.scoreHand', () {
-    const contract = Bid(tricks: 8, suit: BidSuit.hearts, bidder: Position.north);
+    const contract =
+        Bid(tricks: 8, suit: BidSuit.hearts, bidder: Position.north);
 
     test('awards bid value when contract is made', () {
       final score = FiveHundredScorer.scoreHand(
@@ -16,7 +17,10 @@ void main() {
       );
 
       expect(score.contractMade, isTrue);
-      expect(score.contractorPoints, AvondaleTable.getBidValueFromBid(contract));
+      expect(
+        score.contractorPoints,
+        AvondaleTable.getBidValueFromBid(contract),
+      );
       expect(score.opponentPoints, 20);
       expect(score.tricksOver, 0);
       expect(score.tricksUnder, 0);
@@ -25,7 +29,8 @@ void main() {
 
     test('applies slam bonus to raise score to 250 for bids < 250', () {
       // 7 Spades is worth 140 points, should be raised to 250 on slam
-      const lowBid = Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.north);
+      const lowBid =
+          Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.north);
       final score = FiveHundredScorer.scoreHand(
         contract: lowBid,
         contractorTricks: 10,
@@ -60,7 +65,10 @@ void main() {
       );
 
       expect(score.contractMade, isFalse);
-      expect(score.contractorPoints, -AvondaleTable.getBidValueFromBid(contract));
+      expect(
+        score.contractorPoints,
+        -AvondaleTable.getBidValueFromBid(contract),
+      );
       expect(score.tricksUnder, 2);
       expect(score.opponentPoints, 40);
     });
@@ -84,7 +92,10 @@ void main() {
       );
 
       expect(score.contractMade, isTrue);
-      expect(score.contractorPoints, 300); // 8 Hearts value, no bonus for overtricks
+      expect(
+        score.contractorPoints,
+        300,
+      ); // 8 Hearts value, no bonus for overtricks
       expect(score.tricksOver, 1);
       expect(score.opponentPoints, 10);
     });
@@ -144,7 +155,8 @@ void main() {
     });
 
     test('failed contracts always score negative bid value', () {
-      const bid = Bid(tricks: 10, suit: BidSuit.noTrump, bidder: Position.north);
+      const bid =
+          Bid(tricks: 10, suit: BidSuit.noTrump, bidder: Position.north);
       final score = FiveHundredScorer.scoreHand(
         contract: bid,
         contractorTricks: 9,
@@ -269,7 +281,8 @@ void main() {
 
   group('FiveHundredScorer.getHandResultDescription', () {
     test('describes made contract exactly', () {
-      const contract = Bid(tricks: 7, suit: BidSuit.hearts, bidder: Position.north);
+      const contract =
+          Bid(tricks: 7, suit: BidSuit.hearts, bidder: Position.north);
       const score = HandScore(
         contractorPoints: 200,
         opponentPoints: 30,
@@ -291,7 +304,8 @@ void main() {
     });
 
     test('describes contract with overtricks', () {
-      const contract = Bid(tricks: 7, suit: BidSuit.hearts, bidder: Position.north);
+      const contract =
+          Bid(tricks: 7, suit: BidSuit.hearts, bidder: Position.north);
       const score = HandScore(
         contractorPoints: 200,
         opponentPoints: 20,
@@ -311,7 +325,8 @@ void main() {
     });
 
     test('describes slam', () {
-      const contract = Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.north);
+      const contract =
+          Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.north);
       const score = HandScore(
         contractorPoints: 250,
         opponentPoints: 0,
@@ -333,7 +348,8 @@ void main() {
     });
 
     test('describes failed contract', () {
-      const contract = Bid(tricks: 8, suit: BidSuit.hearts, bidder: Position.north);
+      const contract =
+          Bid(tricks: 8, suit: BidSuit.hearts, bidder: Position.north);
       const score = HandScore(
         contractorPoints: -300,
         opponentPoints: 40,

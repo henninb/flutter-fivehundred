@@ -50,7 +50,10 @@ abstract class GamePersistence {
   void saveCutCards(PlayingCard player, PlayingCard opponent);
 
   PlayerNames? loadPlayerNames();
-  void savePlayerNames({required String playerName, required String opponentName});
+  void savePlayerNames({
+    required String playerName,
+    required String opponentName,
+  });
 }
 
 class SharedPrefsPersistence implements GamePersistence {
@@ -100,7 +103,9 @@ class SharedPrefsPersistence implements GamePersistence {
         ..setInt(_doubleSkunksAgainstKey, doubleSkunksAgainst);
 
       if (kDebugMode) {
-        debugPrint('[Persistence] Stats saved successfully: W:$gamesWon L:$gamesLost');
+        debugPrint(
+          '[Persistence] Stats saved successfully: W:$gamesWon L:$gamesLost',
+        );
       }
     } catch (e) {
       if (kDebugMode) {
@@ -126,7 +131,9 @@ class SharedPrefsPersistence implements GamePersistence {
       final opponentCard = PlayingCard.decode(opponent);
 
       if (kDebugMode) {
-        debugPrint('[Persistence] Cut cards loaded successfully: ${playerCard.label}, ${opponentCard.label}');
+        debugPrint(
+          '[Persistence] Cut cards loaded successfully: ${playerCard.label}, ${opponentCard.label}',
+        );
       }
 
       return CutCards(
@@ -135,7 +142,9 @@ class SharedPrefsPersistence implements GamePersistence {
       );
     } on FormatException catch (e) {
       if (kDebugMode) {
-        debugPrint('[Persistence] ERROR: Invalid card format in saved data: $e');
+        debugPrint(
+          '[Persistence] ERROR: Invalid card format in saved data: $e',
+        );
       }
       // Return null if corrupted data - game will regenerate
       return null;
@@ -183,7 +192,10 @@ class SharedPrefsPersistence implements GamePersistence {
   }
 
   @override
-  void savePlayerNames({required String playerName, required String opponentName}) {
+  void savePlayerNames({
+    required String playerName,
+    required String opponentName,
+  }) {
     try {
       _prefs
         ..setString(_playerNameKey, playerName)

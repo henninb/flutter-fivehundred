@@ -66,7 +66,8 @@ class _KittyExchangeBottomSheetState extends State<KittyExchangeBottomSheet> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: isValid
                       ? Theme.of(context).colorScheme.primaryContainer
@@ -205,8 +206,9 @@ class _KittyExchangeBottomSheetState extends State<KittyExchangeBottomSheet> {
                     card.label,
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight:
-                          isSelected || isFromKitty ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected || isFromKitty
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       color: _getCardColor(card.label),
                       letterSpacing: card.isJoker ? 1.5 : 0,
                     ),

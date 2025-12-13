@@ -32,7 +32,10 @@ class SetupOverlay extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withAlpha(128),
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurfaceVariant
+                    .withAlpha(128),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -186,7 +189,10 @@ class SetupOverlay extends StatelessWidget {
               boxShadow: isDealer
                   ? [
                       BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withAlpha(128),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withAlpha(128),
                         blurRadius: 8,
                         spreadRadius: 1,
                       ),

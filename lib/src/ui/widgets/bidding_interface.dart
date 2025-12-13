@@ -59,8 +59,7 @@ class _BiddingInterfaceState extends State<BiddingInterface> {
     );
   }
 
-  bool get _isInkle =>
-      _selectedTrickLevel == 6 && widget.canInkle;
+  bool get _isInkle => _selectedTrickLevel == 6 && widget.canInkle;
 
   @override
   Widget build(BuildContext context) {
@@ -76,219 +75,221 @@ class _BiddingInterfaceState extends State<BiddingInterface> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-          // Show message only if no bids yet
-          if (widget.bidHistory.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 16, bottom: 8),
-              child: Text(
-                'No bids yet - Start the bidding!',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            )
-          else
-            const SizedBox(height: 16),
-
-          // Bid history - compact chips only
-          if (widget.bidHistory.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: widget.bidHistory.map((entry) {
-                  final positionName = _getPositionName(entry.bidder);
-                  final bidText = entry.action == BidAction.pass
-                      ? 'Pass'
-                      : entry.action == BidAction.inkle
-                          ? '${entry.bid!.tricks}${_suitSymbol(entry.bid!.suit)} (I)'
-                          : '${entry.bid!.tricks}${_suitSymbol(entry.bid!.suit)}';
-
-                  return Chip(
-                    label: Text(
-                      '$positionName: $bidText',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                  );
-                }).toList(),
-              ),
-            ),
-
-          // AI Recommendation (if available)
-          if (_aiRecommendation != null &&
-              _aiRecommendation!.action != BidAction.pass)
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: colorScheme.secondary.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.lightbulb,
-                    size: 18,
-                    color: colorScheme.onSecondaryContainer,
+            // Show message only if no bids yet
+            if (widget.bidHistory.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 16, bottom: 8),
+                child: Text(
+                  'No bids yet - Start the bidding!',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'AI Suggests: ${_aiRecommendation!.bid!.tricks}${_suitSymbol(_aiRecommendation!.bid!.suit)}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                ),
+              )
+            else
+              const SizedBox(height: 16),
+
+            // Bid history - compact chips only
+            if (widget.bidHistory.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: widget.bidHistory.map((entry) {
+                    final positionName = _getPositionName(entry.bidder);
+                    final bidText = entry.action == BidAction.pass
+                        ? 'Pass'
+                        : entry.action == BidAction.inkle
+                            ? '${entry.bid!.tricks}${_suitSymbol(entry.bid!.suit)} (I)'
+                            : '${entry.bid!.tricks}${_suitSymbol(entry.bid!.suit)}';
+
+                    return Chip(
+                      label: Text(
+                        '$positionName: $bidText',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                    );
+                  }).toList(),
+                ),
+              ),
+
+            // AI Recommendation (if available)
+            if (_aiRecommendation != null &&
+                _aiRecommendation!.action != BidAction.pass)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: colorScheme.secondary.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.lightbulb,
+                      size: 18,
                       color: colorScheme.onSecondaryContainer,
                     ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'AI Suggests: ${_aiRecommendation!.bid!.tricks}${_suitSymbol(_aiRecommendation!.bid!.suit)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            const SizedBox(height: 16),
+
+            // Suit selection buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Choose Suit:',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: BidSuit.values.map((suit) {
+                      final isSelected = _selectedSuit == suit;
+                      final isAIRec = _aiRecommendation?.bid?.suit == suit;
+
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _buildSuitButton(
+                            context,
+                            suit,
+                            isSelected,
+                            isAIRec,
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ],
               ),
             ),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
-          // Suit selection buttons
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Choose Suit:',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
+            // Trick level selection buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Choose Tricks:',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: BidSuit.values.map((suit) {
-                    final isSelected = _selectedSuit == suit;
-                    final isAIRec = _aiRecommendation?.bid?.suit == suit;
+                  const SizedBox(height: 12),
+                  Row(
+                    children: List.generate(5, (index) {
+                      final tricks = index + 6;
+                      final isSelected = _selectedTrickLevel == tricks;
+                      final isAIRec = _aiRecommendation?.bid?.tricks == tricks;
+                      final canSelect = _canSelectTrickLevel(tricks);
 
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: _buildSuitButton(
-                          context,
-                          suit,
-                          isSelected,
-                          isAIRec,
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _buildTrickButton(
+                            context,
+                            tricks,
+                            isSelected,
+                            isAIRec,
+                            canSelect,
+                          ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Trick level selection buttons
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Choose Tricks:',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
+                      );
+                    }),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: List.generate(5, (index) {
-                    final tricks = index + 6;
-                    final isSelected = _selectedTrickLevel == tricks;
-                    final isAIRec = _aiRecommendation?.bid?.tricks == tricks;
-                    final canSelect = _canSelectTrickLevel(tricks);
-
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: _buildTrickButton(
-                          context,
-                          tricks,
-                          isSelected,
-                          isAIRec,
-                          canSelect,
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          // Action buttons at bottom
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Row(
-              children: [
-                // Pass button
-                Expanded(
-                  child: SizedBox(
-                    height: 50,
-                    child: OutlinedButton(
-                      onPressed: widget.onPass,
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: colorScheme.outline,
-                          width: 2,
+            // Action buttons at bottom
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Row(
+                children: [
+                  // Pass button
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: OutlinedButton(
+                        onPressed: widget.onPass,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: colorScheme.outline,
+                            width: 2,
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'Pass',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
+                        child: Text(
+                          'Pass',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
 
-                const SizedBox(width: 12),
+                  const SizedBox(width: 12),
 
-                // Confirm bid button
-                Expanded(
-                  flex: 2,
-                  child: SizedBox(
-                    height: 50,
-                    child: FilledButton(
-                      onPressed: _currentBid != null && _isValidBid(_currentBid!)
-                          ? () {
-                              widget.onBidSelected(_currentBid!, _isInkle);
-                            }
-                          : null,
-                      child: Text(
-                        _currentBid != null
-                            ? 'Bid $_selectedTrickLevel${_suitSymbol(_selectedSuit!)} (${_currentBid!.value} pts)'
-                            : 'Select Suit & Tricks',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                  // Confirm bid button
+                  Expanded(
+                    flex: 2,
+                    child: SizedBox(
+                      height: 50,
+                      child: FilledButton(
+                        onPressed: _currentBid != null &&
+                                _isValidBid(_currentBid!)
+                            ? () {
+                                widget.onBidSelected(_currentBid!, _isInkle);
+                              }
+                            : null,
+                        child: Text(
+                          _currentBid != null
+                              ? 'Bid $_selectedTrickLevel${_suitSymbol(_selectedSuit!)} (${_currentBid!.value} pts)'
+                              : 'Select Suit & Tricks',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
     );

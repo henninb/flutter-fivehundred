@@ -141,7 +141,10 @@ void main() {
     test('trump always beats non-trump', () {
       final rules = const TrumpRules(trumpSuit: Suit.hearts);
       expect(
-        rules.compare(_card(Rank.four, Suit.hearts), _card(Rank.ace, Suit.spades)),
+        rules.compare(
+          _card(Rank.four, Suit.hearts),
+          _card(Rank.ace, Suit.spades),
+        ),
         greaterThan(0),
       );
     });
@@ -149,7 +152,10 @@ void main() {
     test('non-trump never beats trump', () {
       final rules = const TrumpRules(trumpSuit: Suit.hearts);
       expect(
-        rules.compare(_card(Rank.ace, Suit.spades), _card(Rank.four, Suit.hearts)),
+        rules.compare(
+          _card(Rank.ace, Suit.spades),
+          _card(Rank.four, Suit.hearts),
+        ),
         lessThan(0),
       );
     });
@@ -168,11 +174,17 @@ void main() {
     test('trump ace beats lower trump cards', () {
       final rules = const TrumpRules(trumpSuit: Suit.hearts);
       expect(
-        rules.compare(_card(Rank.ace, Suit.hearts), _card(Rank.king, Suit.hearts)),
+        rules.compare(
+          _card(Rank.ace, Suit.hearts),
+          _card(Rank.king, Suit.hearts),
+        ),
         greaterThan(0),
       );
       expect(
-        rules.compare(_card(Rank.ace, Suit.hearts), _card(Rank.four, Suit.hearts)),
+        rules.compare(
+          _card(Rank.ace, Suit.hearts),
+          _card(Rank.four, Suit.hearts),
+        ),
         greaterThan(0),
       );
     });
@@ -180,25 +192,40 @@ void main() {
     test('non-trump cards compared by rank', () {
       final rules = const TrumpRules(trumpSuit: Suit.hearts);
       expect(
-        rules.compare(_card(Rank.ace, Suit.spades), _card(Rank.king, Suit.spades)),
+        rules.compare(
+          _card(Rank.ace, Suit.spades),
+          _card(Rank.king, Suit.spades),
+        ),
         greaterThan(0),
       );
       expect(
-        rules.compare(_card(Rank.ten, Suit.clubs), _card(Rank.nine, Suit.clubs)),
+        rules.compare(
+          _card(Rank.ten, Suit.clubs),
+          _card(Rank.nine, Suit.clubs),
+        ),
         greaterThan(0),
       );
     });
 
     test('in no-trump, joker beats all cards', () {
       final rules = const TrumpRules(trumpSuit: null);
-      expect(rules.compare(_joker, _card(Rank.ace, Suit.hearts)), greaterThan(0));
-      expect(rules.compare(_joker, _card(Rank.jack, Suit.spades)), greaterThan(0));
+      expect(
+        rules.compare(_joker, _card(Rank.ace, Suit.hearts)),
+        greaterThan(0),
+      );
+      expect(
+        rules.compare(_joker, _card(Rank.jack, Suit.spades)),
+        greaterThan(0),
+      );
     });
 
     test('in no-trump, regular cards compared by rank', () {
       final rules = const TrumpRules(trumpSuit: null);
       expect(
-        rules.compare(_card(Rank.ace, Suit.hearts), _card(Rank.king, Suit.hearts)),
+        rules.compare(
+          _card(Rank.ace, Suit.hearts),
+          _card(Rank.king, Suit.hearts),
+        ),
         greaterThan(0),
       );
     });

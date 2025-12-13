@@ -53,7 +53,8 @@ class _BiddingDialogState extends State<BiddingDialog> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.secondaryContainer,
-                border: Border.all(color: Theme.of(context).colorScheme.secondary),
+                border:
+                    Border.all(color: Theme.of(context).colorScheme.secondary),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -69,7 +70,10 @@ class _BiddingDialogState extends State<BiddingDialog> {
                     runSpacing: 4,
                     children: widget.playerHand.map((card) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           border: Border.all(color: Colors.grey.shade400),
@@ -104,7 +108,10 @@ class _BiddingDialogState extends State<BiddingDialog> {
                         width: double.infinity,
                         child: FilledButton(
                           onPressed: () {
-                            widget.onBidSelected(_selectedBid!, _selectedIsInkle);
+                            widget.onBidSelected(
+                              _selectedBid!,
+                              _selectedIsInkle,
+                            );
                             Navigator.of(context).pop();
                           },
                           child: Text(
@@ -138,7 +145,9 @@ class _BiddingDialogState extends State<BiddingDialog> {
       children: [
         // Header row
         TableRow(
-          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
           children: [
             _buildHeaderCell(''),
             _buildHeaderCell('♠'),
@@ -149,7 +158,8 @@ class _BiddingDialogState extends State<BiddingDialog> {
           ],
         ),
         // Bid rows (6-10)
-        for (int tricks = 6; tricks <= 10; tricks++) _buildBidRow(context, tricks),
+        for (int tricks = 6; tricks <= 10; tricks++)
+          _buildBidRow(context, tricks),
       ],
     );
   }
@@ -221,7 +231,10 @@ class _BiddingDialogState extends State<BiddingDialog> {
                   ? Theme.of(context).colorScheme.primaryContainer
                   : null,
           border: isSelected
-              ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
+              ? Border.all(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                )
               : null,
         ),
         child: Center(
@@ -229,8 +242,8 @@ class _BiddingDialogState extends State<BiddingDialog> {
             value.toString(),
             style: TextStyle(
               color: !isValid
-                ? Theme.of(context).colorScheme.onSurfaceVariant
-                : Theme.of(context).colorScheme.onSurface,
+                  ? Theme.of(context).colorScheme.onSurfaceVariant
+                  : Theme.of(context).colorScheme.onSurface,
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),

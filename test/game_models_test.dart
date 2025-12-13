@@ -84,9 +84,12 @@ void main() {
     });
 
     test('beats method compares suits when tricks equal', () {
-      final spadeBid = Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.north);
-      final clubBid = Bid(tricks: 7, suit: BidSuit.clubs, bidder: Position.south);
-      final heartBid = Bid(tricks: 7, suit: BidSuit.hearts, bidder: Position.east);
+      final spadeBid =
+          Bid(tricks: 7, suit: BidSuit.spades, bidder: Position.north);
+      final clubBid =
+          Bid(tricks: 7, suit: BidSuit.clubs, bidder: Position.south);
+      final heartBid =
+          Bid(tricks: 7, suit: BidSuit.hearts, bidder: Position.east);
 
       expect(clubBid.beats(spadeBid), isTrue);
       expect(heartBid.beats(clubBid), isTrue);
@@ -99,8 +102,10 @@ void main() {
     });
 
     test('no-trump beats all suits at same trick level', () {
-      final noTrumpBid = Bid(tricks: 7, suit: BidSuit.noTrump, bidder: Position.north);
-      final heartBid = Bid(tricks: 7, suit: BidSuit.hearts, bidder: Position.south);
+      final noTrumpBid =
+          Bid(tricks: 7, suit: BidSuit.noTrump, bidder: Position.north);
+      final heartBid =
+          Bid(tricks: 7, suit: BidSuit.hearts, bidder: Position.south);
 
       expect(noTrumpBid.beats(heartBid), isTrue);
       expect(heartBid.beats(noTrumpBid), isFalse);
@@ -177,7 +182,9 @@ void main() {
 
     test('isEmpty returns false for non-empty trick', () {
       final trick = Trick(
-        plays: [CardPlay(card: _card(Rank.ace, Suit.hearts), player: Position.north)],
+        plays: [
+          CardPlay(card: _card(Rank.ace, Suit.hearts), player: Position.north),
+        ],
         leader: Position.north,
       );
       expect(trick.isEmpty, isFalse);
@@ -188,7 +195,10 @@ void main() {
         plays: [
           CardPlay(card: _card(Rank.ace, Suit.hearts), player: Position.north),
           CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.east),
-          CardPlay(card: _card(Rank.queen, Suit.hearts), player: Position.south),
+          CardPlay(
+            card: _card(Rank.queen, Suit.hearts),
+            player: Position.south,
+          ),
           CardPlay(card: _card(Rank.jack, Suit.hearts), player: Position.west),
         ],
         leader: Position.north,
@@ -223,7 +233,8 @@ void main() {
 
     test('addPlay adds card to trick', () {
       final trick = Trick(plays: [], leader: Position.north);
-      final play = CardPlay(card: _card(Rank.ace, Suit.hearts), player: Position.north);
+      final play =
+          CardPlay(card: _card(Rank.ace, Suit.hearts), player: Position.north);
       final newTrick = trick.addPlay(play);
 
       expect(newTrick.plays.length, 1);
@@ -231,8 +242,10 @@ void main() {
     });
 
     test('addPlay preserves existing plays', () {
-      final play1 = CardPlay(card: _card(Rank.ace, Suit.hearts), player: Position.north);
-      final play2 = CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.east);
+      final play1 =
+          CardPlay(card: _card(Rank.ace, Suit.hearts), player: Position.north);
+      final play2 =
+          CardPlay(card: _card(Rank.king, Suit.hearts), player: Position.east);
 
       final trick = Trick(plays: [play1], leader: Position.north);
       final newTrick = trick.addPlay(play2);
@@ -244,15 +257,18 @@ void main() {
 
     test('addPlay preserves leader', () {
       final trick = Trick(plays: [], leader: Position.west);
-      final play = CardPlay(card: _card(Rank.ace, Suit.hearts), player: Position.west);
+      final play =
+          CardPlay(card: _card(Rank.ace, Suit.hearts), player: Position.west);
       final newTrick = trick.addPlay(play);
 
       expect(newTrick.leader, Position.west);
     });
 
     test('addPlay preserves trumpSuit', () {
-      final trick = Trick(plays: [], leader: Position.north, trumpSuit: Suit.spades);
-      final play = CardPlay(card: _card(Rank.ace, Suit.hearts), player: Position.north);
+      final trick =
+          Trick(plays: [], leader: Position.north, trumpSuit: Suit.spades);
+      final play =
+          CardPlay(card: _card(Rank.ace, Suit.hearts), player: Position.north);
       final newTrick = trick.addPlay(play);
 
       expect(newTrick.trumpSuit, Suit.spades);

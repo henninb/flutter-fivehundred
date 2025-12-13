@@ -37,10 +37,10 @@ Future<void> _pumpGolden({
   required FiveHundredTheme theme,
   required String goldenName,
 }) async {
-  tester.binding.window.physicalSizeTestValue = const Size(1280, 720);
-  tester.binding.window.devicePixelRatioTestValue = 1.0;
-  addTearDown(tester.binding.window.clearPhysicalSizeTestValue);
-  addTearDown(tester.binding.window.clearDevicePixelRatioTestValue);
+  tester.view.physicalSize = const Size(1280, 720);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
 
   final settings = GameSettings(selectedTheme: theme.type);
   final engine = PreviewGameEngine(state);

@@ -23,7 +23,10 @@ void main() {
   group('dealHand', () {
     test('throws when deck length is not 45', () {
       expect(
-        () => dealHand(deck: _orderedDeck()..removeLast(), dealer: Position.south),
+        () => dealHand(
+          deck: _orderedDeck()..removeLast(),
+          dealer: Position.south,
+        ),
         throwsArgumentError,
       );
     });

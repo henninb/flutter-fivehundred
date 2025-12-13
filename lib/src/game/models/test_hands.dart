@@ -133,7 +133,10 @@ class TestHands {
       name: 'Bower Test',
       description: 'Both jacks of same color for bower testing',
       cards: [
-        PlayingCard(rank: Rank.jack, suit: Suit.spades), // Right bower in spades
+        PlayingCard(
+          rank: Rank.jack,
+          suit: Suit.spades,
+        ), // Right bower in spades
         PlayingCard(rank: Rank.jack, suit: Suit.clubs), // Left bower in spades
         PlayingCard(rank: Rank.ace, suit: Suit.spades),
         PlayingCard(rank: Rank.king, suit: Suit.spades),
@@ -152,8 +155,14 @@ class TestHands {
       description: 'Powerful hand capable of winning all tricks',
       cards: [
         PlayingCard(rank: Rank.joker, suit: Suit.spades),
-        PlayingCard(rank: Rank.jack, suit: Suit.hearts), // Right bower in hearts
-        PlayingCard(rank: Rank.jack, suit: Suit.diamonds), // Left bower in hearts
+        PlayingCard(
+          rank: Rank.jack,
+          suit: Suit.hearts,
+        ), // Right bower in hearts
+        PlayingCard(
+          rank: Rank.jack,
+          suit: Suit.diamonds,
+        ), // Left bower in hearts
         PlayingCard(rank: Rank.ace, suit: Suit.hearts),
         PlayingCard(rank: Rank.king, suit: Suit.hearts),
         PlayingCard(rank: Rank.queen, suit: Suit.hearts),

@@ -14,12 +14,15 @@ void main() {
 
   // Save foreground (for adaptive icon)
   final foregroundSvg = generateFiveHundredIconForegroundSVG();
-  File('assets/fivehundred_icon_foreground.svg').writeAsStringSync(foregroundSvg);
+  File('assets/fivehundred_icon_foreground.svg')
+      .writeAsStringSync(foregroundSvg);
   print('✓ Created assets/fivehundred_icon_foreground.svg');
 
   print('\nNext steps:');
-  print('1. Convert SVG to PNG (1024x1024) using an online tool or ImageMagick:');
-  print('   - Visit https://svgtopng.com/ or use: convert -resize 1024x1024 assets/fivehundred_icon.svg assets/fivehundred_icon.png');
+  print(
+      '1. Convert SVG to PNG (1024x1024) using an online tool or ImageMagick:');
+  print(
+      '   - Visit https://svgtopng.com/ or use: convert -resize 1024x1024 assets/fivehundred_icon.svg assets/fivehundred_icon.png');
   print('2. Run: dart run flutter_launcher_icons');
   print('3. Rebuild your app to see the new icon!');
 }

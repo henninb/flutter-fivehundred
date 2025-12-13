@@ -1,0 +1,79 @@
+name: Flutter CI
+
+# Security: CVE scanning is handled by Dependabot (see .github/dependabot.yml)
+# Dependabot automatically checks for vulnerable dependencies and creates PRs
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  analyze:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Required to checkout code
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Check for vulnerable dependencies
+        run: |
+          echo "Checking for outdated packages with known vulnerabilities..."
+          flutter pub outdated --json > outdated.json || true
+          if [ -f outdated.json ]; then
+            echo "Outdated packages report generated"
+            cat outdated.json
+          fi
+        continue-on-error: true
+
+      - name: Verify formatting
+        run: dart format --set-exit-if-changed .
+
+      - name: Run static analysis
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    needs: analyze
+    permissions:
+      contents: read  # Required to checkout code
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7

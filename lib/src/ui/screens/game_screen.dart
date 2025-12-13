@@ -71,16 +71,22 @@ class _GameScreenState extends State<GameScreen> {
         }
 
         // Show bottom sheets based on game phase
-        debugPrint('🎯 [UI TIMING] Build phase: ${state.currentPhase}, currentBidder: ${state.currentBidder}, biddingOverlayShown: $_biddingOverlayShown');
+        debugPrint(
+          '🎯 [UI TIMING] Build phase: ${state.currentPhase}, currentBidder: ${state.currentBidder}, biddingOverlayShown: $_biddingOverlayShown',
+        );
 
         // For bidding, show immediately; for others use post-frame callback
         if (state.currentPhase == GamePhase.bidding &&
             state.currentBidder == Position.south &&
             !_biddingOverlayShown) {
-          debugPrint('🎯 [UI TIMING] Scheduling bidding sheet via postFrameCallback');
+          debugPrint(
+            '🎯 [UI TIMING] Scheduling bidding sheet via postFrameCallback',
+          );
           // Show bidding sheet immediately without delay
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            debugPrint('🎯 [UI TIMING] postFrameCallback executing for bidding sheet');
+            debugPrint(
+              '🎯 [UI TIMING] postFrameCallback executing for bidding sheet',
+            );
             if (!mounted) return;
             _biddingOverlayShown = true;
             _showBiddingSheet(context, state);
@@ -215,7 +221,10 @@ class _GameScreenState extends State<GameScreen> {
             builder: (context, _) {
               final currentState = widget.engine.state;
               final biddingEngine = BiddingEngine(dealer: currentState.dealer);
-              final canInkle = biddingEngine.canInkle(Position.south, currentState.bidHistory);
+              final canInkle = biddingEngine.canInkle(
+                Position.south,
+                currentState.bidHistory,
+              );
 
               // Auto-close sheet when bidding phase ends (auction won or moving to next phase)
               if (!currentState.isBiddingPhase) {
@@ -227,7 +236,10 @@ class _GameScreenState extends State<GameScreen> {
               }
 
               return BiddingBottomSheet(
-                key: ValueKey(currentState.playerHand.length + currentState.playerHand.hashCode),
+                key: ValueKey(
+                  currentState.playerHand.length +
+                      currentState.playerHand.hashCode,
+                ),
                 state: currentState,
                 canInkle: canInkle,
                 onBidSelected: (bid, isInkle) {

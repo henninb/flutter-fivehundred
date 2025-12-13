@@ -38,7 +38,9 @@ class TrickEngine {
         debugPrint('\n[TRICK PLAY VALIDATION FAILED]');
         debugPrint('Player: ${player.name}');
         debugPrint('Attempted card: ${card.label}');
-        debugPrint('Led suit: ${currentTrick.ledSuit?.name ?? 'none (leading)'}');
+        debugPrint(
+          'Led suit: ${currentTrick.ledSuit?.name ?? 'none (leading)'}',
+        );
         debugPrint('Nominated suit: ${nominatedSuit?.name ?? 'none'}');
         debugPrint('Trump suit: ${trumpRules.trumpSuit?.name ?? 'no trump'}');
         debugPrint('Hand size: ${playerHand.length}');
@@ -84,7 +86,9 @@ class TrickEngine {
     // If leading (first card), any card is valid except joker restrictions
     if (trick.isEmpty) {
       // Leading with joker in no-trump requires nominating a suit
-      if (card.isJoker && trumpRules.trumpSuit == null && nominatedSuit == null) {
+      if (card.isJoker &&
+          trumpRules.trumpSuit == null &&
+          nominatedSuit == null) {
         return PlayValidation.invalid(
           'Must nominate a suit when leading with joker in no-trump',
         );
@@ -101,8 +105,12 @@ class TrickEngine {
       final hasNominatedSuit = hand.any(
         (c) => !c.isJoker && trumpRules.getEffectiveSuit(c) == nominatedSuit,
       );
-      if (hasNominatedSuit && trumpRules.getEffectiveSuit(card) != nominatedSuit && !card.isJoker) {
-        return PlayValidation.invalid('Must follow nominated suit $nominatedSuit');
+      if (hasNominatedSuit &&
+          trumpRules.getEffectiveSuit(card) != nominatedSuit &&
+          !card.isJoker) {
+        return PlayValidation.invalid(
+          'Must follow nominated suit $nominatedSuit',
+        );
       }
       return PlayValidation.valid();
     }
@@ -113,19 +121,26 @@ class TrickEngine {
       // It's the highest card but playing it is optional - you can discard any suit
       if (card.isJoker && trumpRules.trumpSuit == null) {
         if (kDebugMode) {
-          debugPrint('[TRICK ENGINE] Joker played in no-trump - always legal (voluntary play)');
+          debugPrint(
+            '[TRICK ENGINE] Joker played in no-trump - always legal (voluntary play)',
+          );
         }
         return PlayValidation.valid();
       }
 
       final cardEffectiveSuit = trumpRules.getEffectiveSuit(card);
-      final hasLedSuit = hand.any((c) => !c.isJoker && trumpRules.getEffectiveSuit(c) == ledSuit);
+      final hasLedSuit = hand
+          .any((c) => !c.isJoker && trumpRules.getEffectiveSuit(c) == ledSuit);
 
       if (hasLedSuit && cardEffectiveSuit != ledSuit) {
         if (kDebugMode) {
-          debugPrint('[TRICK ENGINE] Must follow suit ${_suitLabel(ledSuit)} - player has led suit');
+          debugPrint(
+            '[TRICK ENGINE] Must follow suit ${_suitLabel(ledSuit)} - player has led suit',
+          );
         }
-        return PlayValidation.invalid('Must follow suit ${_suitLabel(ledSuit)}');
+        return PlayValidation.invalid(
+          'Must follow suit ${_suitLabel(ledSuit)}',
+        );
       }
     }
 
@@ -163,7 +178,9 @@ class TrickEngine {
     final ledSuit = trick.ledSuit;
 
     if (kDebugMode) {
-      debugPrint('[TRICK ENGINE] Determining winner of ${plays.length}-card trick');
+      debugPrint(
+        '[TRICK ENGINE] Determining winner of ${plays.length}-card trick',
+      );
       debugPrint('  Led suit: ${ledSuit?.name ?? 'none (joker in no-trump)'}');
       debugPrint('  Trump suit: ${trumpRules.trumpSuit?.name ?? 'no trump'}');
     }
@@ -181,7 +198,9 @@ class TrickEngine {
 
       if (currentIsTrump && !winningIsTrump) {
         if (kDebugMode) {
-          debugPrint('  ${plays[i].player.name}\'s ${currentCard.label} (trump) beats ${winningPlay.player.name}\'s ${winningCard.label}');
+          debugPrint(
+            '  ${plays[i].player.name}\'s ${currentCard.label} (trump) beats ${winningPlay.player.name}\'s ${winningCard.label}',
+          );
         }
         winningPlay = plays[i];
         winningCard = currentCard;
@@ -191,7 +210,9 @@ class TrickEngine {
         // Both trump: compare trump ranks
         if (trumpRules.compare(currentCard, winningCard) > 0) {
           if (kDebugMode) {
-            debugPrint('  ${plays[i].player.name}\'s ${currentCard.label} (higher trump) beats ${winningPlay.player.name}\'s ${winningCard.label}');
+            debugPrint(
+              '  ${plays[i].player.name}\'s ${currentCard.label} (higher trump) beats ${winningPlay.player.name}\'s ${winningCard.label}',
+            );
           }
           winningPlay = plays[i];
           winningCard = currentCard;
@@ -203,14 +224,18 @@ class TrickEngine {
 
         if (currentSuit == ledSuit && winningSuit != ledSuit) {
           if (kDebugMode) {
-            debugPrint('  ${plays[i].player.name}\'s ${currentCard.label} (follows led suit) beats ${winningPlay.player.name}\'s ${winningCard.label}');
+            debugPrint(
+              '  ${plays[i].player.name}\'s ${currentCard.label} (follows led suit) beats ${winningPlay.player.name}\'s ${winningCard.label}',
+            );
           }
           winningPlay = plays[i];
           winningCard = currentCard;
         } else if (currentSuit == ledSuit && winningSuit == ledSuit) {
           if (trumpRules.compare(currentCard, winningCard) > 0) {
             if (kDebugMode) {
-              debugPrint('  ${plays[i].player.name}\'s ${currentCard.label} (higher rank) beats ${winningPlay.player.name}\'s ${winningCard.label}');
+              debugPrint(
+                '  ${plays[i].player.name}\'s ${currentCard.label} (higher rank) beats ${winningPlay.player.name}\'s ${winningCard.label}',
+              );
             }
             winningPlay = plays[i];
             winningCard = currentCard;
@@ -220,7 +245,9 @@ class TrickEngine {
     }
 
     if (kDebugMode) {
-      debugPrint('  Winner: ${winningPlay.player.name} with ${winningCard.label}');
+      debugPrint(
+        '  Winner: ${winningPlay.player.name} with ${winningCard.label}',
+      );
     }
 
     return winningPlay.player;

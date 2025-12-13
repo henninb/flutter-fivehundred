@@ -126,13 +126,18 @@ class BiddingEngine {
     final highestInkle = getHighestInkle(bids);
 
     if (kDebugMode) {
-      debugPrint('  Highest bid: ${highestBid != null ? '${highestBid.tricks}${_suitLabel(highestBid.suit)} by ${highestBid.bidder.name}' : 'none'}');
-      debugPrint('  Highest inkle: ${highestInkle != null ? '${highestInkle.tricks}${_suitLabel(highestInkle.suit)} by ${highestInkle.bidder.name}' : 'none'}');
+      debugPrint(
+        '  Highest bid: ${highestBid != null ? '${highestBid.tricks}${_suitLabel(highestBid.suit)} by ${highestBid.bidder.name}' : 'none'}',
+      );
+      debugPrint(
+        '  Highest inkle: ${highestInkle != null ? '${highestInkle.tricks}${_suitLabel(highestInkle.suit)} by ${highestInkle.bidder.name}' : 'none'}',
+      );
     }
 
     // If there's a valid bid (7+), that wins
     if (highestBid != null && highestBid.tricks >= 7) {
-      final message = '${highestBid.bidder.name} wins with ${highestBid.tricks}${_suitLabel(highestBid.suit)}';
+      final message =
+          '${highestBid.bidder.name} wins with ${highestBid.tricks}${_suitLabel(highestBid.suit)}';
       if (kDebugMode) {
         debugPrint('  Result: WON - $message');
       }

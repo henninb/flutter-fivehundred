@@ -168,10 +168,14 @@ class Trick {
   // Helper: Get same-color suit for left bower check
   Suit _getOppositeColorSuit(Suit suit) {
     switch (suit) {
-      case Suit.hearts: return Suit.diamonds;
-      case Suit.diamonds: return Suit.hearts;
-      case Suit.spades: return Suit.clubs;
-      case Suit.clubs: return Suit.spades;
+      case Suit.hearts:
+        return Suit.diamonds;
+      case Suit.diamonds:
+        return Suit.hearts;
+      case Suit.spades:
+        return Suit.clubs;
+      case Suit.clubs:
+        return Suit.spades;
     }
   }
 

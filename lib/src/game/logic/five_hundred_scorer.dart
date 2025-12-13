@@ -25,14 +25,17 @@ class FiveHundredScorer {
   }) {
     if (kDebugMode) {
       debugPrint('\n[SCORER] Scoring hand');
-      debugPrint('  Contract: ${contract.tricks}${_suitLabel(contract.suit)} by ${contract.bidder.name}');
+      debugPrint(
+        '  Contract: ${contract.tricks}${_suitLabel(contract.suit)} by ${contract.bidder.name}',
+      );
       debugPrint('  Contractor tricks: $contractorTricks');
       debugPrint('  Opponent tricks: $opponentTricks');
     }
 
     // Validate trick counts
     if (contractorTricks + opponentTricks != 10) {
-      final error = 'Total tricks must equal 10 (got ${contractorTricks + opponentTricks})';
+      final error =
+          'Total tricks must equal 10 (got ${contractorTricks + opponentTricks})';
       if (kDebugMode) {
         debugPrint('  ⚠️  ERROR: $error');
       }
@@ -55,21 +58,27 @@ class FiveHundredScorer {
       // SLAM BONUS: If bid value < 250, raise to 250. Otherwise use bid value.
       contractorPoints = bidValue < 250 ? 250 : bidValue;
       if (kDebugMode) {
-        debugPrint('  SLAM! Contractor points: $contractorPoints (bid value was $bidValue)');
+        debugPrint(
+          '  SLAM! Contractor points: $contractorPoints (bid value was $bidValue)',
+        );
       }
     } else if (contractMade) {
       // Normal made contract: bid value
       contractorPoints = bidValue;
       if (kDebugMode) {
         final overtricks = contractorTricks - contract.tricks;
-        debugPrint('  Contract made with $overtricks overtrick(s). Contractor points: $contractorPoints');
+        debugPrint(
+          '  Contract made with $overtricks overtrick(s). Contractor points: $contractorPoints',
+        );
       }
     } else {
       // Failed contract: negative bid value
       contractorPoints = -bidValue;
       if (kDebugMode) {
         final undertricks = contract.tricks - contractorTricks;
-        debugPrint('  Contract failed by $undertricks trick(s). Contractor points: $contractorPoints');
+        debugPrint(
+          '  Contract failed by $undertricks trick(s). Contractor points: $contractorPoints',
+        );
       }
     }
 
@@ -77,8 +86,12 @@ class FiveHundredScorer {
     final opponentPoints = opponentTricks * 10;
 
     if (kDebugMode) {
-      debugPrint('  Opponent points: $opponentPoints ($opponentTricks tricks × 10)');
-      debugPrint('  Final: Contractor ${contractorPoints > 0 ? '+' : ''}$contractorPoints, Opponents +$opponentPoints');
+      debugPrint(
+        '  Opponent points: $opponentPoints ($opponentTricks tricks × 10)',
+      );
+      debugPrint(
+        '  Final: Contractor ${contractorPoints > 0 ? '+' : ''}$contractorPoints, Opponents +$opponentPoints',
+      );
     }
 
     return HandScore(
@@ -107,12 +120,16 @@ class FiveHundredScorer {
       // Both teams reached 500+ - highest score wins
       if (teamNSScore > teamEWScore) {
         if (kDebugMode) {
-          debugPrint('  GAME OVER: Both teams reached 500+, North-South wins ($teamNSScore > $teamEWScore)');
+          debugPrint(
+            '  GAME OVER: Both teams reached 500+, North-South wins ($teamNSScore > $teamEWScore)',
+          );
         }
         return GameOverStatus.teamNSWins;
       } else {
         if (kDebugMode) {
-          debugPrint('  GAME OVER: Both teams reached 500+, East-West wins ($teamEWScore > $teamNSScore)');
+          debugPrint(
+            '  GAME OVER: Both teams reached 500+, East-West wins ($teamEWScore > $teamNSScore)',
+          );
         }
         return GameOverStatus.teamEWWins;
       }
@@ -135,14 +152,18 @@ class FiveHundredScorer {
     // Check for losses (-500 or below)
     if (teamNSScore <= -500) {
       if (kDebugMode) {
-        debugPrint('  GAME OVER: North-South drops to -500 or below ($teamNSScore)');
+        debugPrint(
+          '  GAME OVER: North-South drops to -500 or below ($teamNSScore)',
+        );
       }
       return GameOverStatus.teamNSLoses;
     }
 
     if (teamEWScore <= -500) {
       if (kDebugMode) {
-        debugPrint('  GAME OVER: East-West drops to -500 or below ($teamEWScore)');
+        debugPrint(
+          '  GAME OVER: East-West drops to -500 or below ($teamEWScore)',
+        );
       }
       return GameOverStatus.teamEWLoses;
     }
@@ -176,7 +197,11 @@ class FiveHundredScorer {
   }
 
   /// Get game over message
-  static String getGameOverMessage(GameOverStatus status, int scoreNS, int scoreEW) {
+  static String getGameOverMessage(
+    GameOverStatus status,
+    int scoreNS,
+    int scoreEW,
+  ) {
     switch (status) {
       case GameOverStatus.teamNSWins:
         return 'Team North-South wins! Final score: $scoreNS to $scoreEW';

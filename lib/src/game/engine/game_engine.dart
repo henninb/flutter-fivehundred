@@ -295,11 +295,16 @@ class GameEngine extends ChangeNotifier {
     final deck = createDeck();
     for (final testCard in testHand) {
       final existsInDeck = deck.any(
-        (deckCard) => deckCard.rank == testCard.rank && deckCard.suit == testCard.suit,
+        (deckCard) =>
+            deckCard.rank == testCard.rank && deckCard.suit == testCard.suit,
       );
       if (!existsInDeck) {
-        _debugLog('⚠️ ERROR: Test hand contains invalid card: ${testCard.label}');
-        _debugLog('⚠️ Test hand rejected - all cards must be from standard deck');
+        _debugLog(
+          '⚠️ ERROR: Test hand contains invalid card: ${testCard.label}',
+        );
+        _debugLog(
+          '⚠️ Test hand rejected - all cards must be from standard deck',
+        );
         return;
       }
     }
@@ -328,7 +333,9 @@ class GameEngine extends ChangeNotifier {
       }
     }
 
-    _debugLog('Available cards after removing test hand: ${availableCards.length} (should be 35)');
+    _debugLog(
+      'Available cards after removing test hand: ${availableCards.length} (should be 35)',
+    );
 
     // Shuffle available cards
     availableCards.shuffle(Random());
@@ -415,11 +422,17 @@ class GameEngine extends ChangeNotifier {
       // Log bid validation failure
       _debugLog('\n[BID VALIDATION FAILED]');
       _debugLog('Player: ${_state.getName(Position.south)}');
-      _debugLog('Attempted bid: ${bid != null ? '${bid.tricks}${bid.suit.name}' : 'PASS'}');
+      _debugLog(
+        'Attempted bid: ${bid != null ? '${bid.tricks}${bid.suit.name}' : 'PASS'}',
+      );
       _debugLog('Is Inkle: $isInkle');
-      _debugLog('Current high bid: ${_state.currentHighBid != null ? '${_state.currentHighBid!.tricks}${_state.currentHighBid!.suit.name}' : 'none'}');
+      _debugLog(
+        'Current high bid: ${_state.currentHighBid != null ? '${_state.currentHighBid!.tricks}${_state.currentHighBid!.suit.name}' : 'none'}',
+      );
       _debugLog('Reason: ${validation.errorMessage ?? 'Invalid bid'}');
-      _debugLog('Bid history: ${_state.bidHistory.map((e) => e.toString()).join(', ')}');
+      _debugLog(
+        'Bid history: ${_state.bidHistory.map((e) => e.toString()).join(', ')}',
+      );
 
       _updateState(
         _state.copyWith(
@@ -1014,8 +1027,7 @@ class GameEngine extends ChangeNotifier {
     }
 
     // Validate game state before starting claim
-    final totalCardsRemaining =
-        _state.playerHand.length +
+    final totalCardsRemaining = _state.playerHand.length +
         _state.partnerHand.length +
         _state.opponentEastHand.length +
         _state.opponentWestHand.length;
@@ -1066,15 +1078,15 @@ class GameEngine extends ChangeNotifier {
       }
 
       // Safety check: ensure we still have cards to play
-      final totalCardsRemaining =
-          _state.playerHand.length +
+      final totalCardsRemaining = _state.playerHand.length +
           _state.partnerHand.length +
           _state.opponentEastHand.length +
           _state.opponentWestHand.length;
 
       if (totalCardsRemaining == 0 && _state.completedTricks.length < 10) {
         _debugLog(
-            '⚠️ ERROR: No cards remaining but only ${_state.completedTricks.length} tricks completed',);
+          '⚠️ ERROR: No cards remaining but only ${_state.completedTricks.length} tricks completed',
+        );
         _updateState(
           _state.copyWith(
             gameStatus: 'Error during claim - cards exhausted early',
@@ -1103,15 +1115,19 @@ class GameEngine extends ChangeNotifier {
           // Get winner of last trick
           final trumpRules = TrumpRules(trumpSuit: _state.trumpSuit);
           final trickEngine = TrickEngine(trumpRules: trumpRules);
-          final winner = trickEngine.getCurrentWinner(_state.completedTricks.last);
+          final winner =
+              trickEngine.getCurrentWinner(_state.completedTricks.last);
 
           // Safety check: winner should never be null for a completed trick
           if (winner == null) {
-            _debugLog('⚠️ ERROR: Cannot determine winner of last trick during claim');
+            _debugLog(
+              '⚠️ ERROR: Cannot determine winner of last trick during claim',
+            );
             _debugLog('⚠️ Re-enabling manual play for recovery');
             _updateState(
               _state.copyWith(
-                gameStatus: 'Error: Cannot determine trick winner - continue manually',
+                gameStatus:
+                    'Error: Cannot determine trick winner - continue manually',
               ),
             );
             _updateClaimStatus();
@@ -1122,7 +1138,8 @@ class GameEngine extends ChangeNotifier {
         }
 
         _debugLog(
-            'Starting trick ${_state.completedTricks.length + 1}, ${_state.getName(leader)} leads',);
+          'Starting trick ${_state.completedTricks.length + 1}, ${_state.getName(leader)} leads',
+        );
 
         _updateState(
           _state.copyWith(
@@ -1191,7 +1208,8 @@ class GameEngine extends ChangeNotifier {
       // Safety: check hand is not empty
       if (hand.isEmpty) {
         _debugLog(
-            '⚠️ ERROR: ${_state.getName(position)} has no cards but trick not complete',);
+          '⚠️ ERROR: ${_state.getName(position)} has no cards but trick not complete',
+        );
         _updateState(
           _state.copyWith(
             gameStatus: 'Error: Player has no cards during claim',
@@ -1214,7 +1232,8 @@ class GameEngine extends ChangeNotifier {
       );
 
       _debugLog(
-          '  ${_state.getName(position)} plays ${card.label} (${hand.length} cards in hand)',);
+        '  ${_state.getName(position)} plays ${card.label} (${hand.length} cards in hand)',
+      );
 
       // Play the card
       final result = trickEngine.playCard(
@@ -1242,7 +1261,8 @@ class GameEngine extends ChangeNotifier {
       // Safety: verify card was actually in the hand
       if (!wasRemoved) {
         _debugLog(
-            '⚠️ ERROR: Card ${card.label} not found in ${_state.getName(position)} hand',);
+          '⚠️ ERROR: Card ${card.label} not found in ${_state.getName(position)} hand',
+        );
         _updateState(
           _state.copyWith(
             gameStatus: 'Error: Card not found in hand',
@@ -1293,7 +1313,9 @@ class GameEngine extends ChangeNotifier {
         final winner = result.winner!;
         final newCompleted = [..._state.completedTricks, result.trick];
 
-        _debugLog('  Trick ${newCompleted.length} won by ${_state.getName(winner)}');
+        _debugLog(
+          '  Trick ${newCompleted.length} won by ${_state.getName(winner)}',
+        );
         _debugLog(
             '  Hand sizes after trick: South=${_state.playerHand.length}, North=${_state.partnerHand.length}, '
             'East=${_state.opponentEastHand.length}, West=${_state.opponentWestHand.length}');
@@ -1344,7 +1366,8 @@ class GameEngine extends ChangeNotifier {
         final winnerHand = _state.getHand(winner);
         if (winnerHand.isEmpty) {
           _debugLog(
-              '⚠️ ERROR: Trick winner ${_state.getName(winner)} has no cards to lead next trick',);
+            '⚠️ ERROR: Trick winner ${_state.getName(winner)} has no cards to lead next trick',
+          );
           _updateState(
             _state.copyWith(
               gameStatus:

@@ -23,7 +23,8 @@ class GameState {
     // Game setup
     this.gameStarted = false,
     this.currentPhase = GamePhase.setup,
-    this.dealer = Position.west, // Default dealer (player is South, dealer rotates)
+    this.dealer =
+        Position.west, // Default dealer (player is South, dealer rotates)
     this.handNumber = 0,
     // Cut for deal
     this.cutDeck = const [],
@@ -84,7 +85,8 @@ class GameState {
   // Cut for deal
   final List<PlayingCard> cutDeck; // Spread deck shown to player for cutting
   final Map<Position, PlayingCard> cutCards; // Cards drawn during cut for deal
-  final bool playerHasSelectedCutCard; // Whether player has tapped a card from spread deck
+  final bool
+      playerHasSelectedCutCard; // Whether player has tapped a card from spread deck
 
   // Scores
   final int teamNorthSouthScore;
@@ -123,7 +125,8 @@ class GameState {
   final int tricksWonEW; // East-West team
 
   // UI state
-  final Set<int> selectedCardIndices; // For kitty discard - indices of selected cards
+  final Set<int>
+      selectedCardIndices; // For kitty discard - indices of selected cards
   final String gameStatus;
   final bool showGameOverDialog;
   final GameOverData? gameOverData;
@@ -134,7 +137,8 @@ class GameState {
   final bool showSuitNominationDialog; // Show suit nomination dialog
   final int? pendingCardIndex; // Card index pending suit nomination
   final Suit? nominatedSuit; // Nominated suit for joker in no-trump
-  final bool canPlayerClaimRemainingTricks; // True if player can guarantee winning all remaining tricks
+  final bool
+      canPlayerClaimRemainingTricks; // True if player can guarantee winning all remaining tricks
 
   /// Get hand for a specific position
   List<PlayingCard> getHand(Position position) {
@@ -253,7 +257,8 @@ class GameState {
       handNumber: handNumber ?? this.handNumber,
       cutDeck: cutDeck ?? this.cutDeck,
       cutCards: cutCards ?? this.cutCards,
-      playerHasSelectedCutCard: playerHasSelectedCutCard ?? this.playerHasSelectedCutCard,
+      playerHasSelectedCutCard:
+          playerHasSelectedCutCard ?? this.playerHasSelectedCutCard,
       teamNorthSouthScore: teamNorthSouthScore ?? this.teamNorthSouthScore,
       teamEastWestScore: teamEastWestScore ?? this.teamEastWestScore,
       gamesWon: gamesWon ?? this.gamesWon,
@@ -269,29 +274,46 @@ class GameState {
       kitty: kitty ?? this.kitty,
       isBiddingPhase: isBiddingPhase ?? this.isBiddingPhase,
       bidHistory: bidHistory ?? this.bidHistory,
-      currentBidder: clearCurrentBidder ? null : (currentBidder ?? this.currentBidder),
-      currentHighBid: clearCurrentHighBid ? null : (currentHighBid ?? this.currentHighBid),
+      currentBidder:
+          clearCurrentBidder ? null : (currentBidder ?? this.currentBidder),
+      currentHighBid:
+          clearCurrentHighBid ? null : (currentHighBid ?? this.currentHighBid),
       winningBid: clearWinningBid ? null : (winningBid ?? this.winningBid),
       contractor: clearContractor ? null : (contractor ?? this.contractor),
       isPlayPhase: isPlayPhase ?? this.isPlayPhase,
       trumpSuit: clearTrumpSuit ? null : (trumpSuit ?? this.trumpSuit),
-      currentTrick: clearCurrentTrick ? null : (currentTrick ?? this.currentTrick),
+      currentTrick:
+          clearCurrentTrick ? null : (currentTrick ?? this.currentTrick),
       completedTricks: completedTricks ?? this.completedTricks,
-      currentPlayer: clearCurrentPlayer ? null : (currentPlayer ?? this.currentPlayer),
+      currentPlayer:
+          clearCurrentPlayer ? null : (currentPlayer ?? this.currentPlayer),
       tricksWonNS: tricksWonNS ?? this.tricksWonNS,
       tricksWonEW: tricksWonEW ?? this.tricksWonEW,
-      selectedCardIndices: clearSelectedCardIndices ? {} : (selectedCardIndices ?? this.selectedCardIndices),
+      selectedCardIndices: clearSelectedCardIndices
+          ? {}
+          : (selectedCardIndices ?? this.selectedCardIndices),
       gameStatus: gameStatus ?? this.gameStatus,
       showGameOverDialog: showGameOverDialog ?? this.showGameOverDialog,
-      gameOverData: clearGameOverData ? null : (gameOverData ?? this.gameOverData),
-      scoreAnimation: clearScoreAnimation ? null : (scoreAnimation ?? this.scoreAnimation),
+      gameOverData:
+          clearGameOverData ? null : (gameOverData ?? this.gameOverData),
+      scoreAnimation:
+          clearScoreAnimation ? null : (scoreAnimation ?? this.scoreAnimation),
       showBiddingDialog: showBiddingDialog ?? this.showBiddingDialog,
-      pendingBidEntry: clearPendingBidEntry ? null : (pendingBidEntry ?? this.pendingBidEntry),
-      aiThinkingPosition: clearAiThinkingPosition ? null : (aiThinkingPosition ?? this.aiThinkingPosition),
-      showSuitNominationDialog: showSuitNominationDialog ?? this.showSuitNominationDialog,
-      pendingCardIndex: clearPendingCardIndex ? null : (pendingCardIndex ?? this.pendingCardIndex),
-      nominatedSuit: clearNominatedSuit ? null : (nominatedSuit ?? this.nominatedSuit),
-      canPlayerClaimRemainingTricks: canPlayerClaimRemainingTricks ?? this.canPlayerClaimRemainingTricks,
+      pendingBidEntry: clearPendingBidEntry
+          ? null
+          : (pendingBidEntry ?? this.pendingBidEntry),
+      aiThinkingPosition: clearAiThinkingPosition
+          ? null
+          : (aiThinkingPosition ?? this.aiThinkingPosition),
+      showSuitNominationDialog:
+          showSuitNominationDialog ?? this.showSuitNominationDialog,
+      pendingCardIndex: clearPendingCardIndex
+          ? null
+          : (pendingCardIndex ?? this.pendingCardIndex),
+      nominatedSuit:
+          clearNominatedSuit ? null : (nominatedSuit ?? this.nominatedSuit),
+      canPlayerClaimRemainingTricks:
+          canPlayerClaimRemainingTricks ?? this.canPlayerClaimRemainingTricks,
     );
   }
 }

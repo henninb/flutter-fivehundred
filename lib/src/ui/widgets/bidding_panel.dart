@@ -66,7 +66,8 @@ class _BiddingPanelState extends State<BiddingPanel> {
       margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+        border:
+            Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
         borderRadius: BorderRadius.circular(8),
       ),
       child: SingleChildScrollView(
@@ -81,15 +82,15 @@ class _BiddingPanelState extends State<BiddingPanel> {
                 Text(
                   'Your Bid',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 if (widget.currentHighBid != null)
                   Text(
                     'High: ${widget.currentHighBid!.tricks}${_suitLabel(widget.currentHighBid!.suit)} (${widget.currentHighBid!.value})',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontSize: 11,
-                    ),
+                          fontSize: 11,
+                        ),
                   ),
               ],
             ),
@@ -99,10 +100,16 @@ class _BiddingPanelState extends State<BiddingPanel> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primaryContainer
+                      .withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.2),
                   ),
                 ),
                 child: Column(
@@ -113,11 +120,19 @@ class _BiddingPanelState extends State<BiddingPanel> {
                       runSpacing: 4,
                       children: _getPreviousBids().map((entry) {
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: entry.action == BidAction.pass
-                                ? Theme.of(context).colorScheme.surfaceContainerHighest
-                                : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.6),
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer
+                                    .withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(3),
                             border: Border.all(
                               color: entry.action == BidAction.pass
@@ -130,10 +145,16 @@ class _BiddingPanelState extends State<BiddingPanel> {
                             _formatBidEntry(entry),
                             style: TextStyle(
                               fontSize: 10,
-                              fontWeight: entry.action != BidAction.pass ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: entry.action != BidAction.pass
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                               color: entry.action == BidAction.pass
-                                  ? Theme.of(context).colorScheme.onSurfaceVariant
-                                  : Theme.of(context).colorScheme.onPrimaryContainer,
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onPrimaryContainer,
                             ),
                           ),
                         );
@@ -185,12 +206,16 @@ class _BiddingPanelState extends State<BiddingPanel> {
       border: TableBorder.all(color: Theme.of(context).dividerColor),
       defaultColumnWidth: const FlexColumnWidth(),
       columnWidths: const {
-        0: FlexColumnWidth(0.5), // First column (trick numbers) is half the width
+        0: FlexColumnWidth(
+          0.5,
+        ), // First column (trick numbers) is half the width
       },
       children: [
         // Header row
         TableRow(
-          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
           children: [
             _buildHeaderCell(''),
             _buildHeaderCell('♠'),
@@ -201,7 +226,8 @@ class _BiddingPanelState extends State<BiddingPanel> {
           ],
         ),
         // Bid rows (6-10)
-        for (int tricks = 6; tricks <= 10; tricks++) _buildBidRow(context, tricks),
+        for (int tricks = 6; tricks <= 10; tricks++)
+          _buildBidRow(context, tricks),
       ],
     );
   }
@@ -273,7 +299,10 @@ class _BiddingPanelState extends State<BiddingPanel> {
                   ? Theme.of(context).colorScheme.primaryContainer
                   : null,
           border: isSelected
-              ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
+              ? Border.all(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                )
               : null,
         ),
         child: Center(
@@ -281,8 +310,8 @@ class _BiddingPanelState extends State<BiddingPanel> {
             value.toString(),
             style: TextStyle(
               color: !isValid
-                ? Theme.of(context).colorScheme.onSurfaceVariant
-                : Theme.of(context).colorScheme.onSurface,
+                  ? Theme.of(context).colorScheme.onSurfaceVariant
+                  : Theme.of(context).colorScheme.onSurface,
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),

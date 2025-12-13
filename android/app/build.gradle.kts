@@ -39,26 +39,33 @@ android {
         versionName = flutter.versionName
     }
 
+    // Check if signing credentials are available
+    val hasSigningCredentials = System.getenv("FIVEHUNDRED_KEYSTORE_PASSWORD") != null &&
+                                System.getenv("FIVEHUNDRED_KEY_PASSWORD") != null
+
     signingConfigs {
-        create("release") {
-            // Always use the keystore from home directory
-            storeFile = file("${System.getProperty("user.home")}/.android/keystores/fivehundred-release-key.jks")
+        if (hasSigningCredentials) {
+            create("release") {
+                // Always use the keystore from home directory
+                storeFile = file("${System.getProperty("user.home")}/.android/keystores/fivehundred-release-key.jks")
 
-            // Read passwords from environment variables (required)
-            storePassword = System.getenv("FIVEHUNDRED_KEYSTORE_PASSWORD")
-                ?: throw GradleException("FIVEHUNDRED_KEYSTORE_PASSWORD environment variable not set")
-            keyPassword = System.getenv("FIVEHUNDRED_KEY_PASSWORD")
-                ?: throw GradleException("FIVEHUNDRED_KEY_PASSWORD environment variable not set")
+                // Read passwords from environment variables
+                storePassword = System.getenv("FIVEHUNDRED_KEYSTORE_PASSWORD")
+                keyPassword = System.getenv("FIVEHUNDRED_KEY_PASSWORD")
 
-            // Key alias from properties file or default
-            keyAlias = keystoreProperties.getProperty("keyAlias")?.takeIf { it.isNotEmpty() }
-                ?: "fivehundred-release"
+                // Key alias from properties file or default
+                keyAlias = keystoreProperties.getProperty("keyAlias")?.takeIf { it.isNotEmpty() }
+                    ?: "fivehundred-release"
+            }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // Only use release signing if credentials are available
+            if (hasSigningCredentials) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             // Enable ProGuard/R8 for release builds
             isMinifyEnabled = true
             isShrinkResources = true
