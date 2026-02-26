@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../game/models/card.dart';
 import '../../game/engine/game_state.dart';
+import 'playing_card_widget.dart';
 
 /// Displays the player's hand of cards with tap interaction support.
 ///
@@ -122,22 +123,8 @@ class _HandDisplayState extends State<HandDisplay> {
   }
 
   Widget _buildCard(BuildContext context, PlayingCard card, int index) {
-    final bool isKittyExchange = widget.phase == GamePhase.kittyExchange;
     final bool isSelected = widget.selectedIndices.contains(index);
     final bool isPeeking = _peekingCardIndex == index;
-    final bool isJoker = card.label == 'JOKER';
-
-    // Determine card color
-    Color cardColor;
-    Color textColor;
-
-    if (isKittyExchange && isSelected) {
-      cardColor = Theme.of(context).colorScheme.errorContainer;
-      textColor = Theme.of(context).colorScheme.onErrorContainer;
-    } else {
-      cardColor = Colors.white;
-      textColor = _getCardColor(card.label);
-    }
 
     // Calculate vertical offset - selected cards and peeking cards lift up
     double yOffset = 0;
@@ -150,42 +137,12 @@ class _HandDisplayState extends State<HandDisplay> {
     final cardWidget = AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       transform: yOffset != 0 ? Matrix4.translationValues(0, yOffset, 0) : null,
-      child: Card(
-        color: cardColor,
-        elevation: isPeeking ? 16 : (isSelected ? 12 : 3),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: isSelected
-              ? BorderSide(
-                  color: Theme.of(context).colorScheme.error,
-                  width: 2,
-                )
-              : (isPeeking
-                  ? BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 2,
-                    )
-                  : BorderSide.none),
-        ),
-        child: Container(
-          width: 60,
-          height: 84,
-          padding: const EdgeInsets.all(8),
-          child: Center(
-            child: Text(
-              card.label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: isJoker || isSelected || isPeeking
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-                letterSpacing: isJoker ? 1.5 : 0,
-                color: textColor,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
+      child: PlayingCardWidget(
+        card: card,
+        width: 60,
+        isSelected: isSelected || isPeeking,
+        isPlayable: widget.enabled,
+        onTap: widget.enabled ? () => widget.onCardTap(index) : null,
       ),
     );
 
@@ -211,19 +168,7 @@ class _HandDisplayState extends State<HandDisplay> {
       );
     }
 
-    // Otherwise, use InkWell for normal tap behavior
-    return InkWell(
-      onTap: widget.enabled ? () => widget.onCardTap(index) : null,
-      borderRadius: BorderRadius.circular(8),
-      child: cardWidget,
-    );
-  }
-
-  Color _getCardColor(String label) {
-    // Red for hearts and diamonds, black for clubs and spades
-    if (label.contains('♥') || label.contains('♦')) {
-      return Colors.red.shade800;
-    }
-    return Colors.black;
+    // Otherwise, the PlayingCardWidget handles tap internally
+    return cardWidget;
   }
 }

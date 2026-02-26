@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../game/models/card.dart';
+import '../playing_card_widget.dart';
 
 /// Bottom sheet for kitty exchange with card selection UI.
 ///
@@ -168,85 +169,69 @@ class _KittyExchangeBottomSheetState extends State<KittyExchangeBottomSheet> {
     bool isFromKitty,
     bool isSelected,
   ) {
-    return GestureDetector(
-      onTap: () => _toggleSelection(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isFromKitty
-                ? Colors.amber.shade700
-                : isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.outline.withAlpha(128),
-            width: isFromKitty ? 3 : (isSelected ? 2 : 1),
-          ),
-          color: isSelected
-              ? Theme.of(context).colorScheme.primaryContainer
-              : Colors.white,
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withAlpha(77),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
-        ),
-        child: Stack(
-          children: [
-            // Card content
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    card.label,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: isSelected || isFromKitty
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      color: _getCardColor(card.label),
-                      letterSpacing: card.isJoker ? 1.5 : 0,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  if (isFromKitty) ...[
-                    const SizedBox(height: 4),
-                    Icon(
-                      Icons.star,
-                      size: 16,
-                      color: Colors.amber.shade700,
-                    ),
-                  ],
-                ],
-              ),
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use the available width from grid constraints
+        final cardWidth = constraints.maxWidth;
 
-            // Selection checkmark
-            if (isSelected)
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check,
-                    size: 14,
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
+        return GestureDetector(
+          onTap: () => _toggleSelection(index),
+          child: Stack(
+            children: [
+              // Playing card with custom border overlay for kitty cards
+              Container(
+                decoration: isFromKitty
+                    ? BoxDecoration(
+                        borderRadius: BorderRadius.circular(cardWidth * 0.1),
+                        border: Border.all(
+                          color: Colors.amber.shade700,
+                          width: 3,
+                        ),
+                      )
+                    : null,
+                child: PlayingCardWidget(
+                  card: card,
+                  width: cardWidth,
+                  isSelected: isSelected,
+                  onTap: () => _toggleSelection(index),
                 ),
               ),
-          ],
-        ),
-      ),
+
+              // Star icon for kitty cards
+              if (isFromKitty)
+                Positioned(
+                  bottom: cardWidth * 0.12,
+                  left: 0,
+                  right: 0,
+                  child: Icon(
+                    Icons.star,
+                    size: cardWidth * 0.25,
+                    color: Colors.amber.shade700,
+                  ),
+                ),
+
+              // Selection checkmark
+              if (isSelected)
+                Positioned(
+                  top: cardWidth * 0.08,
+                  right: cardWidth * 0.08,
+                  child: Container(
+                    padding: EdgeInsets.all(cardWidth * 0.04),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check,
+                      size: cardWidth * 0.2,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -258,13 +243,5 @@ class _KittyExchangeBottomSheetState extends State<KittyExchangeBottomSheet> {
         _selectedIndices.add(index);
       }
     });
-  }
-
-  Color _getCardColor(String label) {
-    // Red for hearts and diamonds, black for clubs and spades
-    if (label.contains('♥') || label.contains('♦')) {
-      return Colors.red.shade800;
-    }
-    return Colors.black;
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../game/engine/game_state.dart';
+import 'card_back_widget.dart';
 
 /// Setup screen shown during initial setup and cut for deal phases
 class SetupScreen extends StatelessWidget {
@@ -138,7 +139,7 @@ class _SpreadDeckDisplay extends StatelessWidget {
             left: index * finalSpacing,
             child: GestureDetector(
               onTap: onSelectCard != null ? () => onSelectCard!(index) : null,
-              child: _CardBackWidget(
+              child: CardBackWidget(
                 width: cardWidth,
                 height: cardHeight,
               ),
@@ -150,43 +151,3 @@ class _SpreadDeckDisplay extends StatelessWidget {
   }
 }
 
-/// Widget displaying card back
-class _CardBackWidget extends StatelessWidget {
-  final double width;
-  final double height;
-
-  const _CardBackWidget({
-    required this.width,
-    required this.height,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.tertiaryContainer,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.tertiary,
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          Icons.style,
-          color: Theme.of(context).colorScheme.tertiary,
-          size: 24,
-        ),
-      ),
-    );
-  }
-}
