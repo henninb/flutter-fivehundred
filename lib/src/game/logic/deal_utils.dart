@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/card.dart';
 import '../models/game_models.dart';
+import 'trump_rules.dart';
 
 /// Result of dealing cards for 500
 class DealResult {
@@ -136,4 +137,103 @@ List<Position> _getDealingOrder(Position dealer) {
 /// Get next dealer (rotates clockwise)
 Position getNextDealer(Position currentDealer) {
   return currentDealer.next;
+}
+
+/// Sorts a hand of cards by suit and rank for display.
+///
+/// If [trumpSuit] is null (before bidding):
+///   Order: Joker first, then Spades, Hearts, Diamonds, Clubs
+///   Within each suit: Ace (high) down to 4 (low)
+///
+/// If [trumpSuit] is set (after bidding):
+///   Trump cards first (including left bower), sorted by trump rank:
+///     Joker, Right bower, Left bower, A, K, Q, 10, 9, 8, 7, 6, 5, 4
+///   Then non-trump suits: Spades, Hearts, Diamonds, Clubs
+///   Within each non-trump suit: Ace (high) down to 4 (low)
+List<PlayingCard> sortHandBySuit(
+  List<PlayingCard> hand, {
+  Suit? trumpSuit,
+}) {
+  if (trumpSuit == null) {
+    return _sortByNaturalSuit(hand);
+  } else {
+    return _sortWithTrump(hand, trumpSuit);
+  }
+}
+
+/// Sort cards by natural suit (no trump consideration)
+List<PlayingCard> _sortByNaturalSuit(List<PlayingCard> hand) {
+  const suitOrder = [Suit.spades, Suit.hearts, Suit.diamonds, Suit.clubs];
+  const rankOrder = [
+    Rank.ace,
+    Rank.king,
+    Rank.queen,
+    Rank.jack,
+    Rank.ten,
+    Rank.nine,
+    Rank.eight,
+    Rank.seven,
+    Rank.six,
+    Rank.five,
+    Rank.four,
+  ];
+
+  final sorted = List<PlayingCard>.from(hand);
+  sorted.sort((a, b) {
+    // Joker always comes first
+    if (a.isJoker && !b.isJoker) return -1;
+    if (!a.isJoker && b.isJoker) return 1;
+    if (a.isJoker && b.isJoker) return 0;
+
+    final suitCompare =
+        suitOrder.indexOf(a.suit).compareTo(suitOrder.indexOf(b.suit));
+    if (suitCompare != 0) return suitCompare;
+
+    return rankOrder.indexOf(a.rank).compareTo(rankOrder.indexOf(b.rank));
+  });
+  return sorted;
+}
+
+/// Sort cards with trump consideration, using TrumpRules for correctness.
+List<PlayingCard> _sortWithTrump(List<PlayingCard> hand, Suit trumpSuit) {
+  const suitOrder = [Suit.spades, Suit.hearts, Suit.diamonds, Suit.clubs];
+  const rankOrder = [
+    Rank.ace,
+    Rank.king,
+    Rank.queen,
+    Rank.jack,
+    Rank.ten,
+    Rank.nine,
+    Rank.eight,
+    Rank.seven,
+    Rank.six,
+    Rank.five,
+    Rank.four,
+  ];
+
+  final trumpRules = TrumpRules(trumpSuit: trumpSuit);
+  final sorted = List<PlayingCard>.from(hand);
+
+  sorted.sort((a, b) {
+    final aTrump = trumpRules.isTrump(a);
+    final bTrump = trumpRules.isTrump(b);
+
+    // Trump cards come first
+    if (aTrump && !bTrump) return -1;
+    if (!aTrump && bTrump) return 1;
+
+    // Both trump: sort by trump rank, high to low
+    if (aTrump && bTrump) {
+      return trumpRules.compare(b, a);
+    }
+
+    // Both non-trump: sort by suit then rank
+    final suitCompare =
+        suitOrder.indexOf(a.suit).compareTo(suitOrder.indexOf(b.suit));
+    if (suitCompare != 0) return suitCompare;
+
+    return rankOrder.indexOf(a.rank).compareTo(rankOrder.indexOf(b.rank));
+  });
+
+  return sorted;
 }

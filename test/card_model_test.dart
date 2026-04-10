@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fivehundred/src/game/models/card.dart';
+import 'package:fivehundred/src/game/logic/deal_utils.dart';
 
 void main() {
   group('PlayingCard encoding and values', () {
@@ -12,20 +13,20 @@ void main() {
       expect(decoded, original);
     });
 
-    test('decode throws on invalid indices', () {
-      // Out of range indices should throw RangeError
+    test('decode throws FormatException for invalid input', () {
+      // Unknown rank/suit names throw FormatException
       expect(
-        () => PlayingCard.decode('99|99'),
-        throwsA(isA<RangeError>()),
+        () => PlayingCard.decode('badRank|spades'),
+        throwsA(isA<FormatException>()),
       );
 
-      // Invalid format should throw FormatException
+      // Invalid format (no pipe separator) throws FormatException
       expect(
         () => PlayingCard.decode('not-a-card'),
         throwsA(isA<FormatException>()),
       );
 
-      // Non-numeric values should throw FormatException
+      // Two invalid names throw FormatException
       expect(
         () => PlayingCard.decode('abc|def'),
         throwsA(isA<FormatException>()),

@@ -1,8 +1,28 @@
+import 'package:flutter/foundation.dart';
+
 import 'card.dart';
 import '../logic/avondale_table.dart';
 
 // Extends Suit enum to include no-trump for bidding
 enum BidSuit { spades, clubs, diamonds, hearts, noTrump }
+
+extension BidSuitX on BidSuit {
+  /// Short display label for the bid suit.
+  String get label {
+    switch (this) {
+      case BidSuit.spades:
+        return '♠';
+      case BidSuit.clubs:
+        return '♣';
+      case BidSuit.diamonds:
+        return '♦';
+      case BidSuit.hearts:
+        return '♥';
+      case BidSuit.noTrump:
+        return 'NT';
+    }
+  }
+}
 
 // Player positions around the table (South is human player)
 enum Position { north, south, east, west }
@@ -52,6 +72,7 @@ extension PositionExt on Position {
 }
 
 // A bid in the auction
+@immutable
 class Bid {
   const Bid({
     required this.tricks,
@@ -75,22 +96,7 @@ class Bid {
   }
 
   @override
-  String toString() => '$tricks${_suitLabel(suit)} by ${bidder.name}';
-
-  String _suitLabel(BidSuit suit) {
-    switch (suit) {
-      case BidSuit.spades:
-        return '♠';
-      case BidSuit.clubs:
-        return '♣';
-      case BidSuit.diamonds:
-        return '♦';
-      case BidSuit.hearts:
-        return '♥';
-      case BidSuit.noTrump:
-        return 'NT';
-    }
-  }
+  String toString() => '$tricks${suit.label} by ${bidder.name}';
 
   @override
   bool operator ==(Object other) {
@@ -106,6 +112,7 @@ class Bid {
 }
 
 // A card played by a player in a trick
+@immutable
 class CardPlay {
   const CardPlay({
     required this.card,
@@ -129,6 +136,7 @@ class CardPlay {
 }
 
 // A trick (4 cards played)
+@immutable
 class Trick {
   const Trick({
     required this.plays,
@@ -155,9 +163,7 @@ class Trick {
 
     // Left bower's effective suit is trump, not its printed suit
     if (firstCard.rank == Rank.jack && trumpSuit != null) {
-      // Check if this is the left bower
-      final oppositeColorSuit = _getOppositeColorSuit(firstCard.suit);
-      if (oppositeColorSuit == trumpSuit) {
+      if (firstCard.suit.sameColorSuit == trumpSuit) {
         return trumpSuit; // This is the left bower, it leads trump
       }
     }
@@ -165,23 +171,9 @@ class Trick {
     return firstCard.suit;
   }
 
-  // Helper: Get same-color suit for left bower check
-  Suit _getOppositeColorSuit(Suit suit) {
-    switch (suit) {
-      case Suit.hearts:
-        return Suit.diamonds;
-      case Suit.diamonds:
-        return Suit.hearts;
-      case Suit.spades:
-        return Suit.clubs;
-      case Suit.clubs:
-        return Suit.spades;
-    }
-  }
-
-  // Get winner of trick (must be complete)
-  // Note: Winner determination logic will be in TrickEngine
-  Position? get winner => null; // Implemented in TrickEngine
+  /// Winner determination is delegated to TrickEngine.
+  Position? get winner =>
+      throw UnsupportedError('Use TrickEngine to determine the trick winner');
 
   Trick copyWith({
     List<CardPlay>? plays,
@@ -221,6 +213,7 @@ class Trick {
 enum BidAction { pass, bid, inkle }
 
 // An entry in the bidding history
+@immutable
 class BidEntry {
   const BidEntry({
     required this.bidder,

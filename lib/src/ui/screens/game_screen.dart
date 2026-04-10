@@ -183,12 +183,17 @@ class _GameScreenState extends State<GameScreen> {
       _showBiddingSheet(context, state);
     }
 
-    // Show kitty exchange when contractor
+    // Show kitty exchange when contractor.
+    // Deferred one extra frame so the bidding sheet's Navigator.pop fires first —
+    // otherwise the pop removes the kitty sheet instead of the bidding sheet.
     if (state.currentPhase == GamePhase.kittyExchange &&
         state.contractor == Position.south &&
         !_kittyOverlayShown) {
       _kittyOverlayShown = true;
-      _showKittyExchange(context, state);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showKittyExchange(context, widget.engine.state);
+      });
     }
   }
 

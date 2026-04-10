@@ -73,7 +73,8 @@ class BiddingEngine {
     final currentHighBid = getHighestBid(currentBids);
     if (currentHighBid != null && !proposedBid.beats(currentHighBid)) {
       return BidValidation.invalid(
-        'Bid must beat current high bid of ${currentHighBid.tricks}${_suitLabel(currentHighBid.suit)}',
+        'Bid must beat current high bid of '
+        '${currentHighBid.tricks}${currentHighBid.suit.label}',
       );
     }
 
@@ -127,17 +128,17 @@ class BiddingEngine {
 
     if (kDebugMode) {
       debugPrint(
-        '  Highest bid: ${highestBid != null ? '${highestBid.tricks}${_suitLabel(highestBid.suit)} by ${highestBid.bidder.name}' : 'none'}',
+        '  Highest bid: ${highestBid != null ? '${highestBid.tricks}${highestBid.suit.label} by ${highestBid.bidder.name}' : 'none'}',
       );
       debugPrint(
-        '  Highest inkle: ${highestInkle != null ? '${highestInkle.tricks}${_suitLabel(highestInkle.suit)} by ${highestInkle.bidder.name}' : 'none'}',
+        '  Highest inkle: ${highestInkle != null ? '${highestInkle.tricks}${highestInkle.suit.label} by ${highestInkle.bidder.name}' : 'none'}',
       );
     }
 
     // If there's a valid bid (7+), that wins
     if (highestBid != null && highestBid.tricks >= 7) {
       final message =
-          '${highestBid.bidder.name} wins with ${highestBid.tricks}${_suitLabel(highestBid.suit)}';
+          '${highestBid.bidder.name} wins with ${highestBid.tricks}${highestBid.suit.label}';
       if (kDebugMode) {
         debugPrint('  Result: WON - $message');
       }
@@ -188,27 +189,11 @@ class BiddingEngine {
     return bids.length == 4;
   }
 
-  /// Get next bidder in order
+  /// Get next bidder in order, or null if bidding is complete
   Position? getNextBidder(List<BidEntry> bids) {
-    if (isComplete(bids)) return null;
-
     final biddingOrder = getBiddingOrder();
+    if (bids.length >= biddingOrder.length) return null;
     return biddingOrder[bids.length];
-  }
-
-  String _suitLabel(BidSuit suit) {
-    switch (suit) {
-      case BidSuit.spades:
-        return '♠';
-      case BidSuit.clubs:
-        return '♣';
-      case BidSuit.diamonds:
-        return '♦';
-      case BidSuit.hearts:
-        return '♥';
-      case BidSuit.noTrump:
-        return 'NT';
-    }
   }
 }
 

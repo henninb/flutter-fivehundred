@@ -32,7 +32,7 @@ class TrumpRules {
   bool isLeftBower(PlayingCard card) {
     if (trumpSuit == null) return false;
     if (card.rank != Rank.jack) return false;
-    return card.suit == _getOppositeColorSuit(trumpSuit!);
+    return card.suit == trumpSuit!.sameColorSuit;
   }
 
   /// Get the effective suit of a card (for following suit)
@@ -91,31 +91,22 @@ class TrumpRules {
     // Left bower (J of same color)
     if (isLeftBower(card)) return 98;
 
-    // Regular trump cards
-    switch (card.rank) {
-      case Rank.ace:
-        return 14;
-      case Rank.king:
-        return 13;
-      case Rank.queen:
-        return 12;
-      case Rank.ten:
-        return 11;
-      case Rank.nine:
-        return 10;
-      case Rank.eight:
-        return 9;
-      case Rank.seven:
-        return 8;
-      case Rank.six:
-        return 7;
-      case Rank.five:
-        return 6;
-      case Rank.four:
-        return 5;
-      default:
-        return 0; // Shouldn't happen
-    }
+    // Regular trump cards — exhaustive switch ensures no silent fallthrough
+    return switch (card.rank) {
+      Rank.ace => 14,
+      Rank.king => 13,
+      Rank.queen => 12,
+      // jack handled by bower checks above; assign standard rank if not a bower
+      Rank.jack => 11,
+      Rank.ten => 10,
+      Rank.nine => 9,
+      Rank.eight => 8,
+      Rank.seven => 7,
+      Rank.six => 6,
+      Rank.five => 5,
+      Rank.four => 4,
+      Rank.joker => 0, // handled above, but required for exhaustiveness
+    };
   }
 
   /// Compare two non-trump cards (assumed to be same suit)
@@ -126,49 +117,22 @@ class TrumpRules {
   }
 
   /// Get non-trump rank (higher number = higher card)
-  /// In non-trump suits: A, K, Q, (J), 10, 9, 8, 7, 6, 5, 4
+  /// In non-trump suits: A, K, Q, J, 10, 9, 8, 7, 6, 5, 4
   int _getNonTrumpRank(PlayingCard card) {
-    switch (card.rank) {
-      case Rank.ace:
-        return 14;
-      case Rank.king:
-        return 13;
-      case Rank.queen:
-        return 12;
-      case Rank.jack:
-        return 11;
-      case Rank.ten:
-        return 10;
-      case Rank.nine:
-        return 9;
-      case Rank.eight:
-        return 8;
-      case Rank.seven:
-        return 7;
-      case Rank.six:
-        return 6;
-      case Rank.five:
-        return 5;
-      case Rank.four:
-        return 4;
-      default:
-        return 0; // Shouldn't happen
-    }
-  }
-
-  /// Get the same-color suit (for left bower determination)
-  /// Hearts ↔ Diamonds (both red), Spades ↔ Clubs (both black)
-  Suit _getOppositeColorSuit(Suit suit) {
-    switch (suit) {
-      case Suit.hearts:
-        return Suit.diamonds;
-      case Suit.diamonds:
-        return Suit.hearts;
-      case Suit.spades:
-        return Suit.clubs;
-      case Suit.clubs:
-        return Suit.spades;
-    }
+    return switch (card.rank) {
+      Rank.ace => 14,
+      Rank.king => 13,
+      Rank.queen => 12,
+      Rank.jack => 11,
+      Rank.ten => 10,
+      Rank.nine => 9,
+      Rank.eight => 8,
+      Rank.seven => 7,
+      Rank.six => 6,
+      Rank.five => 5,
+      Rank.four => 4,
+      Rank.joker => 0, // required for exhaustiveness; joker handled elsewhere
+    };
   }
 
   /// Get all trump cards from a list of cards

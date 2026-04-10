@@ -79,7 +79,7 @@ class BiddingAI {
       );
       if (kDebugMode) {
         debugPrint(
-          '[AI BIDDING] ${position.name}: INKLE 6${_suitLabel(bestSuit)} - ${decision.reasoning}',
+          '[AI BIDDING] ${position.name}: INKLE 6${bestSuit.label} - ${decision.reasoning}',
         );
       }
       return decision;
@@ -103,7 +103,7 @@ class BiddingAI {
       if (minBeatingBid == null) {
         final decision = BidDecision.pass(
           reasoning:
-              'Cannot beat current bid of ${currentHighBid.tricks}${_suitLabel(currentHighBid.suit)}',
+              'Cannot beat current bid of ${currentHighBid.tricks}${currentHighBid.suit.label}',
         );
         if (kDebugMode) {
           debugPrint(
@@ -116,11 +116,11 @@ class BiddingAI {
       final decision = BidDecision.bid(
         bid: minBeatingBid,
         reasoning:
-            'Bidding ${minBeatingBid.tricks}${_suitLabel(minBeatingBid.suit)} (estimated ${evaluations[minBeatingBid.suit]!.estimatedTricks.toStringAsFixed(1)} tricks)',
+            'Bidding ${minBeatingBid.tricks}${minBeatingBid.suit.label} (estimated ${evaluations[minBeatingBid.suit]!.estimatedTricks.toStringAsFixed(1)} tricks)',
       );
       if (kDebugMode) {
         debugPrint(
-          '[AI BIDDING] ${position.name}: BID ${minBeatingBid.tricks}${_suitLabel(minBeatingBid.suit)} - ${decision.reasoning}',
+          '[AI BIDDING] ${position.name}: BID ${minBeatingBid.tricks}${minBeatingBid.suit.label} - ${decision.reasoning}',
         );
       }
       return decision;
@@ -130,11 +130,11 @@ class BiddingAI {
     final decision = BidDecision.bid(
       bid: ourBid,
       reasoning:
-          'Bidding $estimatedTricks$bestSuit (${bestEval.trumpCount} trumps)',
+          'Bidding $estimatedTricks${bestSuit.label} (${bestEval.trumpCount} trumps)',
     );
     if (kDebugMode) {
       debugPrint(
-        '[AI BIDDING] ${position.name}: BID $estimatedTricks${_suitLabel(bestSuit)} - ${decision.reasoning}',
+        '[AI BIDDING] ${position.name}: BID $estimatedTricks${bestSuit.label} - ${decision.reasoning}',
       );
     }
     return decision;
@@ -438,23 +438,10 @@ class BiddingAI {
     );
   }
 
-  static String _suitLabel(BidSuit suit) {
-    switch (suit) {
-      case BidSuit.spades:
-        return '♠';
-      case BidSuit.clubs:
-        return '♣';
-      case BidSuit.diamonds:
-        return '♦';
-      case BidSuit.hearts:
-        return '♥';
-      case BidSuit.noTrump:
-        return 'NT';
-    }
-  }
 }
 
 /// Result of hand evaluation for a suit
+@immutable
 class SuitEvaluation {
   const SuitEvaluation({
     required this.suit,
@@ -474,6 +461,7 @@ class SuitEvaluation {
 }
 
 /// AI's bidding decision
+@immutable
 class BidDecision {
   const BidDecision._({
     required this.action,

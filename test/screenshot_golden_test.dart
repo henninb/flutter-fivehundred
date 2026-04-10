@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fivehundred/src/game/engine/game_engine.dart';
 import 'package:fivehundred/src/game/engine/game_state.dart';
+import 'package:fivehundred/src/game/logic/deal_utils.dart';
 import 'package:fivehundred/src/game/logic/trick_engine.dart';
 import 'package:fivehundred/src/game/logic/trump_rules.dart';
 import 'package:fivehundred/src/game/models/card.dart';
@@ -13,7 +14,7 @@ import 'package:fivehundred/src/ui/screens/game_screen.dart';
 import 'package:fivehundred/src/ui/theme/theme_definitions.dart';
 
 class PreviewGameEngine extends GameEngine {
-  PreviewGameEngine(this.previewState) : super(persistence: null);
+  PreviewGameEngine(this.previewState) : super();
 
   GameState previewState;
 
@@ -120,7 +121,6 @@ void main() {
     final state = GameState(
       gameStarted: true,
       currentPhase: GamePhase.play,
-      isPlayPhase: true,
       dealer: Position.west,
       handNumber: 4,
       teamNorthSouthScore: 320,

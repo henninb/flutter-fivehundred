@@ -4,6 +4,9 @@ import '../models/card.dart';
 import '../models/game_models.dart';
 import '../logic/five_hundred_scorer.dart';
 
+/// Sentinel used by copyWith to distinguish "keep existing value" from "set to null".
+const _absent = Object();
+
 /// Game phases for 500
 enum GamePhase {
   setup, // Initial state
@@ -47,14 +50,12 @@ class GameState {
     this.opponentEastHand = const [],
     this.kitty = const [], // 5 cards
     // Bidding phase
-    this.isBiddingPhase = false,
     this.bidHistory = const [],
     this.currentBidder,
     this.currentHighBid,
     this.winningBid,
     this.contractor,
     // Play phase
-    this.isPlayPhase = false,
     this.trumpSuit, // null for no-trump
     this.currentTrick,
     this.completedTricks = const [],
@@ -108,7 +109,6 @@ class GameState {
   final List<PlayingCard> kitty;
 
   // Bidding phase
-  final bool isBiddingPhase;
   final List<BidEntry> bidHistory;
   final Position? currentBidder;
   final Bid? currentHighBid;
@@ -116,7 +116,6 @@ class GameState {
   final Position? contractor;
 
   // Play phase
-  final bool isPlayPhase;
   final Suit? trumpSuit;
   final Trick? currentTrick;
   final List<Trick> completedTricks;
@@ -139,6 +138,10 @@ class GameState {
   final Suit? nominatedSuit; // Nominated suit for joker in no-trump
   final bool
       canPlayerClaimRemainingTricks; // True if player can guarantee winning all remaining tricks
+
+  // Computed phase checks (derived from currentPhase — no manual sync needed)
+  bool get isBiddingPhase => currentPhase == GamePhase.bidding;
+  bool get isPlayPhase => currentPhase == GamePhase.play;
 
   /// Get hand for a specific position
   List<PlayingCard> getHand(Position position) {
@@ -188,6 +191,11 @@ class GameState {
     }
   }
 
+  /// Returns a copy of this state with specified fields replaced.
+  ///
+  /// For nullable fields, pass [null] explicitly to clear them (e.g.,
+  /// `copyWith(currentBidder: null)`). Omitting a nullable field keeps the
+  /// existing value.
   GameState copyWith({
     bool? gameStarted,
     GamePhase? currentPhase,
@@ -209,46 +217,29 @@ class GameState {
     List<PlayingCard>? opponentWestHand,
     List<PlayingCard>? opponentEastHand,
     List<PlayingCard>? kitty,
-    bool? isBiddingPhase,
     List<BidEntry>? bidHistory,
-    Position? currentBidder,
-    Bid? currentHighBid,
-    Bid? winningBid,
-    Position? contractor,
-    bool? isPlayPhase,
-    Suit? trumpSuit,
-    Trick? currentTrick,
+    Object? currentBidder = _absent,
+    Object? currentHighBid = _absent,
+    Object? winningBid = _absent,
+    Object? contractor = _absent,
+    Object? trumpSuit = _absent,
+    Object? currentTrick = _absent,
     List<Trick>? completedTricks,
-    Position? currentPlayer,
+    Object? currentPlayer = _absent,
     int? tricksWonNS,
     int? tricksWonEW,
     Set<int>? selectedCardIndices,
     String? gameStatus,
     bool? showGameOverDialog,
-    GameOverData? gameOverData,
-    ScoreAnimation? scoreAnimation,
+    Object? gameOverData = _absent,
+    Object? scoreAnimation = _absent,
     bool? showBiddingDialog,
-    BidEntry? pendingBidEntry,
-    Position? aiThinkingPosition,
+    Object? pendingBidEntry = _absent,
+    Object? aiThinkingPosition = _absent,
     bool? showSuitNominationDialog,
-    int? pendingCardIndex,
-    Suit? nominatedSuit,
+    Object? pendingCardIndex = _absent,
+    Object? nominatedSuit = _absent,
     bool? canPlayerClaimRemainingTricks,
-    // Special handling for nullable fields
-    bool clearCurrentBidder = false,
-    bool clearCurrentHighBid = false,
-    bool clearWinningBid = false,
-    bool clearContractor = false,
-    bool clearTrumpSuit = false,
-    bool clearCurrentTrick = false,
-    bool clearCurrentPlayer = false,
-    bool clearSelectedCardIndices = false,
-    bool clearGameOverData = false,
-    bool clearScoreAnimation = false,
-    bool clearPendingBidEntry = false,
-    bool clearAiThinkingPosition = false,
-    bool clearPendingCardIndex = false,
-    bool clearNominatedSuit = false,
   }) {
     return GameState(
       gameStarted: gameStarted ?? this.gameStarted,
@@ -272,46 +263,50 @@ class GameState {
       opponentWestHand: opponentWestHand ?? this.opponentWestHand,
       opponentEastHand: opponentEastHand ?? this.opponentEastHand,
       kitty: kitty ?? this.kitty,
-      isBiddingPhase: isBiddingPhase ?? this.isBiddingPhase,
       bidHistory: bidHistory ?? this.bidHistory,
-      currentBidder:
-          clearCurrentBidder ? null : (currentBidder ?? this.currentBidder),
-      currentHighBid:
-          clearCurrentHighBid ? null : (currentHighBid ?? this.currentHighBid),
-      winningBid: clearWinningBid ? null : (winningBid ?? this.winningBid),
-      contractor: clearContractor ? null : (contractor ?? this.contractor),
-      isPlayPhase: isPlayPhase ?? this.isPlayPhase,
-      trumpSuit: clearTrumpSuit ? null : (trumpSuit ?? this.trumpSuit),
-      currentTrick:
-          clearCurrentTrick ? null : (currentTrick ?? this.currentTrick),
+      currentBidder: currentBidder == _absent
+          ? this.currentBidder
+          : currentBidder as Position?,
+      currentHighBid: currentHighBid == _absent
+          ? this.currentHighBid
+          : currentHighBid as Bid?,
+      winningBid:
+          winningBid == _absent ? this.winningBid : winningBid as Bid?,
+      contractor:
+          contractor == _absent ? this.contractor : contractor as Position?,
+      trumpSuit: trumpSuit == _absent ? this.trumpSuit : trumpSuit as Suit?,
+      currentTrick: currentTrick == _absent
+          ? this.currentTrick
+          : currentTrick as Trick?,
       completedTricks: completedTricks ?? this.completedTricks,
-      currentPlayer:
-          clearCurrentPlayer ? null : (currentPlayer ?? this.currentPlayer),
+      currentPlayer: currentPlayer == _absent
+          ? this.currentPlayer
+          : currentPlayer as Position?,
       tricksWonNS: tricksWonNS ?? this.tricksWonNS,
       tricksWonEW: tricksWonEW ?? this.tricksWonEW,
-      selectedCardIndices: clearSelectedCardIndices
-          ? {}
-          : (selectedCardIndices ?? this.selectedCardIndices),
+      selectedCardIndices: selectedCardIndices ?? this.selectedCardIndices,
       gameStatus: gameStatus ?? this.gameStatus,
       showGameOverDialog: showGameOverDialog ?? this.showGameOverDialog,
-      gameOverData:
-          clearGameOverData ? null : (gameOverData ?? this.gameOverData),
-      scoreAnimation:
-          clearScoreAnimation ? null : (scoreAnimation ?? this.scoreAnimation),
+      gameOverData: gameOverData == _absent
+          ? this.gameOverData
+          : gameOverData as GameOverData?,
+      scoreAnimation: scoreAnimation == _absent
+          ? this.scoreAnimation
+          : scoreAnimation as ScoreAnimation?,
       showBiddingDialog: showBiddingDialog ?? this.showBiddingDialog,
-      pendingBidEntry: clearPendingBidEntry
-          ? null
-          : (pendingBidEntry ?? this.pendingBidEntry),
-      aiThinkingPosition: clearAiThinkingPosition
-          ? null
-          : (aiThinkingPosition ?? this.aiThinkingPosition),
+      pendingBidEntry: pendingBidEntry == _absent
+          ? this.pendingBidEntry
+          : pendingBidEntry as BidEntry?,
+      aiThinkingPosition: aiThinkingPosition == _absent
+          ? this.aiThinkingPosition
+          : aiThinkingPosition as Position?,
       showSuitNominationDialog:
           showSuitNominationDialog ?? this.showSuitNominationDialog,
-      pendingCardIndex: clearPendingCardIndex
-          ? null
-          : (pendingCardIndex ?? this.pendingCardIndex),
+      pendingCardIndex: pendingCardIndex == _absent
+          ? this.pendingCardIndex
+          : pendingCardIndex as int?,
       nominatedSuit:
-          clearNominatedSuit ? null : (nominatedSuit ?? this.nominatedSuit),
+          nominatedSuit == _absent ? this.nominatedSuit : nominatedSuit as Suit?,
       canPlayerClaimRemainingTricks:
           canPlayerClaimRemainingTricks ?? this.canPlayerClaimRemainingTricks,
     );

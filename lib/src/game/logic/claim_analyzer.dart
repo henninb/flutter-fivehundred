@@ -124,7 +124,7 @@ class ClaimAnalyzer {
         playerHand: hand,
       );
 
-      trick = result.trick;
+      trick = result.trick!;
       if (!trick.isComplete) {
         nextPlayer = nextPlayer.next;
       }
@@ -158,7 +158,7 @@ class ClaimAnalyzer {
         playerHand: hand,
       );
 
-      trick = result.trick;
+      trick = result.trick!;
 
       // Remove card from simulated hand
       hand.remove(card);

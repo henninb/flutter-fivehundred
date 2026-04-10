@@ -49,7 +49,6 @@ class PlayAI {
     if (currentTrick.isEmpty) {
       final card = _chooseLeadCard(
         legalCards: legalCards,
-        hand: hand,
         trumpRules: trumpRules,
       );
       if (kDebugMode) {
@@ -61,15 +60,16 @@ class PlayAI {
     }
 
     // Following
-    final currentWinner = _getCurrentWinner(currentTrick, trumpRules);
-    final partnerIsWinning = currentWinner == partner;
     final card = _chooseFollowCard(
       legalCards: legalCards,
       currentTrick: currentTrick,
       trumpRules: trumpRules,
       partner: partner,
+      trickEngine: trickEngine,
     );
     if (kDebugMode) {
+      final currentWinner = trickEngine.getCurrentWinner(currentTrick);
+      final partnerIsWinning = currentWinner == partner;
       debugPrint(
         '[AI PLAY] ${position.name}: ${card.label} (partner ${partnerIsWinning ? 'winning' : 'not winning'}, ${legalCards.length} options)',
       );
@@ -80,7 +80,6 @@ class PlayAI {
   /// Choose card to lead
   static PlayingCard _chooseLeadCard({
     required List<PlayingCard> legalCards,
-    required List<PlayingCard> hand,
     required TrumpRules trumpRules,
   }) {
     // If we have strong trumps, lead highest trump
@@ -123,10 +122,10 @@ class PlayAI {
     required Trick currentTrick,
     required TrumpRules trumpRules,
     required Position partner,
+    required TrickEngine trickEngine,
   }) {
-    // Determine who's currently winning
-    final currentWinner = _getCurrentWinner(currentTrick, trumpRules);
-    final partnerIsWinning = currentWinner == partner;
+    final currentWinnerPos = trickEngine.getCurrentWinner(currentTrick);
+    final partnerIsWinning = currentWinnerPos == partner;
 
     if (partnerIsWinning) {
       // Partner is winning - play lowest card (don't waste high cards)
@@ -134,7 +133,10 @@ class PlayAI {
     }
 
     // Opponent is winning - try to win with lowest winning card
-    final winningCard = _getWinningCard(currentTrick, trumpRules);
+    final winningCard = currentWinnerPos != null
+        ? currentTrick.plays.firstWhere((p) => p.player == currentWinnerPos).card
+        : currentTrick.plays.first.card;
+
     final cardsWeCanWinWith = legalCards.where((c) {
       return trumpRules.compare(c, winningCard) > 0;
     }).toList();
@@ -147,57 +149,5 @@ class PlayAI {
 
     // Can't win - play lowest card
     return trumpRules.getLowestCard(legalCards) ?? legalCards.first;
-  }
-
-  /// Get the card that's currently winning the trick
-  static PlayingCard _getWinningCard(Trick trick, TrumpRules trumpRules) {
-    if (trick.plays.isEmpty) {
-      throw StateError('Cannot get winning card from empty trick');
-    }
-
-    PlayingCard winningCard = trick.plays.first.card;
-
-    for (int i = 1; i < trick.plays.length; i++) {
-      final currentCard = trick.plays[i].card;
-
-      // Trump beats non-trump
-      if (trumpRules.isTrump(currentCard) && !trumpRules.isTrump(winningCard)) {
-        winningCard = currentCard;
-      } else if (trumpRules.isTrump(currentCard) &&
-          trumpRules.isTrump(winningCard)) {
-        // Both trump - higher wins
-        if (trumpRules.compare(currentCard, winningCard) > 0) {
-          winningCard = currentCard;
-        }
-      } else if (!trumpRules.isTrump(currentCard) &&
-          !trumpRules.isTrump(winningCard)) {
-        // Both non-trump - same suit comparison
-        if (trumpRules.getEffectiveSuit(currentCard) == trick.ledSuit) {
-          if (trumpRules.getEffectiveSuit(winningCard) != trick.ledSuit ||
-              trumpRules.compare(currentCard, winningCard) > 0) {
-            winningCard = currentCard;
-          }
-        }
-      }
-    }
-
-    return winningCard;
-  }
-
-  /// Get the position currently winning the trick
-  static Position _getCurrentWinner(Trick trick, TrumpRules trumpRules) {
-    if (trick.plays.isEmpty) {
-      return trick.leader; // No one has played yet
-    }
-
-    final winningCard = _getWinningCard(trick, trumpRules);
-
-    for (final play in trick.plays) {
-      if (play.card == winningCard) {
-        return play.player;
-      }
-    }
-
-    return trick.leader; // Fallback (shouldn't happen)
   }
 }

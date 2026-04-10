@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../game/models/card.dart';
+import '../../../game/logic/deal_utils.dart';
 import '../../../game/models/test_hands.dart';
 
 /// Dialog for selecting test hands during debugging/testing

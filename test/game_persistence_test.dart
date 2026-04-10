@@ -27,7 +27,7 @@ void main() {
       expect(defaults.doubleSkunksFor, 0);
       expect(defaults.doubleSkunksAgainst, 0);
 
-      persistence.saveStats(
+      await persistence.saveStats(
         gamesWon: 5,
         gamesLost: 2,
         skunksFor: 1,
@@ -46,11 +46,11 @@ void main() {
       expect(loaded.doubleSkunksAgainst, 0);
     });
 
-    test('cut cards round-trip through save and load', () {
+    test('cut cards round-trip through save and load', () async {
       const playerCard = PlayingCard(rank: Rank.queen, suit: Suit.spades);
       const opponentCard = PlayingCard(rank: Rank.five, suit: Suit.hearts);
 
-      persistence.saveCutCards(playerCard, opponentCard);
+      await persistence.saveCutCards(playerCard, opponentCard);
 
       final loaded = persistence.loadCutCards();
       expect(loaded, isNotNull);
@@ -67,8 +67,11 @@ void main() {
       expect(loaded, isNull);
     });
 
-    test('player names round-trip through save and load', () {
-      persistence.savePlayerNames(playerName: 'Alice', opponentName: 'Bot');
+    test('player names round-trip through save and load', () async {
+      await persistence.savePlayerNames(
+        playerName: 'Alice',
+        opponentName: 'Bot',
+      );
 
       final names = persistence.loadPlayerNames();
       expect(names, isNotNull);

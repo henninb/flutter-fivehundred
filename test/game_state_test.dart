@@ -79,20 +79,20 @@ void main() {
 
     test('clear flags null out optional values', () {
       final cleared = base.copyWith(
-        clearCurrentBidder: true,
-        clearCurrentHighBid: true,
-        clearWinningBid: true,
-        clearContractor: true,
-        clearTrumpSuit: true,
-        clearCurrentTrick: true,
-        clearCurrentPlayer: true,
-        clearSelectedCardIndices: true,
-        clearGameOverData: true,
-        clearScoreAnimation: true,
-        clearPendingBidEntry: true,
-        clearAiThinkingPosition: true,
-        clearPendingCardIndex: true,
-        clearNominatedSuit: true,
+        currentBidder: null,
+        currentHighBid: null,
+        winningBid: null,
+        contractor: null,
+        trumpSuit: null,
+        currentTrick: null,
+        currentPlayer: null,
+        selectedCardIndices: {},
+        gameOverData: null,
+        scoreAnimation: null,
+        pendingBidEntry: null,
+        aiThinkingPosition: null,
+        pendingCardIndex: null,
+        nominatedSuit: null,
       );
 
       expect(cleared.currentBidder, isNull);

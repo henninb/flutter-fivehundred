@@ -12,7 +12,6 @@ import '../logic/play_ai.dart';
 import '../logic/trump_rules.dart';
 import '../logic/five_hundred_scorer.dart';
 import '../logic/claim_analyzer.dart';
-import '../../services/game_persistence.dart';
 import 'game_state.dart';
 
 /// Game engine for 500
@@ -25,12 +24,8 @@ import 'game_state.dart';
 /// 5. Scoring
 /// 6. Repeat or Game Over
 class GameEngine extends ChangeNotifier {
-  GameEngine({GamePersistence? persistence})
-      : _persistence = persistence,
-        _state = const GameState();
+  GameEngine() : _state = const GameState();
 
-  // ignore: unused_field
-  final GamePersistence? _persistence;
   GameState _state;
 
   GameState get state => _state;
@@ -265,6 +260,9 @@ class GameEngine extends ChangeNotifier {
   ///
   /// Can only be called during the bidding phase before the player has bid.
   void applyTestHand(List<PlayingCard> testHand) {
+    // Test hands are a debug-only feature; no-op in release builds.
+    if (!kDebugMode) return;
+
     if (_state.currentPhase != GamePhase.bidding) {
       _debugLog('⚠️ Cannot apply test hand - not in bidding phase');
       return;
@@ -381,13 +379,12 @@ class GameEngine extends ChangeNotifier {
     _updateState(
       _state.copyWith(
         currentPhase: GamePhase.bidding,
-        isBiddingPhase: true,
         bidHistory: [],
         currentBidder: biddingOrder.first,
         gameStatus: 'Bidding: ${_state.getName(biddingOrder.first)}',
-        clearCurrentHighBid: true,
-        clearWinningBid: true,
-        clearContractor: true,
+        currentHighBid: null,
+        winningBid: null,
+        contractor: null,
       ),
     );
 
@@ -517,7 +514,7 @@ class GameEngine extends ChangeNotifier {
         currentHighBid: newHighBid,
         pendingBidEntry: entry,
         gameStatus: entry.toString(),
-        clearAiThinkingPosition: true,
+        aiThinkingPosition: null,
       ),
     );
   }
@@ -552,15 +549,18 @@ class GameEngine extends ChangeNotifier {
       case AuctionStatus.won:
         _updateState(
           _state.copyWith(
-            isBiddingPhase: false,
             winningBid: result.winningBid,
             contractor: result.winner,
             gameStatus: result.message,
-            clearCurrentBidder: true,
+            currentBidder: null,
           ),
         );
         // Start kitty exchange
-        Future.delayed(const Duration(milliseconds: 1000), _startKittyExchange);
+        _aiTimer?.cancel();
+        _aiTimer = Timer(
+          const Duration(milliseconds: 1000),
+          _startKittyExchange,
+        );
         break;
 
       case AuctionStatus.redeal:
@@ -571,10 +571,10 @@ class GameEngine extends ChangeNotifier {
           ),
         );
         // Redeal after delay, then restart bidding
-        Future.delayed(const Duration(milliseconds: 1500), () {
+        _aiTimer?.cancel();
+        _aiTimer = Timer(const Duration(milliseconds: 1500), () {
           dealCards();
-          // After dealing, restart bidding automatically
-          Future.delayed(const Duration(milliseconds: 500), _startBidding);
+          _aiTimer = Timer(const Duration(milliseconds: 500), _startBidding);
         });
         break;
 
@@ -628,7 +628,8 @@ class GameEngine extends ChangeNotifier {
       );
     } else {
       // AI picks up kitty and discards
-      Future.delayed(
+      _aiTimer?.cancel();
+      _aiTimer = Timer(
         const Duration(milliseconds: 1000),
         _executeAIKittyExchange,
       );
@@ -717,7 +718,7 @@ class GameEngine extends ChangeNotifier {
     _updateState(
       _state.copyWith(
         playerHand: newHand,
-        clearSelectedCardIndices: true,
+        selectedCardIndices: {},
         gameStatus: 'Discarded 5 cards',
       ),
     );
@@ -813,7 +814,6 @@ class GameEngine extends ChangeNotifier {
     _updateState(
       _state.copyWith(
         currentPhase: GamePhase.play,
-        isPlayPhase: true,
         trumpSuit: trumpSuit,
         playerHand: sortedPlayerHand,
         currentTrick: Trick(plays: [], leader: leader, trumpSuit: trumpSuit),
@@ -822,7 +822,7 @@ class GameEngine extends ChangeNotifier {
         tricksWonEW: 0,
         currentPlayer: leader,
         gameStatus: '${_state.getName(leader)} leads',
-        clearSelectedCardIndices: true,
+        selectedCardIndices: {},
       ),
     );
 
@@ -890,14 +890,14 @@ class GameEngine extends ChangeNotifier {
     _updateState(
       _state.copyWith(
         playerHand: newHand,
-        currentTrick: result.trick,
+        currentTrick: result.trick!,
         gameStatus: result.message,
-        clearSelectedCardIndices: true,
+        selectedCardIndices: {},
       ),
     );
 
     if (result.status == TrickStatus.complete) {
-      _handleTrickComplete(result.trick, result.winner!);
+      _handleTrickComplete(result.trick!, result.winner!);
     } else {
       // Advance to next player
       _advanceToNextPlayer();
@@ -914,7 +914,7 @@ class GameEngine extends ChangeNotifier {
       _state.copyWith(
         showSuitNominationDialog: false,
         nominatedSuit: nominatedSuit,
-        clearPendingCardIndex: true,
+        pendingCardIndex: null,
       ),
     );
 
@@ -953,14 +953,14 @@ class GameEngine extends ChangeNotifier {
     _updateState(
       _state.copyWith(
         playerHand: newHand,
-        currentTrick: result.trick,
+        currentTrick: result.trick!,
         gameStatus: result.message,
-        clearSelectedCardIndices: true,
+        selectedCardIndices: {},
       ),
     );
 
     if (result.status == TrickStatus.complete) {
-      _handleTrickComplete(result.trick, result.winner!);
+      _handleTrickComplete(result.trick!, result.winner!);
     } else {
       // Advance to next player
       _advanceToNextPlayer();
@@ -1289,7 +1289,7 @@ class GameEngine extends ChangeNotifier {
 
       _updateState(
         _state.copyWith(
-          currentTrick: result.trick,
+          currentTrick: result.trick!,
           gameStatus:
               'Auto-playing: ${_state.getName(position)} plays ${card.label}',
         ),
@@ -1311,7 +1311,7 @@ class GameEngine extends ChangeNotifier {
         }
 
         final winner = result.winner!;
-        final newCompleted = [..._state.completedTricks, result.trick];
+        final newCompleted = [..._state.completedTricks, result.trick!];
 
         _debugLog(
           '  Trick ${newCompleted.length} won by ${_state.getName(winner)}',
@@ -1386,7 +1386,7 @@ class GameEngine extends ChangeNotifier {
               trumpSuit: _state.trumpSuit,
             ),
             currentPlayer: winner,
-            clearNominatedSuit: true,
+            nominatedSuit: null,
           ),
         );
 
@@ -1475,14 +1475,14 @@ class GameEngine extends ChangeNotifier {
 
     _updateState(
       _state.copyWith(
-        currentTrick: result.trick,
+        currentTrick: result.trick!,
         gameStatus: result.message,
-        clearAiThinkingPosition: true,
+        aiThinkingPosition: null,
       ),
     );
 
     if (result.status == TrickStatus.complete) {
-      _handleTrickComplete(result.trick, result.winner!);
+      _handleTrickComplete(result.trick!, result.winner!);
     } else {
       _advanceToNextPlayer();
     }
@@ -1550,10 +1550,12 @@ class GameEngine extends ChangeNotifier {
       _verifyAllCardsUnique(newCompleted);
 
       // Last trick - give extra time to see the cards before scoring
-      Future.delayed(const Duration(milliseconds: 3000), _scoreHand);
+      _aiTimer?.cancel();
+      _aiTimer = Timer(const Duration(milliseconds: 3000), _scoreHand);
     } else {
       // Start next trick with winner leading
-      Future.delayed(const Duration(milliseconds: 2500), () {
+      _aiTimer?.cancel();
+      _aiTimer = Timer(const Duration(milliseconds: 2500), () {
         _startNextTrick(winner);
       });
     }
@@ -1621,8 +1623,8 @@ class GameEngine extends ChangeNotifier {
         ),
         currentPlayer: leader,
         gameStatus: '${_state.getName(leader)} leads',
-        clearSelectedCardIndices: true,
-        clearNominatedSuit: true, // Clear nominated suit for new trick
+        selectedCardIndices: {},
+        nominatedSuit: null, // Clear nominated suit for new trick
       ),
     );
 
@@ -1668,7 +1670,6 @@ class GameEngine extends ChangeNotifier {
     _updateState(
       _state.copyWith(
         currentPhase: GamePhase.scoring,
-        isPlayPhase: false,
         teamNorthSouthScore: newScoreNS,
         teamEastWestScore: newScoreEW,
         gameStatus: FiveHundredScorer.getHandResultDescription(
@@ -1691,9 +1692,10 @@ class GameEngine extends ChangeNotifier {
         ),
       );
 
-      Timer(const Duration(seconds: 2), () {
+      _aiTimer?.cancel();
+      _aiTimer = Timer(const Duration(seconds: 2), () {
         _updateState(
-          _state.copyWith(clearScoreAnimation: true),
+          _state.copyWith(scoreAnimation: null),
         );
       });
     }
@@ -1706,7 +1708,8 @@ class GameEngine extends ChangeNotifier {
 
     if (gameOverStatus != null) {
       // Delay before showing game over to let user see final trick and score
-      Future.delayed(const Duration(milliseconds: 3000), () {
+      _aiTimer?.cancel();
+      _aiTimer = Timer(const Duration(milliseconds: 3000), () {
         _handleGameOver(gameOverStatus, newScoreNS, newScoreEW);
       });
     }
@@ -1731,14 +1734,14 @@ class GameEngine extends ChangeNotifier {
         tricksWonNS: 0,
         tricksWonEW: 0,
         gameStatus: 'Tap Deal for next hand',
-        clearCurrentBidder: true,
-        clearCurrentHighBid: true,
-        clearWinningBid: true,
-        clearContractor: true,
-        clearTrumpSuit: true,
-        clearCurrentTrick: true,
-        clearCurrentPlayer: true,
-        clearPendingBidEntry: true,
+        currentBidder: null,
+        currentHighBid: null,
+        winningBid: null,
+        contractor: null,
+        trumpSuit: null,
+        currentTrick: null,
+        currentPlayer: null,
+        pendingBidEntry: null,
       ),
     );
   }
@@ -1783,7 +1786,7 @@ class GameEngine extends ChangeNotifier {
     _updateState(
       _state.copyWith(
         showGameOverDialog: false,
-        clearGameOverData: true,
+        gameOverData: null,
       ),
     );
 

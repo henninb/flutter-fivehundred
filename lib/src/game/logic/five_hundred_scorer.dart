@@ -9,8 +9,8 @@ import 'avondale_table.dart';
 /// - Contractor makes bid: Score = bid value (from Avondale table)
 /// - Contractor fails bid: Score = -bid value (can go negative)
 /// - Opponents: Score 10 points per trick taken (always)
-/// - SLAM BONUS: If contractor wins all 10 tricks on a bid worth < 250, score is raised to 250
-///   (Bids worth 250+ keep their normal value even with a slam)
+/// - SLAM BONUS: If contractor wins all 10 tricks on a bid worth < 250,
+///   score is raised to 250 (Bids worth 250+ keep their normal value)
 /// - No bonus for overtricks (unless it's a slam with bid < 250)
 /// - Game ends when a team reaches 500+ (wins) or -500 (loses)
 class FiveHundredScorer {
@@ -26,7 +26,7 @@ class FiveHundredScorer {
     if (kDebugMode) {
       debugPrint('\n[SCORER] Scoring hand');
       debugPrint(
-        '  Contract: ${contract.tricks}${_suitLabel(contract.suit)} by ${contract.bidder.name}',
+        '  Contract: ${contract.tricks}${contract.suit.label} by ${contract.bidder.name}',
       );
       debugPrint('  Contractor tricks: $contractorTricks');
       debugPrint('  Opponent tricks: $opponentTricks');
@@ -187,12 +187,12 @@ class FiveHundredScorer {
       if (score.isSlam) {
         return '$contractorName SLAM! Won all 10 tricks (+${score.contractorPoints})';
       } else if (score.tricksOver == 0) {
-        return '$contractorName made ${contract.tricks}${_suitLabel(contract.suit)} exactly (+${score.contractorPoints})';
+        return '$contractorName made ${contract.tricks}${contract.suit.label} exactly (+${score.contractorPoints})';
       } else {
-        return '$contractorName made ${contract.tricks}${_suitLabel(contract.suit)} with ${score.tricksOver} overtrick(s) (+${score.contractorPoints})';
+        return '$contractorName made ${contract.tricks}${contract.suit.label} with ${score.tricksOver} overtrick(s) (+${score.contractorPoints})';
       }
     } else {
-      return '$contractorName failed ${contract.tricks}${_suitLabel(contract.suit)} by ${score.tricksUnder} trick(s) (${score.contractorPoints})';
+      return '$contractorName failed ${contract.tricks}${contract.suit.label} by ${score.tricksUnder} trick(s) (${score.contractorPoints})';
     }
   }
 
@@ -220,21 +220,6 @@ class FiveHundredScorer {
         return 'North-South';
       case Team.eastWest:
         return 'East-West';
-    }
-  }
-
-  static String _suitLabel(BidSuit suit) {
-    switch (suit) {
-      case BidSuit.spades:
-        return '♠';
-      case BidSuit.clubs:
-        return '♣';
-      case BidSuit.diamonds:
-        return '♦';
-      case BidSuit.hearts:
-        return '♥';
-      case BidSuit.noTrump:
-        return 'NT';
     }
   }
 }

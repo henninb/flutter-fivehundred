@@ -289,13 +289,15 @@ class TrickEngine {
 class TrickResult {
   const TrickResult._({
     required this.status,
-    required this.trick,
+    this.trick,
     this.winner,
     required this.message,
   });
 
   final TrickStatus status;
-  final Trick trick;
+
+  /// The updated trick, or null when [status] is [TrickStatus.error].
+  final Trick? trick;
   final Position? winner;
   final String message;
 
@@ -323,7 +325,6 @@ class TrickResult {
 
   factory TrickResult.error(String message) => TrickResult._(
         status: TrickStatus.error,
-        trick: const Trick(plays: [], leader: Position.north),
         message: message,
       );
 }

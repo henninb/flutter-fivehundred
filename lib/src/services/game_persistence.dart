@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../game/models/card.dart';
 
+@immutable
 class StoredStats {
   const StoredStats({
     required this.gamesWon,
@@ -21,6 +22,7 @@ class StoredStats {
   final int doubleSkunksAgainst;
 }
 
+@immutable
 class CutCards {
   const CutCards({required this.player, required this.opponent});
 
@@ -28,6 +30,7 @@ class CutCards {
   final PlayingCard opponent;
 }
 
+@immutable
 class PlayerNames {
   const PlayerNames({required this.playerName, required this.opponentName});
 
@@ -37,7 +40,7 @@ class PlayerNames {
 
 abstract class GamePersistence {
   StoredStats? loadStats();
-  void saveStats({
+  Future<void> saveStats({
     required int gamesWon,
     required int gamesLost,
     required int skunksFor,
@@ -47,10 +50,10 @@ abstract class GamePersistence {
   });
 
   CutCards? loadCutCards();
-  void saveCutCards(PlayingCard player, PlayingCard opponent);
+  Future<void> saveCutCards(PlayingCard player, PlayingCard opponent);
 
   PlayerNames? loadPlayerNames();
-  void savePlayerNames({
+  Future<void> savePlayerNames({
     required String playerName,
     required String opponentName,
   });
@@ -85,22 +88,21 @@ class SharedPrefsPersistence implements GamePersistence {
   }
 
   @override
-  void saveStats({
+  Future<void> saveStats({
     required int gamesWon,
     required int gamesLost,
     required int skunksFor,
     required int skunksAgainst,
     required int doubleSkunksFor,
     required int doubleSkunksAgainst,
-  }) {
+  }) async {
     try {
-      _prefs
-        ..setInt(_gamesWonKey, gamesWon)
-        ..setInt(_gamesLostKey, gamesLost)
-        ..setInt(_skunksForKey, skunksFor)
-        ..setInt(_skunksAgainstKey, skunksAgainst)
-        ..setInt(_doubleSkunksForKey, doubleSkunksFor)
-        ..setInt(_doubleSkunksAgainstKey, doubleSkunksAgainst);
+      await _prefs.setInt(_gamesWonKey, gamesWon);
+      await _prefs.setInt(_gamesLostKey, gamesLost);
+      await _prefs.setInt(_skunksForKey, skunksFor);
+      await _prefs.setInt(_skunksAgainstKey, skunksAgainst);
+      await _prefs.setInt(_doubleSkunksForKey, doubleSkunksFor);
+      await _prefs.setInt(_doubleSkunksAgainstKey, doubleSkunksAgainst);
 
       if (kDebugMode) {
         debugPrint(
@@ -146,29 +148,20 @@ class SharedPrefsPersistence implements GamePersistence {
           '[Persistence] ERROR: Invalid card format in saved data: $e',
         );
       }
-      // Return null if corrupted data - game will regenerate
-      return null;
-    } on RangeError catch (e) {
-      if (kDebugMode) {
-        debugPrint('[Persistence] ERROR: Card data out of range: $e');
-      }
-      // Return null if corrupted data - game will regenerate
       return null;
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[Persistence] ERROR loading cut cards: $e');
       }
-      // Return null if corrupted data - game will regenerate
       return null;
     }
   }
 
   @override
-  void saveCutCards(PlayingCard player, PlayingCard opponent) {
+  Future<void> saveCutCards(PlayingCard player, PlayingCard opponent) async {
     try {
-      _prefs
-        ..setString(_playerCutKey, player.encode())
-        ..setString(_opponentCutKey, opponent.encode());
+      await _prefs.setString(_playerCutKey, player.encode());
+      await _prefs.setString(_opponentCutKey, opponent.encode());
 
       if (kDebugMode) {
         debugPrint('[Persistence] Cut cards saved successfully');
@@ -192,14 +185,13 @@ class SharedPrefsPersistence implements GamePersistence {
   }
 
   @override
-  void savePlayerNames({
+  Future<void> savePlayerNames({
     required String playerName,
     required String opponentName,
-  }) {
+  }) async {
     try {
-      _prefs
-        ..setString(_playerNameKey, playerName)
-        ..setString(_opponentNameKey, opponentName);
+      await _prefs.setString(_playerNameKey, playerName);
+      await _prefs.setString(_opponentNameKey, opponentName);
 
       if (kDebugMode) {
         debugPrint('[Persistence] Player names saved successfully');
